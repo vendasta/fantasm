@@ -536,6 +536,8 @@ class FSMContext(dict):
                     retry_options=retryOptions, headers=self.headers)
         if queue:
             self.Queue(name=queueName).add(task)
+            if not task.was_enqueued:
+                self.logger.critical('Task "%s" was not enqueued.', taskName)
         
         return task
     
@@ -632,7 +634,8 @@ class FSMContext(dict):
             now = time.time()
             url = self.buildUrl(self.currentState, nextEvent)
             params = self.buildParams(self.currentState, nextEvent)
-            task = Task(name='%s-%d' % (taskNameBase, index),
+            taskName = '%s-%d' % (taskNameBase, index)
+            task = Task(name=taskName,
                         method=self.method,
                         url=url,
                         params=params,
@@ -640,6 +643,8 @@ class FSMContext(dict):
                         headers=self.headers,
                         retry_options=retryOptions)
             self.Queue(name=queueName).add(task)
+            if not task.was_enqueued:
+                self.logger.critical('Task "%s" was not enqueued.', taskName)
             return task
         
         except (TaskAlreadyExistsError, TombstonedTaskError):
@@ -820,7 +825,15 @@ class FSMContext(dict):
         @return: a new FSMContext instance
         """
         assert (not updateData) or (not replaceData), "cannot update and replace data at the same time"
-        context = copy.deepcopy(self)
+
+        #context = copy.deepcopy(self)
+        # shallow copy the context
+        context = copy.copy(self)
+        
+        # deepcopy the dictionary portion of the context
+        deepcopy_dict = copy.deepcopy(dict(self))
+        context.update(deepcopy_dict)
+
         if instanceName:
             context.instanceName = instanceName
         if updateData:

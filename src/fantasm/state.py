@@ -118,6 +118,8 @@ class State(object):
                              context.machineName, 
                              context.currentState.name)
                 obj[constants.TERMINATED_PARAM] = True
+                # likely due to index writing race conditions, just retry
+                raise Exception('Raising exception to provoke a retry.')
                 
         transition.execute(context, obj)
         

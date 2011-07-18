@@ -42,7 +42,7 @@ class LoggerTestPersistent(AppEngineTestCase):
     def test_TaskTooLargeError(self):
         self.assertEqual(0, _FantasmLog.all().count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
-        self.context.logger.info('a' * 100000)
+        self.context.logger.info('a' * 1000000)
         runQueuedTasks(queueName=self.context.queueName, assertTasks=False)
         self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
         self.assertEqual({True: 2, False: 1}[self.PERSISTENT_LOGGING], sum(self.loggingDouble.count.values()))
