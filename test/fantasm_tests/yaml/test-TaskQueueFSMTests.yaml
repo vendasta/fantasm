@@ -74,6 +74,8 @@ state_machines:
       bool1: bool
       bool2: bool
       custom: fantasm_tests.actions.Custom
+      list_of_custom: fantasm_tests.actions.Custom
+      list_of_custom_len_1: fantasm_tests.actions.Custom
       
 
   states:

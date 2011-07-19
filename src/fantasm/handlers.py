@@ -27,7 +27,7 @@ from fantasm.fsm import FSM
 from fantasm.utils import NoOpQueue
 from fantasm.constants import NON_CONTEXT_PARAMS, STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, TASK_NAME_PARAM, \
                               RETRY_COUNT_PARAM, STARTED_AT_PARAM, IMMEDIATE_MODE_PARAM, MESSAGES_PARAM, \
-                              HTTP_REQUEST_HEADER_PREFIX
+                              HTTP_REQUEST_HEADER_PREFIX, USE_RUN_ONCE_SEMAPHORE_FOR_TASKS
 from fantasm.exceptions import UnknownMachineError, RequiredServicesUnavailableRuntimeError, FSMRuntimeError
 from fantasm.models import Encoder, _FantasmFanIn
 from fantasm.lock import RunOnceSemaphore
@@ -202,12 +202,12 @@ class FSMHandler(webapp.RequestHandler):
         
         # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
         # a datastore transaction as a semaphore to determine if we should actually execute this or not.
-        if taskName:
+        if taskName and USE_RUN_ONCE_SEMAPHORE_FOR_TASKS:
             semaphoreKey = '%s--%s' % (taskName, retryCount)
             semaphore = RunOnceSemaphore(semaphoreKey, None)
             if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
                 # we can simply return here, this is a duplicate fired task
-                logging.info('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
+                logging.error('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
                 self.response.status_code = 200
                 return
             

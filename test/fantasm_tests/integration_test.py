@@ -178,7 +178,9 @@ class ParamsTests(RunTasksBaseTest):
         self.context['dict_db_Key'] = {'a': models[1].key()} # BAD!!!! not defined in context_types
         self.context['dict_db_Key_defined_in_context_types'] = {'a': models[1].key()}
         self.context['unicode2'] = "  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ".decode('iso-8859-1')
-        self.context['custom'] = [CustomImpl(a='A', b='B')]
+        self.context['custom'] = CustomImpl(a='A', b='B')
+        self.context['list_of_custom'] = [CustomImpl(a='A', b='B'), CustomImpl(a='AA', b='BB')]
+        self.context['list_of_custom_len_1'] = [CustomImpl(a='A', b='B')]
         
         self.context.initialize() # queues the first task
         ran = runQueuedTasks(queueName=self.context.queueName)
@@ -186,7 +188,9 @@ class ParamsTests(RunTasksBaseTest):
         self.assertEqual(['instanceName--pseudo-init--pseudo-init--state-initial--step-0',
                           'instanceName--state-initial--next-event--state-final--step-1'], ran)
         
-        self.assertEqual([{'custom': [CustomImpl(a="A", b="B")],
+        self.assertEqual([{'custom': CustomImpl(a="A", b="B"),
+                           'list_of_custom': [CustomImpl(a="A", b="B"), CustomImpl(a="AA", b="BB")],
+                           'list_of_custom_len_1': [CustomImpl(a="A", b="B")],
                            'db_Key': 'agdmYW50YXNtchALEglUZXN0TW9kZWwiATAM',
                            'db_Key_defined_in_context_types': datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'),
                            'char': 'a',
@@ -873,12 +877,13 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_fail_post_fan_in(RunTasks
                           'instanceName--continuation-1-4--state-initial--next-event--state-continuation--step-1', 
                           'instanceName--continuation-1-5--state-initial--next-event--state-continuation--step-1', 
                           'instanceName--state-continuation--next-event--state-fan-in--step-2-1',
-                          'instanceName--state-continuation--next-event--state-fan-in--step-2-1'], ran)
+                          'instanceName--state-continuation--next-event--state-fan-in--step-2-1',
+                          'instanceName--work-index-1--state-fan-in--next-event--state-final--step-3'], ran)
         self.assertEqual({'state-initial': {'entry': 1, 'action': 1, 'exit': 0},
                           'state-continuation': {'entry': 6, 'action': 5, 'continuation': 6, 'exit': 0},
-                          'state-fan-in': {'entry': 2, 'action': 1, 'exit': 0, 
+                          'state-fan-in': {'entry': 2, 'action': 2, 'exit': 0, 
                                            'fan-in-entry': 5, 'fan-in-action': 5, 'fan-in-exit': 0},
-                          'state-final': {'entry': 0, 'action': 0, 'exit': 0},
+                          'state-final': {'entry': 1, 'action': 1, 'exit': 0},
                           'state-initial--next-event': {'action': 0},
                           'state-continuation--next-event': {'action': 0},
                           'state-fan-in--next-event': {'action': 0}}, 

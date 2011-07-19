@@ -20,7 +20,7 @@ from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsErro
 
 from fantasm import constants
 from fantasm.transition import Transition
-from fantasm.exceptions import UnknownEventError, InvalidEventNameRuntimeError
+from fantasm.exceptions import UnknownEventError, InvalidEventNameRuntimeError, FanInNoContextsAvailableRuntimeError
 from fantasm.utils import knuthHash
 from fantasm.lock import RunOnceSemaphore
 
@@ -113,13 +113,13 @@ class State(object):
         if transition.target.isFanIn:
             taskNameBase = context.getTaskName(event, fanIn=True)
             contextOrContexts = context.mergeJoinDispatch(event, obj)
-            if not contextOrContexts:
-                context.logger.info('Fan-in resulted in 0 contexts. Terminating machine. (Machine %s, State %s)',
-                             context.machineName, 
-                             context.currentState.name)
-                obj[constants.TERMINATED_PARAM] = True
-                # likely due to index writing race conditions, just retry
-                raise Exception('Raising exception to provoke a retry.')
+            if not contextOrContexts and not contextOrContexts.guarded:
+                # by implementation, EVERY fan-in should have at least one work package available to it, this
+                # is likely caused by an index writing delay, and it is suitable to simply retry this task
+                raise FanInNoContextsAvailableRuntimeError(event, 
+                                                           context.machineName,
+                                                           context.currentState.name,
+                                                           context.instanceName)
                 
         transition.execute(context, obj)
         
@@ -185,7 +185,8 @@ class State(object):
                 context.logger.info("Fan-in cleanup Task already exists.")
                 
             if context.get('UNITTEST_RAISE_AFTER_FAN_IN'): # only way to generate this failure
-                raise Exception()
+                if not contextOrContexts.guarded:
+                    raise Exception()
                 
         if nextEvent:
             if not isinstance(nextEvent, str) or not constants.NAME_RE.match(nextEvent):

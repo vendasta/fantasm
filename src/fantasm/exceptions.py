@@ -80,6 +80,14 @@ class FanInReadLockFailureRuntimeError(FSMRuntimeError):
                   (event, machineName, stateName, instanceName)
         super(FanInReadLockFailureRuntimeError, self).__init__(message)
         
+class FanInNoContextsAvailableRuntimeError(FSMRuntimeError):
+    """ Exception when fan-in results in 0 contexts - ie. appengine index write timing issue. """
+    def __init__(self, event, machineName, stateName, instanceName):
+        """ Initialize exception """
+        message = 'Fan-in resulted in 0 contexts. (Event %s, Machine %s, State %s, Instance %s)' % \
+                  (event, machineName, stateName, instanceName)
+        super(FanInNoContextsAvailableRuntimeError, self).__init__(message)
+        
 class RequiredServicesUnavailableRuntimeError(FSMRuntimeError):
     """ Some of the required API services are not available. """
     def __init__(self, unavailableServices):

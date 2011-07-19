@@ -679,11 +679,12 @@ class FSMContext(dict):
         # and return the FSMContexts list
         class FSMContextList(list):
             """ A list that supports .logger.info(), .logger.warning() etc.for fan-in actions """
-            def __init__(self, context, contexts):
+            def __init__(self, context, contexts, guarded=False):
                 """ setup a self.logger for fan-in actions """
                 super(FSMContextList, self).__init__(contexts)
                 self.logger = Logger(context)
                 self.instanceName = context.instanceName
+                self.guarded = guarded
                 
         # see comment (A) in self._queueDispatchFanIn(...)
         time.sleep(constants.DATASTORE_ASYNCRONOUS_INDEX_WRITE_WAIT_TIME)
@@ -697,7 +698,7 @@ class FSMContext(dict):
             if semaphore.readRunOnceSemaphore(payload=self.__obj[constants.TASK_NAME_PARAM]):
                 self.logger.info("Fan-in idempotency guard for workIndex '%s', not processing any work items.", 
                                  workIndex)
-                return FSMContextList(self, []) # don't operate over the data again
+                return FSMContextList(self, [], guarded=True) # don't operate over the data again
             
         # fetch all the work packages in the current group for processing
         query = _FantasmFanIn.all() \
@@ -781,8 +782,24 @@ class FSMContext(dict):
                 if isinstance(value, dict):
                     # FIXME: should we issue a warning that they should update fsm.yaml?
                     value = simplejson.dumps(value, cls=models.Encoder)
-                if isinstance(value, list) and len(value) == 1:
+                    
+                valueIsNotBasestring = False
+                if isinstance(value, (list, tuple)):
+                    for v in value:
+                        if not isinstance(v, basestring):
+                            valueIsNotBasestring = True
+                elif not isinstance(value, basestring):
+                    valueIsNotBasestring = True
+                    
+                if valueIsNotBasestring:
+                    if key not in self.contextTypes.keys():
+                        self.logger.warning("Attempting to put an object in the FSMContext without specifying an "
+                                            "entry for key '%s' in 'context_types' in the yaml. There will likely "
+                                            "be conversion issues (ie. booleans turned into strings).", key)
+                    
+                if isinstance(value, (list, tuple)) and len(value) == 1:
                     key = key + '[]' # used to preserve lists of length=1 - see handler.py for inverse
+
                 params[key] = value
         return params
 
