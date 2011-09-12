@@ -242,28 +242,28 @@ class InsideTest( BaseTest ):
         self.context['batchsize'] = 1
         self.context.initialize() # queues the first task
         runQueuedTasks()
-        self.assertEqual(10, _FantasmFanIn.all().count())
+        self.assertEqual(10, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
         
     def test_batchsize_3(self):
         self.context['batchsize'] = 3
         self.context.initialize() # queues the first task
         runQueuedTasks()
-        self.assertEqual(4, _FantasmFanIn.all().count())
+        self.assertEqual(4, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
         
     def test_batchsize_10(self):
         self.context['batchsize'] = 10
         self.context.initialize() # queues the first task
         runQueuedTasks()
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
         
     def test_batchsize_11(self):
         self.context['batchsize'] = 11
         self.context.initialize() # queues the first task
         runQueuedTasks()
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
         
 class InsideFanTest( InsideTest ):
@@ -289,7 +289,7 @@ class OutsideTest( BaseTest ):
         self.context['batchsize'] = 1
         self.context.initialize() # queues the first task
         runQueuedTasks(maxRetries=0)
-        self.assertEqual(10 + self.EXTRA_COUNT, _FantasmFanIn.all().count())
+        self.assertEqual(10 + self.EXTRA_COUNT, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXTRA_VALUES + self.EXPECTED_VALUES, 
                          sorted(ContinuationFanInResult.get_by_key_name('test').values))
             
@@ -297,14 +297,14 @@ class OutsideTest( BaseTest ):
         self.context['batchsize'] = 3
         self.context.initialize() # queues the first task
         runQueuedTasks(maxRetries=0)
-        self.assertEqual(4, _FantasmFanIn.all().count())
+        self.assertEqual(4, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
             
     def test_batchsize_10(self):
         self.context['batchsize'] = 10
         self.context.initialize() # queues the first task
         runQueuedTasks(maxRetries=0)
-        self.assertEqual(1 + self.EXTRA_COUNT, _FantasmFanIn.all().count())
+        self.assertEqual(1 + self.EXTRA_COUNT, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXTRA_VALUES + self.EXPECTED_VALUES, 
                          sorted(ContinuationFanInResult.get_by_key_name('test').values))
             
@@ -312,7 +312,7 @@ class OutsideTest( BaseTest ):
         self.context['batchsize'] = 11
         self.context.initialize() # queues the first task
         runQueuedTasks(maxRetries=0)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(self.EXPECTED_VALUES, sorted(ContinuationFanInResult.get_by_key_name('test').values))
         
 class OutsideFanTest( OutsideTest ):

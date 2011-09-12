@@ -21,7 +21,8 @@ import logging
 import datetime
 import traceback
 import StringIO
-from google.appengine.ext import deferred
+import random
+from google.appengine.ext import deferred, db
 from fantasm.models import _FantasmLog
 from fantasm import constants
 from google.appengine.api.taskqueue import taskqueue
@@ -59,8 +60,12 @@ def _log(taskName,
         message = message % args
     except TypeError: # TypeError: not enough arguments for format string
         pass
-    
-    _FantasmLog(taskName=taskName,
+
+    randomStr = ''.join(random.sample(constants.CHARS_FOR_RANDOM, 8))
+    keyName = '%s:%s' % (taskName, randomStr)
+    key = db.Key.from_path(_FantasmLog.kind(), keyName, namespace='')
+    _FantasmLog(key=key,
+                taskName=taskName,
                 instanceName=instanceName, 
                 machineName=machineName,
                 stateName=stateName,

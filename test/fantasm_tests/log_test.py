@@ -24,27 +24,27 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.loggingDouble = getLoggingDouble()
     
     def test(self):
-        self.assertEqual(0, _FantasmLog.all().count())
+        self.assertEqual(0, _FantasmLog.all(namespace='').count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
         self.context.logger.info('a')
         runQueuedTasks(queueName=self.context.queueName, assertTasks=self.PERSISTENT_LOGGING)
-        self.assertEqual({True: 1, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 1, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(1, sum(self.loggingDouble.count.values()))
         
     def test_empty_tags(self):
-        self.assertEqual(0, _FantasmLog.all().count())
+        self.assertEqual(0, _FantasmLog.all(namespace='').count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
         self.context.logger.info('a', tags=[])
         runQueuedTasks(queueName=self.context.queueName, assertTasks=self.PERSISTENT_LOGGING)
-        self.assertEqual({True: 1, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 1, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(1, sum(self.loggingDouble.count.values()))
     
     def test_TaskTooLargeError(self):
-        self.assertEqual(0, _FantasmLog.all().count())
+        self.assertEqual(0, _FantasmLog.all(namespace='').count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
         self.context.logger.info('a' * 1000000)
         runQueuedTasks(queueName=self.context.queueName, assertTasks=False)
-        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual({True: 2, False: 1}[self.PERSISTENT_LOGGING], sum(self.loggingDouble.count.values()))
         
     def test_level_OFF(self):
@@ -55,7 +55,7 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info('info')
         self.context.logger.debug('debug')
         runQueuedTasks(queueName=self.context.queueName, assertTasks=False)
-        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
         
     def test_level_WARNING(self):
@@ -66,7 +66,7 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info('info')
         self.context.logger.debug('debug')
         runQueuedTasks(queueName=self.context.queueName, assertTasks=self.PERSISTENT_LOGGING)
-        self.assertEqual({True: 3, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 3, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(3, sum(self.loggingDouble.count.values()))
         
     def test_maxLevel_OFF(self):
@@ -77,7 +77,7 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info('info')
         self.context.logger.debug('debug')
         runQueuedTasks(queueName=self.context.queueName, assertTasks=False)
-        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 0, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(0, sum(self.loggingDouble.count.values()))
         
     def test_maxLevel_WARNING(self):
@@ -88,14 +88,14 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info('info')
         self.context.logger.debug('debug')
         runQueuedTasks(queueName=self.context.queueName, assertTasks=self.PERSISTENT_LOGGING)
-        self.assertEqual({True: 3, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all().count())
+        self.assertEqual({True: 3, False: 0}[self.PERSISTENT_LOGGING], _FantasmLog.all(namespace='').count())
         self.assertEqual(3, sum(self.loggingDouble.count.values()))
         
     def test_logging_object(self):
         self.context.logger.info({'a': 'b'})
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            self.assertEqual("{'a': 'b'}", _FantasmLog.all().get().message)
+            self.assertEqual("{'a': 'b'}", _FantasmLog.all(namespace='').get().message)
         else:
             self.assertEqual("{'a': 'b'}", self.loggingDouble.messages['info'][0])
         
@@ -106,8 +106,8 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info(StrRaises())
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            self.assertEqual(LOG_ERROR_MESSAGE, _FantasmLog.all().get().message)
-            self.assertEqual(logging.INFO, _FantasmLog.all().get().level)
+            self.assertEqual(LOG_ERROR_MESSAGE, _FantasmLog.all(namespace='').get().message)
+            self.assertEqual(logging.INFO, _FantasmLog.all(namespace='').get().level)
         else:
             self.assertEqual('logging error', self.loggingDouble.messages['info'][0])
             
@@ -115,35 +115,35 @@ class LoggerTestPersistent(AppEngineTestCase):
         self.context.logger.info('%s')
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            self.assertEqual('%s', _FantasmLog.all().get().message)
-            self.assertEqual(logging.INFO, _FantasmLog.all().get().level)
+            self.assertEqual('%s', _FantasmLog.all(namespace='').get().message)
+            self.assertEqual(logging.INFO, _FantasmLog.all(namespace='').get().level)
             
     def test_machineName(self):
         self.context.logger.info('info')
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            log = _FantasmLog.all().get()
+            log = _FantasmLog.all(namespace='').get()
             self.assertEqual('FSMContextTests', log.machineName)
             
     def test_stateName(self):
         self.context.logger.info('info')
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            log = _FantasmLog.all().get()
+            log = _FantasmLog.all(namespace='').get()
             self.assertEqual('pseudo-init', log.stateName)
             
     def test_actionName(self):
         self.context.logger.info('info')
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            log = _FantasmLog.all().get()
+            log = _FantasmLog.all(namespace='').get()
             self.assertEqual(None, log.actionName)
             
     def test_transitionName(self):
         self.context.logger.info('info')
         if self.PERSISTENT_LOGGING:
             runQueuedTasks(queueName=self.context.queueName)
-            log = _FantasmLog.all().get()
+            log = _FantasmLog.all(namespace='').get()
             self.assertEqual(None, log.transitionName)
         
 class LoggerTestNotPersistent(LoggerTestPersistent):

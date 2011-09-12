@@ -66,13 +66,13 @@ class LoggingTests( RunTasksBaseTest ):
         self.context.logger.persistentLogging = True
         
     def test_FantasmInstance(self):
-        self.assertEqual(1, _FantasmInstance.all().count())
+        self.assertEqual(1, _FantasmInstance.all(namespace='').count())
         
     def _test_FantasmLog(self, level, logger):
-        self.assertEqual(1, _FantasmInstance.all().count())
+        self.assertEqual(1, _FantasmInstance.all(namespace='').count())
         logger("message: %s", "foo", exc_info=True)
         runQueuedTasks(queueName=self.context.queueName)
-        query = _FantasmLog.all().filter("level =", level)
+        query = _FantasmLog.all(namespace='').filter("level =", level)
         self.assertEqual(1, query.count())
         self.assertEqual("message: foo", query.get().message)
         
@@ -94,7 +94,7 @@ class LoggingTests( RunTasksBaseTest ):
     def test_FantasmInstance_stack(self):
         self.context.logger.critical("message", exc_info=1)
         runQueuedTasks(queueName=self.context.queueName)
-        log = _FantasmLog.all().get()
+        log = _FantasmLog.all(namespace='').get()
         self.assertEqual("message", log.message)
         self.assertEqual("None\n", log.stack)
         
@@ -104,7 +104,7 @@ class LoggingTests( RunTasksBaseTest ):
         except Exception:
             self.context.logger.critical("message", exc_info=1)
         runQueuedTasks(queueName=self.context.queueName)
-        log = _FantasmLog.all().get()
+        log = _FantasmLog.all(namespace='').get()
         self.assertEqual("message", log.message)
         self.assertTrue("Traceback" in log.stack and "IndexError" in log.stack)
         
@@ -589,7 +589,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
                           'state-continuation-and-fork--next-event': {'action': 0},
                           'state-fan-in--next-event': {'action': 0}}, 
                          getCounts(self.machineConfig))
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         # pylint: disable-msg=C0301
         # - long lines are much clearer in htis case
         self.assertEqual([{u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '3', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
@@ -675,7 +675,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):
                           {u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
                           {u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
                           {u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
         
 class RunTasksTests_DatastoreFSMContinuationFanInTests_POST(RunTasksTests_DatastoreFSMContinuationFanInTests):
@@ -838,7 +838,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
                           {u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
                           {u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
                           {u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
         
 class RunTasksTests_DatastoreFSMContinuationFanInTests__memcache_problems_POST(
@@ -1333,7 +1333,7 @@ class RunTasksWithFailuresTests_DatastoreFSMContinuationFanInTests(RunTasksBaseT
                           'state-continuation--next-event': {'action': 0},
                           'state-fan-in--next-event': {'action': 0}}, 
                  getCounts(self.machineConfig))
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
         
 class RunTasksWithFailuresTests_DatastoreFSMContinuationFanInTests_POST(

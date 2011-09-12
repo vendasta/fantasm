@@ -375,7 +375,8 @@ class FSMContext(dict):
         self[constants.STEPS_PARAM] = 0
         task = self.generateInitializationTask()
         self.Queue(name=self.queueName).add(task)
-        _FantasmInstance(key_name=self.instanceName, instanceName=self.instanceName).put()
+        key = db.Key.from_path(_FantasmInstance.kind(), self.instanceName, namespace='')
+        _FantasmInstance(key=key, instanceName=self.instanceName).put()
         
         return FSM.PSEUDO_INIT
         
@@ -611,7 +612,8 @@ class FSMContext(dict):
                 
         # write down two models, one actual work package, one idempotency package
         keyName = '-'.join([str(i) for i in [actualTaskName, fork] if i]) or None
-        work = _FantasmFanIn(context=self, workIndex=workIndex, key_name=keyName)
+        key = db.Key.from_path(_FantasmFanIn.kind(), keyName, namespace='')
+        work = _FantasmFanIn(context=self, workIndex=workIndex, key=key)
         
         # close enough to idempotent, but could still write only one of the entities
         # FIXME: could be made faster using a bulk put, but this interface is cleaner
@@ -701,7 +703,7 @@ class FSMContext(dict):
                 return FSMContextList(self, [], guarded=True) # don't operate over the data again
             
         # fetch all the work packages in the current group for processing
-        query = _FantasmFanIn.all() \
+        query = _FantasmFanIn.all(namespace='') \
                              .filter('workIndex =', workIndex) \
                              .order('__key__')
                              

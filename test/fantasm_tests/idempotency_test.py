@@ -116,16 +116,16 @@ class TaskDoubleExecutionTest( AppEngineTestCase ):
     
     def test(self):
         self.context.initialize() # queues the first task
-        self.assertEqual(0, _FantasmTaskSemaphore.all().count())
+        self.assertEqual(0, _FantasmTaskSemaphore.all(namespace='').count())
         self.assertEqual(0, SimpleModel.all().count())
         tq = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
         tasks = tq.GetTasks('default')
         runQueuedTasks(tasksOverride=tasks)
-        self.assertEqual(1, _FantasmTaskSemaphore.all().count())
+        self.assertEqual(1, _FantasmTaskSemaphore.all(namespace='').count())
         self.assertEqual(1, SimpleModel.all().count())
         runQueuedTasks(tasksOverride=tasks)
-        logging.info([e.key().name() for e in _FantasmTaskSemaphore.all().fetch(100)])
-        self.assertEqual(1, _FantasmTaskSemaphore.all().count())
+        logging.info([e.key().name() for e in _FantasmTaskSemaphore.all(namespace='').fetch(100)])
+        self.assertEqual(1, _FantasmTaskSemaphore.all(namespace='').count())
         self.assertEqual(1, SimpleModel.all().count())
         
 class FanInTxnException( AppEngineTestCase ):
@@ -177,9 +177,9 @@ class FanInMergeJoinDispatchTest( AppEngineTestCase ):
         context.dispatch('pseudo-init', obj) # write down a work package
         self.index = context[constants.INDEX_PARAM]
         
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         
     def setUpContext(self, retryCount=0):
         self.context = self.factory.createFSMInstance(self.machineConfig.name, instanceName='foo',
@@ -198,12 +198,12 @@ class FanInMergeJoinDispatchTest( AppEngineTestCase ):
         self.setUpContext()
         self.context.dispatch('ok', self.obj)
         self.assertEqual(1, ResultModel.get_by_key_name('test').total)
-        self.assertEqual(2, _FantasmTaskSemaphore.all().count())
+        self.assertEqual(2, _FantasmTaskSemaphore.all(namespace='').count())
         
         self.setUpContext(retryCount=1) # assumes retry count is set correctly
         self.context.dispatch('ok', self.obj)  
         self.assertEqual(1, ResultModel.get_by_key_name('test').total)
-        self.assertEqual(2, _FantasmTaskSemaphore.all().count())
+        self.assertEqual(2, _FantasmTaskSemaphore.all(namespace='').count())
         
 class FanInQueueDispatchTest( AppEngineTestCase ):
     
@@ -232,16 +232,16 @@ class FanInQueueDispatchTest( AppEngineTestCase ):
     def test_run_twice(self):
         self.setUpContext()
         self.context.dispatch('pseudo-init', self.obj)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         self.assertEqual('65536', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         
         self.setUpContext()
         self.context.dispatch('pseudo-init', self.obj)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         self.assertEqual('65536', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         
         
@@ -249,46 +249,46 @@ class FanInQueueDispatchTest( AppEngineTestCase ):
         self.setUpContext()
         mock('ReadWriteLock.currentIndex', raises=Exception, tracker=None)
         self.assertRaises(Exception, self.context.dispatch, 'pseudo-init', self.obj)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(None, memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         restore()
         
         self.setUpContext(retryCount=1)
         self.context.dispatch('pseudo-init', self.obj)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         self.assertEqual('65536', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         
     def test_fail_at_acquireWriteLock(self):
         self.setUpContext()
         mock('ReadWriteLock.acquireWriteLock', raises=Exception, tracker=None)
         self.assertRaises(Exception, self.context.dispatch, 'pseudo-init', self.obj)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(None, memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         restore()
         
         self.setUpContext(retryCount=1)
         self.context.dispatch('pseudo-init', self.obj)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         self.assertEqual('65536', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         
     def test_fail_at_put(self):
         self.setUpContext()
         mock('db.put', raises=Exception, tracker=None)
         self.assertRaises(Exception, self.context.dispatch, 'pseudo-init', copy.copy(self.obj))
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         # notice the +1 extra on the lock
         self.assertEqual('65537', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         restore()
         
         self.setUpContext(retryCount=1)
         self.context.dispatch('pseudo-init', self.obj)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         self.assertEqual('foo--InitialState--ok--FanInState--step-2-2957927341', 
-                         _FantasmFanIn.all().get().workIndex)
+                         _FantasmFanIn.all(namespace='').get().workIndex)
         self.assertEqual('65537', memcache.get('foo--InitialState--ok--FanInState--step-2-lock-3255389373'))
         
         

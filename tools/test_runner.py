@@ -68,7 +68,7 @@ def suite():
 
 if __name__ == "__main__":
 
-    sys.path.insert(0, os.path.join(os.environ['APPENGINEDIR'], 'lib', 'django'))
+    sys.path.insert(0, os.path.join(os.environ['APPENGINEDIR'], 'lib', 'simplejson'))
     os.environ['SERVER_SOFTWARE'] = 'Development/unittest' # to ensure correct reloading of config/FSM
 
     import sys

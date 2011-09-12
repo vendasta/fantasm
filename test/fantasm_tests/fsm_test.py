@@ -3,7 +3,7 @@
 import unittest
 import urllib
 import datetime
-from django.utils import simplejson
+import simplejson
 import random # pylint: disable-msg=W0611
 from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable-msg=W0611
 from google.appengine.api import memcache # pylint: disable-msg=W0611
@@ -196,18 +196,18 @@ class FSMContextMergeJoinTests(AppEngineTestCase):
         
     def test_mergeJoinDispatch_1_context(self):
         _FantasmFanIn(workIndex='instanceName--foo--event--foo2--step-0-2654435761').put()
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         contexts = self.context.mergeJoinDispatch('event', {RETRY_COUNT_PARAM: 0})
         self.assertEqual([{'__ix__': 1, '__step__': 0}], contexts)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
     def test_mergeJoinDispatch_1234_contexts(self):
         for i in xrange(1234):
             _FantasmFanIn(workIndex='instanceName--foo--event--foo2--step-0-2654435761').put()
-        self.assertEqual(1000, _FantasmFanIn.all().count()) # can't get them all with .count()
+        self.assertEqual(1000, _FantasmFanIn.all(namespace='').count()) # can't get them all with .count()
         contexts = self.context.mergeJoinDispatch('event', {RETRY_COUNT_PARAM: 0})
         self.assertEqual(1234, len(contexts))
-        self.assertEqual(1000, _FantasmFanIn.all().count())
+        self.assertEqual(1000, _FantasmFanIn.all(namespace='').count())
         
 
 
@@ -626,19 +626,19 @@ class DatastoreFSMContinuationFanInTests(DatastoreFSMContinuationBaseTests):
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-initial', self.context.currentState.name)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-continuation', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-fan-in', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-final', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
     def test_DatastoreFSMContinuationFanInTests_write_lock_error(self):
         obj = TemporaryStateObject()
@@ -664,11 +664,11 @@ class DatastoreFSMContinuationFanInTests(DatastoreFSMContinuationBaseTests):
 #        
 #        event = self.context.dispatch(event, TemporaryStateObject())
 #        self.assertEqual('state-initial', self.context.currentState.name)
-#        self.assertEqual(0, _FantasmFanIn.all().count())
+#        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
 #        
 #        event = self.context.dispatch(event, TemporaryStateObject())
 #        self.assertEqual('state-continuation', self.context.currentState.name)
-#        self.assertEqual(1, _FantasmFanIn.all().count())
+#        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
 #        
 #        writeLock = '%s-lock-%d' % (self.context.getTaskName(event, fanIn=True), self.context.get(INDEX_PARAM))
 #        readLock = '%s-readlock-%d' % (self.context.getTaskName(event, fanIn=True), self.context.get(INDEX_PARAM))
@@ -693,11 +693,11 @@ class DatastoreFSMContinuationFanInTests(DatastoreFSMContinuationBaseTests):
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-initial', self.context.currentState.name)
-        self.assertEqual(0, _FantasmFanIn.all().count())
+        self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-continuation', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
         # override the action of the transition raise an exception
         originalAction = self.context.currentState.getTransition(event).action
@@ -705,17 +705,17 @@ class DatastoreFSMContinuationFanInTests(DatastoreFSMContinuationBaseTests):
             self.context.currentState.getTransition(event).action = RaiseExceptionAction()
             self.assertRaises(Exception, self.context.dispatch, event, obj)
             self.assertEqual('state-continuation', self.context.currentState.name)
-            self.assertEqual(1, _FantasmFanIn.all().count()) # the work packages are restored on exception
+            self.assertEqual(1, _FantasmFanIn.all(namespace='').count()) # the work packages are restored on exception
         finally:
             self.context.currentState.getTransition(event).action = originalAction # and restore
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-fan-in', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
         
         event = self.context.dispatch(event, obj)
         self.assertEqual('state-final', self.context.currentState.name)
-        self.assertEqual(1, _FantasmFanIn.all().count())
+        self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
 
 class ContextTypesCoercionTests(unittest.TestCase):
     

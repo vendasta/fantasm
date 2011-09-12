@@ -77,8 +77,9 @@ class DeleteOldEntities(DatastoreContinuationFSMAction):
         model = context['model']
         dateattr = context['dateattr']
         before = context['before']
-        query = 'SELECT __key__ FROM %s WHERE %s < :1' % (model, dateattr)
-        return db.GqlQuery(query, before)
+        modelClass = db.class_for_kind(model)
+        query = modelClass.all(keys_only=True, namespace='').filter('%s <' % dateattr, before)
+        return query
         
     def getBatchSize(self, context, obj):
         """ Batch size. """

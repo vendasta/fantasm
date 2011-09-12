@@ -67,13 +67,13 @@ class ReadWriteLock( object ):
         @return: an int, the current index
         """
         indexKey = self.indexKey()
-        index = memcache.get(indexKey)
+        index = memcache.get(indexKey, namespace=None)
         if index is None:
             # using 'random.randint' here instead of '1' helps when the index is ejected from memcache
             # instead of restarting at the same counter, we jump (likely) far way from existing task job
             # names. 
-            memcache.add(indexKey, random.randint(1, 2**32))
-            index = memcache.get(indexKey)
+            memcache.add(indexKey, random.randint(1, 2**32), namespace=None)
+            index = memcache.get(indexKey, namespace=None)
         return index
     
     def acquireWriteLock(self, index, nextEvent=None, raiseOnFail=True):
@@ -84,7 +84,7 @@ class ReadWriteLock( object ):
         """
         acquired = True
         lockKey = self.lockKey(index)
-        writers = memcache.incr(lockKey, initial_value=2**16)
+        writers = memcache.incr(lockKey, initial_value=2**16, namespace=None)
         if writers < 2**16:
             self.context.logger.error("Gave up waiting for write lock '%s'.", lockKey)
             acquired = False
@@ -104,7 +104,7 @@ class ReadWriteLock( object ):
         released = True
         
         lockKey = self.lockKey(index)
-        memcache.decr(lockKey)
+        memcache.decr(lockKey, namespace=None)
         
         return released
     
@@ -119,14 +119,14 @@ class ReadWriteLock( object ):
         indexKey = self.indexKey()
         
         # tell writers to use another index
-        memcache.incr(indexKey)
+        memcache.incr(indexKey, namespace=None)
         
         # tell writers they missed the boat
-        memcache.decr(lockKey, 2**15) 
+        memcache.decr(lockKey, 2**15, namespace=None) 
         
         # busy wait for writers
         for i in xrange(ReadWriteLock.BUSY_WAIT_ITERS):
-            counter = memcache.get(lockKey)
+            counter = memcache.get(lockKey, namespace=None)
             # counter is None --> ejected from memcache, or no writers
             # int(counter) <= 2**15 --> writers have all called memcache.decr
             if counter is None or int(counter) <= 2**15:
@@ -176,7 +176,7 @@ class RunOnceSemaphore( object ):
         # in case of memcache ejection
         
         # check memcache
-        cached = memcache.get(self.semaphoreKey)
+        cached = memcache.get(self.semaphoreKey, namespace=None)
         if cached:
             if cached != payload:
                 self.logger.critical("Run-once semaphore memcache payload write error.")
@@ -185,15 +185,16 @@ class RunOnceSemaphore( object ):
         # check datastore
         def txn():
             """ lock in transaction to avoid races between Tasks """
-            entity = _FantasmTaskSemaphore.get_by_key_name(self.semaphoreKey)
+            key = db.Key.from_path(_FantasmTaskSemaphore.kind(), self.semaphoreKey, namespace='')
+            entity = db.get(key)
             if not entity:
-                _FantasmTaskSemaphore(key_name=self.semaphoreKey, payload=payload).put()
-                memcache.set(self.semaphoreKey, payload)
+                _FantasmTaskSemaphore(key=key, payload=payload).put()
+                memcache.set(self.semaphoreKey, payload, namespace=None)
                 return (True, payload)
             else:
                 if entity.payload != payload:
                     self.logger.critical("Run-once semaphore datastore payload write error.")
-                memcache.set(self.semaphoreKey, entity.payload) # maybe reduces chance of ejection???
+                memcache.set(self.semaphoreKey, entity.payload, namespace=None) # maybe reduces chance of ejection???
                 return (False, entity.payload)
                 
         # and return whether or not the lock was written
@@ -210,7 +211,7 @@ class RunOnceSemaphore( object ):
         assert payload
         
         # check memcache
-        cached = memcache.get(self.semaphoreKey)
+        cached = memcache.get(self.semaphoreKey, namespace=None)
         if cached:
             if cached != payload:
                 self.logger.critical("Run-once semaphore memcache payload read error.")
@@ -219,7 +220,8 @@ class RunOnceSemaphore( object ):
         # check datastore
         def txn():
             """ lock in transaction to avoid races between Tasks """
-            entity = _FantasmTaskSemaphore.get_by_key_name(self.semaphoreKey)
+            key = db.Key.from_path(_FantasmTaskSemaphore.kind(), self.semaphoreKey, namespace='')
+            entity = db.get(key)
             if entity:
                 if entity.payload != payload:
                     self.logger.critical("Run-once semaphore datastore payload read error.")

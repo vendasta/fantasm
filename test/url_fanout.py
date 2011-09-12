@@ -1,5 +1,5 @@
 """ Url fanout actions """
-from django.utils import simplejson
+import simplejson
 from google.appengine.ext import db
 from google.appengine.api import urlfetch
 
