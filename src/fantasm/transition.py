@@ -20,7 +20,7 @@ Copyright 2010 VendAsta Technologies Inc.
 class Transition(object):
     """ A transition object for a machine. """
     
-    def __init__(self, name, target, action=None, countdown=0, retryOptions=None, queueName=None):
+    def __init__(self, name, target, action=None, countdown=0, retryOptions=None, queueName=None, taskTarget=None):
         """ Constructor 
         
         @param name: the name of the Transition instance
@@ -29,6 +29,7 @@ class Transition(object):
         @param countdown: the number of seconds to wait before firing this transition. Default 0.
         @param retryOptions: the TaskRetryOptions for this transition
         @param queueName: the name of the queue to Queue into 
+        @param taskTarget: the target for tasks created for this transition
         """
         assert queueName
         
@@ -38,6 +39,7 @@ class Transition(object):
         self.countdown = countdown
         self.retryOptions = retryOptions
         self.queueName = queueName
+        self.taskTarget = taskTarget
         
     # W0613:144:Transition.execute: Unused argument 'obj'
     # args are present for a future(?) transition action

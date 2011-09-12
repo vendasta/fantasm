@@ -263,9 +263,10 @@ class _MachineConfig(object):
         if badAttributes:
             raise exceptions.InvalidMachineAttributeError(self.name, badAttributes)
             
-        # machine queue, namespace
+        # machine queue, namespace, target
         self.queueName = initDict.get(constants.QUEUE_NAME_ATTRIBUTE, constants.DEFAULT_QUEUE_NAME)
         self.namespace = initDict.get(constants.NAMESPACE_ATTRIBUTE)
+        self.target = initDict.get(constants.TARGET_ATTRIBUTE)
         
         # logging
         self.logging = initDict.get(constants.MACHINE_LOGGING_NAME_ATTRIBUTE, constants.LOGGING_DEFAULT)
@@ -537,6 +538,9 @@ class _TransitionConfig(object):
             
         # transition specific queue
         self.queueName = transDict.get(constants.QUEUE_NAME_ATTRIBUTE, machine.queueName)
+        
+        # transition specific target
+        self.target = transDict.get(constants.TARGET_ATTRIBUTE, machine.target)
 
         # resolve the class for action, if specified
         if constants.TRANS_ACTION_ATTRIBUTE in transDict:

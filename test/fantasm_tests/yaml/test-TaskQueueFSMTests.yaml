@@ -29,6 +29,7 @@ state_machines:
   namespace: fantasm_tests.actions
   queue: default
   task_retry_limit: 10
+  target: backend1
 
   states:
     

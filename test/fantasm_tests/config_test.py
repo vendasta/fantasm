@@ -72,6 +72,16 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
         fsm = config._MachineConfig(self.machineDict)
         self.assertEquals(fsm.queueName, constants.DEFAULT_QUEUE_NAME)
         
+    def test_targetParsed(self):
+        target = 'some-target'
+        self.machineDict[constants.TARGET_ATTRIBUTE] = target
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(fsm.target, target)
+
+    def test_targetHasDefaultValue(self):
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(fsm.target, constants.DEFAULT_TARGET)
+
     def test_noNamespaceYieldNoneAttribute(self):
         fsm = config._MachineConfig(self.machineDict)
         self.assertEquals(fsm.namespace, None)
@@ -438,6 +448,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine', 
                                           constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test',
                                           constants.QUEUE_NAME_ATTRIBUTE: 'somequeue',
+                                          constants.TARGET_ATTRIBUTE: 'some-target',
                                           constants.TASK_RETRY_LIMIT_ATTRIBUTE: 100,
                                           constants.MIN_BACKOFF_SECONDS_ATTRIBUTE: 101,
                                           constants.MAX_BACKOFF_SECONDS_ATTRIBUTE: 102,
@@ -527,6 +538,15 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
         self.assertEquals(transition.queueName, 'someotherqueue')
         
+    def test_targetInheritedFromMachine(self):
+        transition = self.fsm.addTransition(self.transDict, 'GoodState')
+        self.assertEquals(transition.target, 'some-target')
+
+    def test_targetOverridesMachineQueueName(self):
+        self.transDict[constants.TARGET_ATTRIBUTE] = 'some-other-target'
+        transition = self.fsm.addTransition(self.transDict, 'GoodState')
+        self.assertEquals(transition.target, 'some-other-target')
+
     def test_maxRetriesOverridesMachineRetryPolicy(self):
         self.transDict[constants.MAX_RETRIES_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')

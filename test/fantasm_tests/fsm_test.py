@@ -375,6 +375,20 @@ class TaskQueueFSMTests(AppEngineTestCase):
 
         self.assertEquals(mockQueue.name, 'fantasm-queue')
         
+    def test_taskTargetSpecifiedAtTransitionLevel(self):
+        mockQueue = TaskQueueDouble()
+        mock(name='Queue.__init__', returns_func=mockQueue.__init__, tracker=None)
+        mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
+
+        self.transNormalToFinal.taskTarget = 'correct-target' # should be this one (dest state)
+        self.transInitialToNormal.taskTarget = 'other-target'
+        self.context.globalTaskTarget = 'global-target'
+        
+        self.context.currentState = self.stateInitial
+        self.context.dispatch('next-event', {})
+
+        self.assertEquals(mockQueue.tasks[0][0].target, 'correct-target')
+        
     
     # These tests are not raising as expected. The mock object is not being called. TODO sort this out     
     # def test_nextEventNotStringRaisesException(self):
@@ -849,6 +863,11 @@ class StartStateMachineTests(unittest.TestCase):
     def test_tasksEnqueuedToStartMultipleMachines(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}, {'c': '3'}], _currentConfig=self.currentConfig)
         self.assertEquals(len(self.mockQueue.tasks), 3)
+        
+    def test_enqueuedTaskPointsAtCorrectTarget(self):
+        startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}, {'c': '3'}], _currentConfig=self.currentConfig)
+        task = self.getTask(1)
+        self.assertEquals('backend1', task.target)
         
     def test_contextsAddedToTasks(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig,
