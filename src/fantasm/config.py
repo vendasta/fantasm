@@ -22,6 +22,7 @@ import yaml
 import logging
 import simplejson
 import datetime
+import pickle
 from fantasm import exceptions, constants, utils
 
 TASK_ATTRIBUTES = (
@@ -186,6 +187,7 @@ def _resolveClass(className, namespace):
         'bool': utils.boolConverter, 
         'long': long,
         'json': simplejson.loads,
+        'pickle': pickle.loads,
         'datetime': lambda x: datetime.datetime.utcfromtimestamp(int(x)),
     }
     if className in shortTypes:

@@ -181,6 +181,8 @@ class ParamsTests(RunTasksBaseTest):
         self.context['custom'] = CustomImpl(a='A', b='B')
         self.context['list_of_custom'] = [CustomImpl(a='A', b='B'), CustomImpl(a='AA', b='BB')]
         self.context['list_of_custom_len_1'] = [CustomImpl(a='A', b='B')]
+        self.context['plain_old_object'] = {'a': 'b'}
+        self.context['list_of_plain_old_object'] = [{'a': 'b'}, {'c': 'd'}]
         
         self.context.initialize() # queues the first task
         ran = runQueuedTasks(queueName=self.context.queueName)
@@ -188,7 +190,9 @@ class ParamsTests(RunTasksBaseTest):
         self.assertEqual(['instanceName--pseudo-init--pseudo-init--state-initial--step-0',
                           'instanceName--state-initial--next-event--state-final--step-1'], ran)
         
-        self.assertEqual([{'custom': CustomImpl(a="A", b="B"),
+        self.assertEqual([{'plain_old_object': {'a': 'b'},
+                           'list_of_plain_old_object': [{'a': 'b'}, {'c': 'd'}],
+                           'custom': CustomImpl(a="A", b="B"),
                            'list_of_custom': [CustomImpl(a="A", b="B"), CustomImpl(a="AA", b="BB")],
                            'list_of_custom_len_1': [CustomImpl(a="A", b="B")],
                            'db_Key': 'agdmYW50YXNtchALEglUZXN0TW9kZWwiATAM',

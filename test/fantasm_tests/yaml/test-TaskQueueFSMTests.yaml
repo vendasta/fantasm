@@ -77,7 +77,8 @@ state_machines:
       custom: fantasm_tests.actions.Custom
       list_of_custom: fantasm_tests.actions.Custom
       list_of_custom_len_1: fantasm_tests.actions.Custom
-      
+      plain_old_object: pickle
+      list_of_plain_old_object: pickle
 
   states:
     

@@ -35,6 +35,7 @@ import random
 import copy
 import time
 import simplejson
+import pickle
 from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsError, TombstonedTaskError, \
                                                      TaskRetryOptions
 from google.appengine.ext import db
@@ -310,7 +311,9 @@ class FSMContext(dict):
         kwargs = {}
         if cast is simplejson.loads:
             kwargs = {'object_hook': models.decode}
-        if isinstance(value, list):
+        if cast is pickle.loads:
+            value = pickle.loads(str(value))
+        elif isinstance(value, list):
             value = [cast(v, **kwargs) for v in value]
         else:
             value = cast(value, **kwargs)
@@ -557,7 +560,7 @@ class FSMContext(dict):
         @param nextEvent: a string event 
         @param fanInPeriod: the period of time between fan in Tasks 
         @param queueName: the queue name to Queue into 
-        @param target: the task target parameter
+        @param taskTarget: the task target parameter
         @return: a taskqueue.Task instance which may or may not have been queued already
         """
         assert nextEvent is not None
@@ -789,6 +792,8 @@ class FSMContext(dict):
             if key not in constants.NON_CONTEXT_PARAMS:
                 if self.contextTypes.get(key) is simplejson.loads:
                     value = simplejson.dumps(value, cls=models.Encoder)
+                if self.contextTypes.get(key) is pickle.loads:
+                    value = pickle.dumps(value)
                 if isinstance(value, datetime.datetime):
                     value = str(int(time.mktime(value.utctimetuple())))
                 if isinstance(value, dict):
@@ -806,8 +811,9 @@ class FSMContext(dict):
                 if valueIsNotBasestring:
                     if key not in self.contextTypes.keys():
                         self.logger.warning("Attempting to put an object in the FSMContext without specifying an "
-                                            "entry for key '%s' in 'context_types' in the yaml. There will likely "
-                                            "be conversion issues (ie. booleans turned into strings).", key)
+                                            "entry for key '%s' in 'context_types' in the yaml for machineName '%s'. "
+                                            "There will likely be conversion issues (ie. booleans turned into "
+                                            "strings).", key, self.machineName)
                     
                 if isinstance(value, (list, tuple)) and len(value) == 1:
                     key = key + '[]' # used to preserve lists of length=1 - see handler.py for inverse
