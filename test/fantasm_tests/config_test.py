@@ -62,6 +62,16 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
         self.assertRaises(exceptions.InvalidMachineNameError, config._MachineConfig, 
                           {constants.MACHINE_NAME_ATTRIBUTE: machineName})
                           
+    def test_use_datastore_semaphore_parsed(self):
+        useRunOnceSemaphore = not constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE
+        self.machineDict[constants.MACHINE_USE_RUN_ONCE_SEMAPHORE_ATTRIBUTE] = useRunOnceSemaphore
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(useRunOnceSemaphore, fsm.useRunOnceSemaphore)
+        
+    def test_use_datastore_semaphore_hasDefaultValue(self):
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE, fsm.useRunOnceSemaphore)
+                          
     def test_queueParsed(self):
         queueName = 'SomeQueue'
         self.machineDict[constants.QUEUE_NAME_ATTRIBUTE] = queueName

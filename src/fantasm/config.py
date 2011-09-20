@@ -274,6 +274,10 @@ class _MachineConfig(object):
         self.logging = initDict.get(constants.MACHINE_LOGGING_NAME_ATTRIBUTE, constants.LOGGING_DEFAULT)
         if self.logging not in constants.VALID_LOGGING_VALUES:
             raise exceptions.InvalidLoggingError(self.name, self.logging)
+            
+        # use datastore semaphore
+        self.useRunOnceSemaphore = initDict.get(constants.MACHINE_USE_RUN_ONCE_SEMAPHORE_ATTRIBUTE,
+                                                constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE)
         
         # machine task_retry_limit, min_backoff_seconds, max_backoff_seconds, task_age_limit, max_doublings
         for (constant, attribute, default, exception) in TASK_ATTRIBUTES:

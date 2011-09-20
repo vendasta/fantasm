@@ -1,5 +1,5 @@
-application: insert-appid
-version: 1
+application: change-me
+version: change-me
 runtime: python
 api_version: 1
 
@@ -17,6 +17,10 @@ handlers:
 - url: /fantasm/.*
   script: fantasm/main.py
   login: admin
+
+# leaving this open for integration test automation
+- url: /Start100ComplexMachineCountdown/
+  script: main.py
 
 - url: .*
   script: main.py

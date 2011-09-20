@@ -111,6 +111,22 @@ class Start100ComplexMachineCountdown(webapp.RequestHandler):
         import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
         
+class Start100ComplexMachineCountdownResults(webapp.RequestHandler):
+    
+    def get(self):
+        
+        #
+        # Work in progress
+        #
+        # check default queue and fan_in queue; if non-zero, return notdone
+        # query ResultsModel for items != 1000
+        #   version = os.environ['CURRENT_VERSION_ID'].split('.')[0]
+        #   SELECT * FROM ResultsModel where version=version and total != 1000
+        # return
+        #    10 (undercount)
+        #     3 (overcount)
+        # *** The resulting file needs to integrate with integration-test-results target in build.xml
+        return
 
 application = webapp.WSGIApplication([
     ('/', HomePage), 
@@ -118,6 +134,7 @@ application = webapp.WSGIApplication([
     ('/Make100Models/', Make100Models),
     ('/Start100ComplexMachine/', Start100ComplexMachine),
     ('/Start100ComplexMachineCountdown/', Start100ComplexMachineCountdown),
+    ('/Start100ComplexMachineCountdown-Results/', Start100ComplexMachineCountdownResults),
     ('/create-subscribers/', email_batch.CreateSubscribers),
     ('/backup/populate/', backup.PopulateBackupExample)
 ], debug=True)

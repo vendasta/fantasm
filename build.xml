@@ -6,8 +6,15 @@
     <property name="srcdir" value="${basedir}/src"/>
     <property name="testdir" value="${basedir}/test"/>
     <property name="toolsdir" value="${basedir}/tools"/>
+    <property name="releasedir" value="${basedir}/release"/>
     <property name="appenginedir" value="/usr/local/google_appengine"/>
     <property name="tests.pythonpath" value="${testdir}:${srcdir}:${basedir}:${appenginedir}:${appenginedir}/lib/simplejson:${appenginedir}/lib/yaml/lib:${appenginedir}/lib/webob:${appenginedir}/lib/django:${appenginedir}/lib/fancy_urllib:${toolsdir}"/>
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="${basedir}/tools/ant/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
 
     <target name="clean">
         <delete>
@@ -16,6 +23,7 @@
             <fileset dir="${testdir}" includes="**/*.pyc"/>
             <fileset dir="${testdir}" includes="**/*.pyo"/>
         </delete>
+        <delete dir="${releasedir}"/>
     </target>
 
     <target name="test">
@@ -61,5 +69,93 @@
     <target name="pylint" depends="pylint-module-src, _pylint"/>
     <target name="pylint-test" depends="pylint-module-test, _pylint"/>
         
+    <target name="copy-test-files">
+        <!-- copy src files to builddir -->
+        <delete dir="${releasedir}"/>
+        <mkdir dir="${releasedir}"/>
+        <copy todir="${releasedir}">
+            <fileset dir="${testdir}">
+                <exclude name="*.pyc"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="rewrite-app-yaml" depends="copy-test-files">
+        <!-- rewrite app.yaml -->
+        <replaceregexp file="${releasedir}/app.yaml" 
+                       match="application:.+" 
+                       replace="application: ${app.yaml.application}"/>
+        <replaceregexp file="${releasedir}/app.yaml" 
+                       match="version:.+" 
+                       replace="version: ${app.yaml.version}"/>
+    </target>
+
+    <target name="integration-test" depends="copy-test-files, rewrite-app-yaml">
+        <!--
+            This target is used to run a consistent integration test by the owners of Fantasm.
+        -->
+        <exec executable="${appenginedir}/appcfg.py" resultproperty="appcfg.retcode" inputstring="${gae.password}">
+            <arg line="update ${releasedir} --no_cookies --email=${gae.email} --passin"/>
+        </exec>
+        
+        <fail message="App Engine deployment failed; non-zero return code.">
+            <condition>
+                <not>
+                    <equals arg1="${appcfg.retcode}" arg2="0"/>
+                </not>
+            </condition>
+        </fail>
+        
+        <!-- kick off the integration run -->
+        <tempfile property="temp.file" suffix=".html"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+    </target>
+
+    <!-- work in progress 
+    
+    <target name="integration-test-results">
+        <tempfile property="temp.file" suffix=".html"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown-Results/" dest="${temp.file}"/>
+        <loadfile property="integration.result" srcFile="${temp.file}"/>
+        <fail message="Integration test is not complete.">
+            <condition>
+                <equals arg1="${integration.result}" arg2="notdone"/>
+            </condition>
+        </fail>
+        
+        ##teamcity[buildStatisticValue key='overcounts' value='3']
+
+        Project-Level Charts
+        The chart is shown on the Statistics tab for the individual Project.
+
+        The settings are configured in the <TeamCity data dir>/config/<Project Name>/plugin-settings.xml file by "graph" tags. You can edit the file while server is running, it will be automatically reloaded.
+
+        Almost the same as for main-config.xml, but there is an intermediate custom-graphs tag:
+
+        <settings>
+ 
+          <custom-graphs>
+ 
+           <graph title="Integration Results" hideFilters="showFailed" seriesTitle="Series">
+              <valueType key="overcounts" title="Overcounts" buildTypeId="bt1119"/>
+              <valueType key="undercounts" title="Undercounts" buildTypeId="bt1119"/> 
+            </graph>
+ 
+          </custom-graphs>
+ 
+        </settings>
+
+
+    </target>
+    -->
 
 </project>

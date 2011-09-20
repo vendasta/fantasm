@@ -179,7 +179,7 @@ class RunOnceSemaphore( object ):
         cached = memcache.get(self.semaphoreKey, namespace=None)
         if cached:
             if cached != payload:
-                self.logger.critical("Run-once semaphore memcache payload write error.")
+                self.logger.critical("Run-once semaphore memcache payload write error. Semaphore key: '%s', actual payload: '%s', expected payload: '%s'.", self.semaphoreKey, cached, payload)
             return (False, cached)
         
         # check datastore
@@ -190,10 +190,11 @@ class RunOnceSemaphore( object ):
             if not entity:
                 _FantasmTaskSemaphore(key=key, payload=payload).put()
                 memcache.set(self.semaphoreKey, payload, namespace=None)
+                self.logger.debug('Setting run-once semaphore. Semaphore key: "%s", payload: "%s".', self.semaphoreKey, payload)
                 return (True, payload)
             else:
                 if entity.payload != payload:
-                    self.logger.critical("Run-once semaphore datastore payload write error.")
+                    self.logger.critical("Run-once semaphore datastore payload write error. Semaphore key: '%s', actual payload: '%s', expected payload: '%s'.", self.semaphoreKey, entity.payload, payload)
                 memcache.set(self.semaphoreKey, entity.payload, namespace=None) # maybe reduces chance of ejection???
                 return (False, entity.payload)
                 
@@ -214,7 +215,7 @@ class RunOnceSemaphore( object ):
         cached = memcache.get(self.semaphoreKey, namespace=None)
         if cached:
             if cached != payload:
-                self.logger.critical("Run-once semaphore memcache payload read error.")
+                self.logger.critical("Run-once semaphore memcache payload read error. Semaphore key: '%s', actual payload: '%s', expected payload: '%s'.", self.semaphoreKey, cached, payload)
             return cached
         
         # check datastore
@@ -224,7 +225,7 @@ class RunOnceSemaphore( object ):
             entity = db.get(key)
             if entity:
                 if entity.payload != payload:
-                    self.logger.critical("Run-once semaphore datastore payload read error.")
+                    self.logger.critical("Run-once semaphore datastore payload read error. Semaphore key: '%s', actual payload: '%s', expected payload: '%s'.", self.semaphoreKey, entity.payload, payload)
                 return entity.payload
             
         # return whether or not the lock was read 

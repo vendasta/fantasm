@@ -27,7 +27,7 @@ from fantasm.fsm import FSM
 from fantasm.utils import NoOpQueue
 from fantasm.constants import NON_CONTEXT_PARAMS, STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, TASK_NAME_PARAM, \
                               RETRY_COUNT_PARAM, STARTED_AT_PARAM, IMMEDIATE_MODE_PARAM, MESSAGES_PARAM, \
-                              HTTP_REQUEST_HEADER_PREFIX, USE_RUN_ONCE_SEMAPHORE_FOR_TASKS
+                              HTTP_REQUEST_HEADER_PREFIX
 from fantasm.exceptions import UnknownMachineError, RequiredServicesUnavailableRuntimeError, FSMRuntimeError
 from fantasm.models import Encoder, _FantasmFanIn
 from fantasm.lock import RunOnceSemaphore
@@ -200,17 +200,6 @@ class FSMHandler(webapp.RequestHandler):
         taskName = lowerCaseHeaders.get('x-appengine-taskname')
         retryCount = int(lowerCaseHeaders.get('x-appengine-taskretrycount', 0))
         
-        # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
-        # a datastore transaction as a semaphore to determine if we should actually execute this or not.
-        if taskName and USE_RUN_ONCE_SEMAPHORE_FOR_TASKS:
-            semaphoreKey = '%s--%s' % (taskName, retryCount)
-            semaphore = RunOnceSemaphore(semaphoreKey, None)
-            if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
-                # we can simply return here, this is a duplicate fired task
-                logging.error('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
-                self.response.status_code = 200
-                return
-            
         # pull out X-Fantasm-* headers
         headers = None
         for key, value in self.request.headers.items():
@@ -248,6 +237,17 @@ class FSMHandler(webapp.RequestHandler):
                                                 obj=obj,
                                                 headers=headers)
         
+        # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
+        # a datastore transaction as a semaphore to determine if we should actually execute this or not.
+        if taskName and fsm.useRunOnceSemaphore:
+            semaphoreKey = '%s--%s' % (taskName, retryCount)
+            semaphore = RunOnceSemaphore(semaphoreKey, None)
+            if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
+                # we can simply return here, this is a duplicate fired task
+                logging.error('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
+                self.response.status_code = 200
+                return
+
         # in "immediate mode" we try to execute as much as possible in the current request
         # for the time being, this does not include things like fork/spawn/contuniuations/fan-in
         immediateMode = IMMEDIATE_MODE_PARAM in requestData.keys()

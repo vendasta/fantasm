@@ -234,6 +234,7 @@ class FSM(object):
         url = machineConfig.url
         queueName = machineConfig.queueName
         taskTarget = machineConfig.target
+        useRunOnceSemaphore = machineConfig.useRunOnceSemaphore
         
         return FSMContext(initialState, currentState=currentState, 
                           machineName=machineName, instanceName=instanceName,
@@ -243,14 +244,16 @@ class FSM(object):
                           persistentLogging=(machineConfig.logging == constants.LOGGING_PERSISTENT),
                           obj=obj,
                           headers=headers,
-                          globalTaskTarget=taskTarget)
+                          globalTaskTarget=taskTarget,
+                          useRunOnceSemaphore=useRunOnceSemaphore)
 
 class FSMContext(dict):
     """ A finite state machine context instance. """
     
     def __init__(self, initialState, currentState=None, machineName=None, instanceName=None,
                  retryOptions=None, url=None, queueName=None, data=None, contextTypes=None,
-                 method='GET', persistentLogging=False, obj=None, headers=None, globalTaskTarget=None):
+                 method='GET', persistentLogging=False, obj=None, headers=None, globalTaskTarget=None,
+                 useRunOnceSemaphore=True):
         """ Constructor
         
         @param initialState: a State instance 
@@ -288,6 +291,7 @@ class FSMContext(dict):
         self.__obj = obj
         self.headers = headers
         self.globalTaskTarget = globalTaskTarget
+        self.useRunOnceSemaphore = useRunOnceSemaphore
         
         # the following is monkey-patched from handler.py for 'immediate mode'
         from google.appengine.api.taskqueue.taskqueue import Queue
@@ -678,6 +682,7 @@ class FSMContext(dict):
         
         # the work package index is stored in the url of the Task/FSMContext
         index = self.get(constants.INDEX_PARAM)
+        self.logger.debug('Index: %s', index)
         taskNameBase = self.getTaskName(event, fanIn=True)
         
         # see comment (***) in self._queueDispatchFanIn 
@@ -707,7 +712,9 @@ class FSMContext(dict):
         # the following step ensure that fan-in only ever operates one time over a list of data
         # the entity is created in State.dispatch(...) _after_ all the actions have executed
         # successfully
-        workIndex = '%s-%d' % (taskNameBase, knuthHash(index))
+        khash = knuthHash(index)
+        self.logger.debug('knuthHash of index: %s', khash)
+        workIndex = '%s-%d' % (taskNameBase, khash)
         if obj[constants.RETRY_COUNT_PARAM] > 0:
             semaphore = RunOnceSemaphore(workIndex, self)
             if semaphore.readRunOnceSemaphore(payload=self.__obj[constants.TASK_NAME_PARAM]):
