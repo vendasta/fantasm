@@ -135,6 +135,7 @@
         ##teamcity[buildStatisticValue key='overcounts' value='3']
 
         Project-Level Charts
+        http://confluence.jetbrains.net/display/TCD4/Custom+Chart
         The chart is shown on the Statistics tab for the individual Project.
 
         The settings are configured in the <TeamCity data dir>/config/<Project Name>/plugin-settings.xml file by "graph" tags. You can edit the file while server is running, it will be automatically reloaded.

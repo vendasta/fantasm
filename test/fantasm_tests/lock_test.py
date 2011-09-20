@@ -214,8 +214,9 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         self.assertEqual('payload', _FantasmTaskSemaphore.all(namespace='').get().payload)
         memcache.set('foo', 'bar')
         success, payload = sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
-        self.assertEqual(["Run-once semaphore memcache payload write error."], 
-                         self.loggingDouble.messages['critical'])
+        self.assertEqual(1, len(self.loggingDouble.messages['critical']))
+        self.assertTrue(self.loggingDouble.messages['critical'][0]\
+                        .startswith("Run-once semaphore memcache payload write error."))
         self.assertFalse(success)
         self.assertEqual('bar', payload)
         self.assertEqual('bar', memcache.get('foo'))
@@ -237,8 +238,9 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         e.put()
         memcache.delete('foo')
         success, payload = sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
-        self.assertEqual(["Run-once semaphore datastore payload write error."], 
-                         self.loggingDouble.messages['critical'])
+        self.assertEqual(1, len(self.loggingDouble.messages['critical']))
+        self.assertTrue(self.loggingDouble.messages['critical'][0]\
+                        .startswith("Run-once semaphore datastore payload write error."))
         self.assertFalse(success)
         self.assertEqual('bar', payload)
         self.assertEqual('bar', memcache.get('foo'))
@@ -267,14 +269,18 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
         payload = sem.readRunOnceSemaphore('bar', transactional=self.TRANSACTIONAL)
         self.assertEqual('payload', payload)
-        self.assertEqual(["Run-once semaphore memcache payload read error."], self.loggingDouble.messages['critical'])
+        self.assertEqual(1, len(self.loggingDouble.messages['critical']))
+        self.assertTrue(self.loggingDouble.messages['critical'][0]\
+                        .startswith("Run-once semaphore memcache payload read error."))
 
     def test_readRunOnceSemaphore_payload_error_memcache_expired(self):
         sem = RunOnceSemaphore('foo', None)
         sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
         payload = sem.readRunOnceSemaphore('bar', transactional=self.TRANSACTIONAL)
         self.assertEqual('payload', payload)
-        self.assertEqual(["Run-once semaphore memcache payload read error."], self.loggingDouble.messages['critical'])
+        self.assertEqual(1, len(self.loggingDouble.messages['critical']))
+        self.assertTrue(self.loggingDouble.messages['critical'][0]\
+                        .startswith("Run-once semaphore memcache payload read error."))
 
         
 class RunOnceSemaphoreTest_NOT_TRANSACTIONAL(AppEngineTestCase):
