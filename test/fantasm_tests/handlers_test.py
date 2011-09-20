@@ -19,6 +19,10 @@ class MockConfigRootUrl(object):
 class GetMachineNameFromRequestTests(unittest.TestCase):
     """ Tests for getMachineNameFromRequest """
     
+    def setUp(self):
+        super(GetMachineNameFromRequestTests, self).setUp()
+        mock('config.currentConfiguration', returns=MockConfigRootUrl('/fantasm/'), tracker=None)
+    
     def tearDown(self):
         super(GetMachineNameFromRequestTests, self).tearDown()
         restore()
