@@ -69,7 +69,7 @@
     <target name="pylint" depends="pylint-module-src, _pylint"/>
     <target name="pylint-test" depends="pylint-module-test, _pylint"/>
         
-    <target name="copy-test-files">
+    <target name="copy-test-files" depends="clean">
         <!-- copy src files to builddir -->
         <delete dir="${releasedir}"/>
         <mkdir dir="${releasedir}"/>
@@ -78,6 +78,7 @@
                 <exclude name="*.pyc"/>
             </fileset>
         </copy>
+        <delete file="${releasedir}/fantasm" failonerror="false"/> <!-- remove bum symlink -->
         <copy todir="${releasedir}/fantasm" overwrite="true">
             <fileset dir="${srcdir}/fantasm">
                 <exclude name="*.pyc"/>
