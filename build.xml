@@ -78,6 +78,11 @@
                 <exclude name="*.pyc"/>
             </fileset>
         </copy>
+        <copy todir="${releasedir}/fantasm" overwrite="true">
+            <fileset dir="${srcdir}/fantasm">
+                <exclude name="*.pyc"/>
+            </fileset>
+        </copy>
     </target>
 
     <target name="rewrite-app-yaml" depends="copy-test-files">
