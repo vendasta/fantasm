@@ -1,19 +1,13 @@
-application: change-me
+application: fantasm-test
 version: change-me
 runtime: python
 api_version: 1
 
-# allow deletion of entire 'tables'
 builtins:
 - datastore_admin: on
 - remote_api: on
 
 handlers:
-
-# allow console access
-- url: /remote_api
-  script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
-  login: admin
 
 - url: /fantasm/.*
   script: fantasm/main.py
