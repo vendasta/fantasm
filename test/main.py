@@ -104,16 +104,49 @@ class Start100ComplexMachine(webapp.RequestHandler):
     def get(self):
         import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100)
-        
+
+class SecurityToken(db.Model):
+    """ An uber-simple security check for views. """
+    name = db.StringProperty(required=True)
+    token = db.StringProperty(required=True)
+
+def checkSecurity(name, request):
+    """ Returns true if the security check succeeds, false otherwise. """
+    token = request.params.get('token')
+    securityToken = SecurityToken.get_by_key_name(name)
+    if not securityToken:
+        return False
+    if securityToken.token != token:
+        return False
+    return True
+    
 class Start100ComplexMachineCountdown(webapp.RequestHandler):
     
     def get(self):
         import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
         
-class Start100ComplexMachineCountdownResults(webapp.RequestHandler):
+class IntegrationTest(webapp.RequestHandler):
+
+    def get(self):
+        
+        # security check
+        if not checkSecurity('integration-test', self.request):
+            self.response.set_status(401)
+            return
+            
+        import fantasm
+        for _ in range(10):
+            fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
+
+class IntegrationTestResults(webapp.RequestHandler):
     
     def get(self):
+        
+        # security check
+        if not checkSecurity('integration-test-results', self.request):
+            self.response.set_status(401)
+            return
         
         #
         # Work in progress
@@ -134,7 +167,8 @@ application = webapp.WSGIApplication([
     ('/Make100Models/', Make100Models),
     ('/Start100ComplexMachine/', Start100ComplexMachine),
     ('/Start100ComplexMachineCountdown/', Start100ComplexMachineCountdown),
-    ('/Start100ComplexMachineCountdown-Results/', Start100ComplexMachineCountdownResults),
+    ('/integration-test/', IntegrationTest),
+    ('/integration-test-results/', IntegrationTestResults),
     ('/create-subscribers/', email_batch.CreateSubscribers),
     ('/backup/populate/', backup.PopulateBackupExample)
 ], debug=True)

@@ -6,6 +6,7 @@ api_version: 1
 # allow deletion of entire 'tables'
 builtins:
 - datastore_admin: on
+- remote_api: on
 
 handlers:
 
@@ -18,8 +19,10 @@ handlers:
   script: fantasm/main.py
   login: admin
 
-# leaving this open for integration test automation
-- url: /Start100ComplexMachineCountdown/
+# security is enforced in a different manner to facilitate integration test automation
+- url: /integration-test/
+  script: main.py
+- url: /integration-test-results/
   script: main.py
 
 - url: .*

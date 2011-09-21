@@ -108,23 +108,14 @@
         
         <!-- kick off the integration run -->
         <tempfile property="temp.file" suffix=".html"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/integration-test/?token=${integration_test_token}" dest="${temp.file}"/>
     </target>
 
     <!-- work in progress 
     
     <target name="integration-test-results">
         <tempfile property="temp.file" suffix=".html"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/Start100ComplexMachineCountdown-Results/" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/integration-test-results/?token=${integration_test_results_token}" dest="${temp.file}"/>
         <loadfile property="integration.result" srcFile="${temp.file}"/>
         <fail message="Integration test is not complete.">
             <condition>
