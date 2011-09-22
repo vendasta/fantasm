@@ -269,6 +269,7 @@ class _MachineConfig(object):
         self.queueName = initDict.get(constants.QUEUE_NAME_ATTRIBUTE, constants.DEFAULT_QUEUE_NAME)
         self.namespace = initDict.get(constants.NAMESPACE_ATTRIBUTE)
         self.target = initDict.get(constants.TARGET_ATTRIBUTE)
+        self.countdown = initDict.get(constants.COUNTDOWN_ATTRIBUTE, constants.DEFAULT_COUNTDOWN)
         
         # logging
         self.logging = initDict.get(constants.MACHINE_LOGGING_NAME_ATTRIBUTE, constants.LOGGING_DEFAULT)
@@ -532,7 +533,7 @@ class _TransitionConfig(object):
                 raise exceptions.InvalidMaxRetriesError(self.name, self.taskRetryLimit)
             
         # transition countdown
-        self.countdown = transDict.get(constants.TRANS_COUNTDOWN_ATTRIBUTE, constants.DEFAULT_COUNTDOWN)
+        self.countdown = transDict.get(constants.COUNTDOWN_ATTRIBUTE, machine.countdown)
         try:
             self.countdown = int(self.countdown)
         except ValueError:

@@ -82,6 +82,16 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
         fsm = config._MachineConfig(self.machineDict)
         self.assertEquals(fsm.queueName, constants.DEFAULT_QUEUE_NAME)
         
+    def test_countdownParsed(self):
+        countdown = 100
+        self.machineDict[constants.COUNTDOWN_ATTRIBUTE] = countdown
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(fsm.countdown, countdown)
+        
+    def test_countdownHasDefaultValue(self):
+        fsm = config._MachineConfig(self.machineDict)
+        self.assertEquals(fsm.countdown, constants.DEFAULT_COUNTDOWN)
+        
     def test_targetParsed(self):
         target = 'some-target'
         self.machineDict[constants.TARGET_ATTRIBUTE] = target
@@ -458,6 +468,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine', 
                                           constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test',
                                           constants.QUEUE_NAME_ATTRIBUTE: 'somequeue',
+                                          constants.COUNTDOWN_ATTRIBUTE: 100,
                                           constants.TARGET_ATTRIBUTE: 'some-target',
                                           constants.TASK_RETRY_LIMIT_ATTRIBUTE: 100,
                                           constants.MIN_BACKOFF_SECONDS_ATTRIBUTE: 101,
@@ -639,18 +650,23 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'MockAction'
         self.assertRaises(exceptions.UnsupportedConfigurationError, self.fsm.addTransition, self.transDict, 'GoodState')
 
-    def test_countdownDefaultIsZero(self):
-        transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.countdown, 0)
-        
     def test_countdownMustBeAnInteger(self):
-        self.transDict[constants.TRANS_COUNTDOWN_ATTRIBUTE] = 'abc'
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 'abc'
         self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
         
     def test_countdownParsed(self):
-        self.transDict[constants.TRANS_COUNTDOWN_ATTRIBUTE] = 10
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 10
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
         self.assertEquals(transition.countdown, 10)
+
+    def test_countdownInheritedFromMachine(self):
+        transition = self.fsm.addTransition(self.transDict, 'GoodState')
+        self.assertEquals(transition.countdown, 100)
+
+    def test_countdownOverridesMachineQueueName(self):
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 99
+        transition = self.fsm.addTransition(self.transDict, 'GoodState')
+        self.assertEquals(transition.countdown, 99)
         
 class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
     
@@ -689,7 +705,7 @@ class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
         self.assertRaises(exceptions.UnsupportedConfigurationError, self.fsm.addTransition, self.transDict, 'state1')
 
     def test_countdownOnTransitionToFanInStateRaisesError(self):
-        self.transDict[constants.TRANS_COUNTDOWN_ATTRIBUTE] = 20
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 20
         self.state2.fanInPeriod = 10
         self.assertRaises(exceptions.UnsupportedConfigurationError, self.fsm.addTransition, self.transDict, 'state1')
 
