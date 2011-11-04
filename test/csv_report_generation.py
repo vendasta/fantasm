@@ -180,7 +180,10 @@ class CsvFanIn( FSMAction ):
 class CsvWriter( FSMAction ):
     """ A simple .csv writing class that writes everything in a single Task.
     
-        NOTE: this does not scale arbitrarily, since we are constrained to a single Task"""
+        NOTE: this does not scale arbitrarily, since we are constrained to a single Task
+        TODO: we could fan-out over CsvIntermediateResults and then write batches via fan-in,
+              although that seems unnecessary
+        """
     
     def execute(self, context, obj):
         """ Writes the CSV file """
@@ -189,34 +192,60 @@ class CsvWriter( FSMAction ):
         semaphore = RunOnceSemaphore(context.instanceName, context)
         if not semaphore.readRunOnceSemaphore(payload='payload'):
         
+            # fetch the CsvCounter, since it is the parent of all the other Models
             counter = CsvProgressCounter.get_by_key_name(context.instanceName)
+            # fetch the single aggregated results Model
             aggResults = CsvIntermediateResults.get_by_key_name(context.instanceName, counter)
             
+            # open the file
             fileName = files.blobstore.create(mime_type='application/octet-stream')
             with files.open(fileName, 'a') as f:
+                
+                # the csv module has a convenient row writing interface
                 writer = csv.writer(f)
+                
+                # this queries for all the intermediate results
                 query = CsvIntermediateResults.all().ancestor(counter)
                 for results in query:
+                    
+                    # the aggregated results may also be in the results, so skip them
                     if aggResults and results.key() == aggResults.key():
                         continue
+                    
+                    # for all the intermediate data, write the rows
                     data = results.data
                     for item in data:
                         rows = self.getRows(context, obj, item, aggResults.data)
                         if rows:
                             for row in rows:
                                 writer.writerow(row)
-                    
+                
+                if aggResults:
+                    # now also write down any specific aggregated data rows
+                    rows = self.getAggregatedRows(context, obj, aggResults.data)
+                    if rows:
+                        for row in rows:
+                            writer.writerow(row)
+            
+            # finalize the file
             files.finalize(fileName)
             
             # FIXME: what to do with this?
             blobKey = files.blobstore.get_blob_key(fileName)
             
+            # at this point we have successfully written the file, lets make sure we don't do it again
+            # if a retry occurs downstream
             semaphore.writeRunOnceSemaphore(payload='payload')
             
+        # store the key of the counter (ie. parent of intermediate results) for cleanup
         context[COUNTER_KEY_PARAM] = counter.key()
         return OK_EVENT
     
     def getRows(self, context, obj, data, aggData):
+        """ Returns a list of lists corresponding to a rows in the CSV """
+        raise NotImplementedError()
+
+    def getAggregatedRows(self, context, obj, aggData):
         """ Returns a list of lists corresponding to a rows in the CSV """
         raise NotImplementedError()
     
@@ -281,3 +310,7 @@ class WriteCsvReport( CsvWriter ):
         rowNum = obj.get('rowNum', 1)
         obj['rowNum'] = rowNum + 1
         return [[rowNum] + data + [aggData]]
+    
+    def getAggregatedRows(self, context, obj, aggData):
+        """ Returns a list corresponding to a row in the CSV """
+        return []
