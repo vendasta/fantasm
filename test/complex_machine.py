@@ -5,6 +5,7 @@ import time
 import os
 import pickle
 from fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext import db
 
 # pylint: disable-msg=C0111
