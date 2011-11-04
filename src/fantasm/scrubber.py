@@ -23,6 +23,7 @@ from fantasm.action import DatastoreContinuationFSMAction
 # W0611: 23: Unused import _FantasmLog
 # we're importing these here so that db has a chance to see them before we query them
 from fantasm.models import _FantasmInstance, _FantasmLog, _FantasmTaskSemaphore # pylint: disable-msg=W0611
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 
 # W0613: Unused argument 'obj'
 # implementing interfaces
@@ -87,5 +88,5 @@ class DeleteOldEntities(DatastoreContinuationFSMAction):
         
     def execute(self, context, obj):
         """ Delete the rows. """
-        if obj['results']:
-            db.delete(obj['results'])
+        if obj[CONTINUATION_RESULTS_KEY]:
+            db.delete(obj[CONTINUATION_RESULTS_KEY])

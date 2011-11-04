@@ -10,6 +10,7 @@ from fantasm.models import _FantasmFanIn
 from fantasm import config # pylint: disable-msg=W0611
 from fantasm.handlers import FSMFanInCleanupHandler # pylint: disable-msg=W0611
 from minimock import mock, restore
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 
 # pylint: disable-msg=C0111,W0613
 # - docstrings not reqd in unit tests
@@ -39,26 +40,26 @@ class ListContinuation( ListContinuationFSMAction ):
     
 class InsideDatastoreContinuationAction( DatastoreContinuation ):
     def execute(self, context, obj):
-        if obj['results']:
-            context['data'] = [e.value for e in obj['results']]
+        if obj[CONTINUATION_RESULTS_KEY]:
+            context['data'] = [e.value for e in obj[CONTINUATION_RESULTS_KEY]]
             return context.get('event', 'ok')
         
 class OutsideDatastoreContinuationAction( DatastoreContinuation ):
     def execute(self, context, obj):
-        if obj['results']:
-            context['data'] = [e.value for e in obj['results']]
+        if obj[CONTINUATION_RESULTS_KEY]:
+            context['data'] = [e.value for e in obj[CONTINUATION_RESULTS_KEY]]
         return context.get('event', 'ok') # bad!!! should be inside if
     
 class InsideListContinuationAction( ListContinuation ):
     def execute(self, context, obj):
-        if obj['results']:
-            context['data'] = obj['results']
+        if obj[CONTINUATION_RESULTS_KEY]:
+            context['data'] = obj[CONTINUATION_RESULTS_KEY]
             return context.get('event', 'ok')
         
 class OutsideListContinuationAction( ListContinuation ):
     def execute(self, context, obj):
-        if obj['results']:
-            context['data'] = obj['results']
+        if obj[CONTINUATION_RESULTS_KEY]:
+            context['data'] = obj[CONTINUATION_RESULTS_KEY]
         return context.get('event', 'ok') # bad!!! should be inside if
     
 class MiddleAction( object ):

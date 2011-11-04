@@ -17,6 +17,13 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
+from fantasm.constants import CONTINUATION_RESULTS_KEY
+from fantasm.constants import CONTINUATION_RESULT_KEY
+from fantasm.constants import CONTINUATION_RESULTS_COUNTER_PARAM
+from fantasm.constants import CONTINUATION_COMPLETE_PARAM
+from fantasm.constants import STEPS_PARAM
+from fantasm.constants import GEN_PARAM
+
 class FSMAction(object):
     """ Defines the interface for all user actions. """
     
@@ -62,17 +69,21 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
         limit = self.getBatchSize(context, obj)
         
         # place results on obj.results
-        obj['results'] = query.fetch(limit)
-        obj.results = obj['results'] # deprecated interface
+        obj[CONTINUATION_RESULTS_KEY] = query.fetch(limit)
+        obj.results = obj[CONTINUATION_RESULTS_KEY] # deprecated interface
         
         # add first obj.results item on obj.result - convenient for batch size 1
-        if obj['results'] and len(obj['results']) > 0:
-            obj['result'] = obj['results'][0]
+        if obj[CONTINUATION_RESULTS_KEY] and len(obj[CONTINUATION_RESULTS_KEY]) > 0:
+            obj[CONTINUATION_RESULT_KEY] = obj[CONTINUATION_RESULTS_KEY][0]
         else:
-            obj['result'] = None
-        obj.result = obj['result'] # deprecated interface
+            obj[CONTINUATION_RESULT_KEY] = None
+        obj.result = obj[CONTINUATION_RESULT_KEY] # deprecated interface
             
-        if len(obj['results']) == limit:
+        context[CONTINUATION_RESULTS_COUNTER_PARAM] = \
+            context.get(GEN_PARAM, {}).get(str(context[STEPS_PARAM]), 0) * limit + len(obj[CONTINUATION_RESULTS_KEY])
+        context[CONTINUATION_COMPLETE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY]) < limit
+        
+        if len(obj[CONTINUATION_RESULTS_KEY]) == limit:
             return query.cursor()
         
     def getQuery(self, context, obj):
@@ -102,21 +113,26 @@ class ListContinuationFSMAction(ContinuationFSMAction):
         # the token is the index into the list
         items = self.getList(context, obj)
         index = int(token or '0')
-        batchsize = self.getBatchSize(context, obj)
+        batchsize = limit = self.getBatchSize(context, obj)
         results = items[index:index + batchsize]
         
         # place results on obj.results
-        obj['results'] = results
-        obj.results = obj['results'] # deprecated interface'
+        obj[CONTINUATION_RESULTS_KEY] = results
+        obj.results = obj[CONTINUATION_RESULTS_KEY] # deprecated interface'
         
         # add first obj.results item on obj.result - convenient for batch size 1
-        if obj['results'] and len(obj['results']) > 0:
-            obj['result'] = obj['results'][0]
+        if obj[CONTINUATION_RESULTS_KEY] and len(obj[CONTINUATION_RESULTS_KEY]) > 0:
+            obj[CONTINUATION_RESULT_KEY] = obj[CONTINUATION_RESULTS_KEY][0]
         else:
-            obj['result'] = None
-        obj.result = obj['result'] # deprecated interface
+            obj[CONTINUATION_RESULT_KEY] = None
+        obj.result = obj[CONTINUATION_RESULT_KEY] # deprecated interface
             
         index += batchsize
+        
+        context[CONTINUATION_RESULTS_COUNTER_PARAM] = \
+            context.get(GEN_PARAM, {}).get(str(context[STEPS_PARAM]), 0) * limit + len(obj[CONTINUATION_RESULTS_KEY])
+        context[CONTINUATION_COMPLETE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY]) < limit
+        
         # unlike a datastore continuation, we know when the end of the data
         # occurs by the value of the token.
         if index < len(items):

@@ -13,6 +13,7 @@ from fantasm import constants
 # - docstrings not reqd in unit tests
 
 os.environ['APPLICATION_ID'] = 'fantasm'
+os.environ['HTTP_HOST'] = 'fantasm'
 
 class AppEngineTestCase(unittest.TestCase):
     

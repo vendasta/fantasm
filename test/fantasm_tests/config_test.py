@@ -848,10 +848,12 @@ class TestYamlFileLocation(unittest.TestCase):
         self.assertTrue('MyMachine' in configuration.machines)
         
 NAMESPACED_EVENT_MODULE_LEVEL = 'NAMESPACED-EVENT-MODULE-LEVEL'
+NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL = 'NAMESPACED-CONTEXT-TYPE-MODULE-LEVEL'
         
-class TestNamespacedEvents(unittest.TestCase):
+class TestNamespacedEventsAndContextTypes(unittest.TestCase):
     
     NAMESPACED_EVENT_CLASS_LEVEL = 'NAMESPACED-EVENT-CLASS-LEVEL'
+    NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL = 'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL'
     
     def _test(self, yamlString):
         """ just tests that it can be built """
@@ -869,6 +871,8 @@ class TestNamespacedEvents(unittest.TestCase):
 state_machines:
 - name: machineName
   namespace: fantasm_tests.config_test
+  context_types:
+    NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL: int
   states:
     - name: state1
       action: fantasm_tests.fsm_test.CountExecuteCalls
@@ -883,6 +887,10 @@ state_machines:
             'NAMESPACED-EVENT-MODULE-LEVEL', 
             configuration.machines['machineName'].transitions['state1--NAMESPACED-EVENT-MODULE-LEVEL'].event
         )
+        self.assertEqual(
+            {'NAMESPACED-CONTEXT-TYPE-MODULE-LEVEL': int}, 
+            configuration.machines['machineName'].contextTypes
+        )
         
     def test_module_level_other(self):
         configuration = self._test(
@@ -890,6 +898,8 @@ state_machines:
 state_machines:
 - name: machineName
   namespace: fantasm_tests.config_test
+  context_types:
+    fantasm_tests.fsm_test.NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL_FSM_TESTS: int
   states:
     - name: state1
       action: fantasm_tests.fsm_test.CountExecuteCalls
@@ -904,6 +914,10 @@ state_machines:
             'NAMESPACED-EVENT-MODULE-LEVEL-FSM-TESTS', 
             configuration.machines['machineName'].transitions['state1--NAMESPACED-EVENT-MODULE-LEVEL-FSM-TESTS'].event
         )
+        self.assertEqual(
+            {'NAMESPACED-CONTEXT-TYPE-MODULE-LEVEL-FSM-TESTS': int}, 
+            configuration.machines['machineName'].contextTypes
+        )
         
     def test_class_level(self):
         configuration = self._test(
@@ -911,12 +925,14 @@ state_machines:
 state_machines:
 - name: machineName
   namespace: fantasm_tests.config_test
+  context_types:
+    TestNamespacedEventsAndContextTypes.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL: int
   states:
     - name: state1
       action: fantasm_tests.fsm_test.CountExecuteCalls
       initial: True
       transitions:
-      - event: TestNamespacedEvents.NAMESPACED_EVENT_CLASS_LEVEL
+      - event: TestNamespacedEventsAndContextTypes.NAMESPACED_EVENT_CLASS_LEVEL
         to: state2
     - name: state2
       final: True
@@ -925,6 +941,10 @@ state_machines:
             'NAMESPACED-EVENT-CLASS-LEVEL', 
             configuration.machines['machineName'].transitions['state1--NAMESPACED-EVENT-CLASS-LEVEL'].event
         )
+        self.assertEqual(
+            {'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL': int}, 
+            configuration.machines['machineName'].contextTypes
+        )
         
     def test_class_level_other(self):
         configuration = self._test(
@@ -932,6 +952,8 @@ state_machines:
 state_machines:
 - name: machineName
   namespace: fantasm_tests.config_test
+  context_types:
+    fantasm_tests.fsm_test.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
   states:
     - name: state1
       action: fantasm_tests.fsm_test.CountExecuteCalls
@@ -946,6 +968,10 @@ state_machines:
             'NAMESPACED-EVENT-CLASS-LEVEL-FSM-TESTS', 
             configuration.machines['machineName'].transitions['state1--NAMESPACED-EVENT-CLASS-LEVEL-FSM-TESTS'].event
         )
+        self.assertEqual(
+            {'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL-FSM-TESTS': int}, 
+            configuration.machines['machineName'].contextTypes
+        )
         
     def test_just_a_plain_old_string(self):
         configuration = self._test(
@@ -953,6 +979,9 @@ state_machines:
 state_machines:
 - name: machineName
   namespace: fantasm_tests.config_test
+  context_types:
+    fantasm_tests.fsm_test.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
+    abc: long
   states:
     - name: state1
       action: fantasm_tests.fsm_test.CountExecuteCalls
@@ -966,6 +995,10 @@ state_machines:
         self.assertEqual(
             'just-a-plain-old-string', 
             configuration.machines['machineName'].transitions['state1--just-a-plain-old-string'].event
+        )
+        self.assertEqual(
+            {'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL-FSM-TESTS': int, 'abc': long}, 
+            configuration.machines['machineName'].contextTypes
         )
         
         
@@ -982,7 +1015,26 @@ state_machines:
       action: fantasm_tests.fsm_test.CountExecuteCalls
       initial: True
       transitions:
-      - event: TestNamespacedEvents.WRONG_TYPE
+      - event: TestNamespacedEventsAndContextTypes.WRONG_TYPE
+        to: state2
+    - name: state2
+      final: True
+""")
+        
+    def test_wrong_type_context_type(self):
+        self.assertRaises(exceptions.UnexpectedObjectTypeError, self._test, 
+"""
+state_machines:
+- name: machineName
+  namespace: fantasm_tests.config_test
+  context_types:
+     TestNamespacedEventsAndContextTypes.WRONG_TYPE: int
+  states:
+    - name: state1
+      action: fantasm_tests.fsm_test.CountExecuteCalls
+      initial: True
+      transitions:
+      - event: event
         to: state2
     - name: state2
       final: True

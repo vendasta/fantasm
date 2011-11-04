@@ -3,6 +3,8 @@
 from fantasm.action import DatastoreContinuationFSMAction, ContinuationFSMAction
 from google.appengine.ext import db
 from fantasm.constants import FORK_PARAM
+from fantasm.constants import CONTINUATION_RESULT_KEY
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 
 # pylint: disable-msg=C0111, W0613
 # - docstrings not reqd in unit tests
@@ -184,11 +186,11 @@ class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
             raise Exception()
         return super(TestDatastoreContinuationFSMAction, self).continuation(context, obj, token=token)
     def execute(self, context, obj):
-        if not obj['results']:
+        if not obj[CONTINUATION_RESULTS_KEY]:
             return None
         self.count += 1
         context['__count__'] = self.count
-        context['fan-me-in'] = context.get('fan-me-in', []) + [r.key() for r in obj['results']]
+        context['fan-me-in'] = context.get('fan-me-in', []) + [r.key() for r in obj[CONTINUATION_RESULTS_KEY]]
         if self.count == self.failat:
             raise Exception()
         if self.fails:
@@ -198,13 +200,13 @@ class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
     
 class TestDatastoreContinuationFSMActionFanInGroupFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
-        if obj.has_key('results') and obj['results']:
-            context['fan-in-group'] = obj['results'][0].key().id_or_name()
+        if obj.has_key(CONTINUATION_RESULTS_KEY) and obj[CONTINUATION_RESULTS_KEY]:
+            context['fan-in-group'] = obj[CONTINUATION_RESULTS_KEY][0].key().id_or_name()
         return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)    
     
 class HappySadContinuationFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
-        if not obj['results']:
+        if not obj[CONTINUATION_RESULTS_KEY]:
             return None
         self.count += 1
         if self.count == self.failat:
@@ -232,14 +234,14 @@ class TestFileContinuationFSMAction(ContinuationFSMAction):
         self.ccount += 1
         if self.ccount == self.cfailat:
             raise Exception()
-        obj['results'] = [TestFileContinuationFSMAction.ENTRIES[token]]
+        obj[CONTINUATION_RESULTS_KEY] = [TestFileContinuationFSMAction.ENTRIES[token]]
         nextToken = token + 1
         if nextToken >= len(TestFileContinuationFSMAction.ENTRIES):
             return None
         return nextToken
     def execute(self, context, obj):
         self.count += 1
-        context['result'] = obj['results'][0]
+        context[CONTINUATION_RESULT_KEY] = obj[CONTINUATION_RESULTS_KEY][0]
         TestFileContinuationFSMAction.CONTEXTS.append(context)
         if self.count == self.failat:
             raise Exception()
@@ -266,7 +268,7 @@ class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
             raise Exception()
         return super(TestContinuationAndForkFSMAction, self).continuation(context, obj, token=token)
     def execute(self, context, obj):
-        if not obj['results']:
+        if not obj[CONTINUATION_RESULTS_KEY]:
             return None
         self.count += 1
         context['__count__'] = self.count
@@ -282,11 +284,11 @@ class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
         # FIXME: maybe just another provided base class like DatastoreContinuationFSMAction?
         
         # fork a machine to deal with all but one of the continuation dataset
-        for result in obj['results'][1:]:
+        for result in obj[CONTINUATION_RESULTS_KEY][1:]:
             context.fork(data={'key': result.key()})
             
         # and deal with the leftover data item
-        context['key'] = obj['result'].key()
+        context['key'] = obj[CONTINUATION_RESULT_KEY].key()
         context[FORK_PARAM] = -1
         
         # this event will be dispatched to this machine an all the forked contexts
@@ -302,14 +304,14 @@ class DoubleContinuation1(ContinuationFSMAction):
     def continuation(self, context, obj, token=None):
         token = int(token or 0) # awkward
         self.ccount += 1
-        obj['results'] = [DoubleContinuation1.ENTRIES[token]]
+        obj[CONTINUATION_RESULTS_KEY] = [DoubleContinuation1.ENTRIES[token]]
         nextToken = token + 1
         if nextToken >= len(DoubleContinuation1.ENTRIES):
             return None
         return nextToken
     def execute(self, context, obj):
         self.count += 1
-        context['c1'] = obj['results'][0]
+        context['c1'] = obj[CONTINUATION_RESULTS_KEY][0]
         #logging.critical('%s' % (context['c1']))
         DoubleContinuation1.CONTEXTS.append(context)
         return 'ok'
@@ -324,14 +326,14 @@ class DoubleContinuation2(object):
     def continuation(self, context, obj, token=None):
         token = int(token or 0) # awkward
         self.ccount += 1
-        obj['results'] = [DoubleContinuation2.ENTRIES[token]]
+        obj[CONTINUATION_RESULTS_KEY] = [DoubleContinuation2.ENTRIES[token]]
         nextToken = token + 1
         if nextToken >= len(DoubleContinuation2.ENTRIES):
             return None
         return nextToken
     def execute(self, context, obj):
         self.count += 1
-        context['c2'] = obj['results'][0]
+        context['c2'] = obj[CONTINUATION_RESULTS_KEY][0]
         #logging.critical('%s-%s' % (context['c1'], context['c2']))
         DoubleContinuation2.CONTEXTS.append(context)
         return 'okfinal'

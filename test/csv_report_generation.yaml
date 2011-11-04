@@ -1,0 +1,49 @@
+state_machines:
+
+#------------------------------------------------------------------------------
+# Backup
+#------------------------------------------------------------------------------
+
+- name: CsvReport
+  namespace: csv_report_generation
+  queue: default
+  task_retry_limit: 10
+  
+  context_types:
+    NUM_ENTITIES_PARAM: int
+    DATA_PARAM: pickle
+    AGG_DATA_PARAM: pickle
+    COUNT_PARAM: int
+    DONE_CONTINUATION_PARAM: bool
+    COUNTER_KEY_PARAM: google.appengine.ext.db.Key
+
+  states:
+    
+  - name: ReadInputRecords
+    action: ReadInputRecords
+    initial: True
+    final: True
+    continuation: True
+    transitions:
+    - event: OK_EVENT
+      to: WriteIntermediateRecords
+    
+  - name: WriteIntermediateRecords
+    action: WriteIntermediateRecords
+    fan_in: 2
+    final: True
+    transitions:
+    - event: OK_EVENT
+      to: WriteCsvReport
+    
+  - name: WriteCsvReport
+    action: WriteCsvReport
+    transitions:
+    - event: OK_EVENT
+      to: CsvCleanup
+      
+  - name: CsvCleanup
+    action: CsvCleanup
+    final: True
+    continuation: True
+    

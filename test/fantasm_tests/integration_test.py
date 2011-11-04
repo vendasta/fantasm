@@ -596,16 +596,16 @@ class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         # pylint: disable-msg=C0301
         # - long lines are much clearer in htis case
-        self.assertEqual([{u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '3', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '2', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '5', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '4', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '7', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '6', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '9', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '8', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
-                          {u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel', '1', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel','0', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}], CountExecuteCallsFanIn.CONTEXTS)
+        self.assertEqual([{u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '3', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '2', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 6, '__cc__': False, u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '5', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 6, '__cc__': False, u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '4', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 8, '__cc__': False, u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '7', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 8, '__cc__': False, u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '6', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 10, '__cc__': False, u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '9', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 10, '__cc__': False, u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '8', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}, 
+                          {u'__crc__': 2, '__cc__': False, u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel', '1', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
+                          {u'__crc__': 2, '__cc__': False, u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel','0', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}], CountExecuteCallsFanIn.CONTEXTS)
         
 class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests_POST(
                                                             RunTasksTests_DatastoreFSMContinuationFanInAndForkTests):
@@ -674,11 +674,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):
                           'state-fan-in--next-event': {'action': 0}}, 
                  getCounts(self.machineConfig))
         # pylint: disable-msg=C0301
-        self.assertEqual([{u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
+        self.assertEqual([{u'__crc__': 4, '__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]}, 
+                          {u'__crc__': 6, '__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]}, 
+                          {u'__crc__': 8, '__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
+                          {u'__crc__': 10, '__cc__': False, u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
+                          {u'__crc__': 2, '__cc__': False, u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
         
@@ -836,12 +836,12 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.", 
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.", 
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'."], self.loggingDouble.messages['critical'])
-        # pylint: disable-msg=C0301
-        self.assertEqual([{u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
-                          {u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
+        # pylint: disable-msg=C0301 
+        self.assertEqual([{u'__crc__': 4, u'__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]}, 
+                          {u'__crc__': 6, u'__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]}, 
+                          {u'__crc__': 8, u'__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]}, 
+                          {u'__crc__': 10, u'__cc__': False, u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]}, 
+                          {u'__crc__': 2, u'__cc__': False, u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
         

@@ -20,6 +20,7 @@ from fantasm.action import DatastoreContinuationFSMAction
 from fantasm.lock import ReadWriteLock # pylint: disable-msg=W0611
                                        # - used by minimock
 from fantasm.models import _FantasmFanIn
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 
 from minimock import mock, restore
 
@@ -78,8 +79,8 @@ class ContinuationAction( DatastoreContinuationFSMAction ):
     def getQuery(self, context, obj):
         return SimpleModel.all()
     def execute(self, context, obj):
-        if obj['results']:
-            context['keys'] = [e.key() for e in obj['results']]
+        if obj[CONTINUATION_RESULTS_KEY]:
+            context['keys'] = [e.key() for e in obj[CONTINUATION_RESULTS_KEY]]
             time.sleep(random.uniform(0.0, 1.0))
             return 'ok'
         

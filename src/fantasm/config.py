@@ -310,9 +310,16 @@ class _MachineConfig(object):
         self.finalStates = []
         
         # context types
-        self.contextTypes = initDict.get(constants.MACHINE_CONTEXT_TYPES_ATTRIBUTE, {})
-        for contextName, contextType in self.contextTypes.iteritems():
-            self.contextTypes[contextName] = _resolveClass(contextType, self.namespace)
+        self.contextTypes = {}
+        contextTypes = initDict.get(constants.MACHINE_CONTEXT_TYPES_ATTRIBUTE, {})
+        for contextName, contextType in contextTypes.iteritems():
+            try:
+                # attempt to import the value of the event
+                contextKey = _resolveObject(contextName, self.namespace)
+            except (exceptions.UnknownModuleError, exceptions.UnknownClassError, exceptions.UnknownObjectError):
+                # otherwise just use the value from the yaml
+                contextKey = contextName
+            self.contextTypes[contextKey] = _resolveClass(contextType, self.namespace)
         
         self.rootUrl = rootUrl
         if not self.rootUrl:

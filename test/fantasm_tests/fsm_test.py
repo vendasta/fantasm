@@ -19,7 +19,7 @@ from fantasm.state import State
 from fantasm.models import _FantasmFanIn
 from fantasm.constants import STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, STEPS_PARAM, MACHINE_STATES_ATTRIBUTE, \
                               CONTINUATION_PARAM, INDEX_PARAM, GEN_PARAM, FORKED_CONTEXTS_PARAM, \
-                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM
+                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY
 from fantasm_tests.fixtures import AppEngineTestCase
 from fantasm_tests.actions import RaiseExceptionAction, RaiseExceptionContinuationAction
 from fantasm_tests.helpers import TaskQueueDouble, getLoggingDouble
@@ -39,10 +39,12 @@ from minimock import mock, restore
 # - lots of unused args in unit tests
 
 NAMESPACED_EVENT_MODULE_LEVEL_FSM_TESTS = 'NAMESPACED-EVENT-MODULE-LEVEL-FSM-TESTS'
+NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL_FSM_TESTS = 'NAMESPACED-CONTEXT-TYPE-MODULE-LEVEL-FSM-TESTS'
 
 class FSMTests(unittest.TestCase):
     
     NAMESPACED_EVENT_CLASS_LEVEL_FSM_TESTS = 'NAMESPACED-EVENT-CLASS-LEVEL-FSM-TESTS'
+    NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS = 'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL-FSM-TESTS'
     
     def test(self):
         machineName = 'foo'
@@ -558,7 +560,7 @@ class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
         self.assertEqual('state-continuation', self.context.currentState.name)
         self.assertTrue(self.context.currentState.isContinuation)
         self.assertFalse(self.context.get(CONTINUATION_PARAM)) # continuation param is popped out
-        self.assertEqual(self.modelKeys[5:7], [m.key() for m in obj['results']])
+        self.assertEqual(self.modelKeys[5:7], [m.key() for m in obj[CONTINUATION_RESULTS_KEY]])
         
         # and check that the expected cursor is in the continuation task
         query.with_cursor(cursor) # unexpected - i would have though the previous fetch() would leave the cursor

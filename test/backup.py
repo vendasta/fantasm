@@ -8,6 +8,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
 from fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULT_KEY
 
 FULL_BACKUP_ON_DAY_OF_WEEK = 2 # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ...
 DELETE_BACKUPS_OLDER_THAN_DAYS = 90 # set to -1 to disable
@@ -137,13 +138,13 @@ class BackupEntity(DatastoreContinuationFSMAction):
     def execute(self, context, obj):
         """ Copies all information to a BackupAccount entity. """
         
-        if not obj['results']:
+        if not obj[CONTINUATION_RESULTS_KEY]:
             # query may return no results
             return None
         
         model = context['model']
         backupId = context['backupId']
-        entities = obj['results']
+        entities = obj[CONTINUATION_RESULTS_KEY]
 
         backupEntities = []
         for originalEntity in entities:
@@ -190,9 +191,9 @@ class SelectBackupToDelete(DatastoreContinuationFSMAction):
         
     def execute(self, context, obj):
         """ Adds the backup_id and model to the context. """
-        if not obj['result']:
+        if not obj[CONTINUATION_RESULT_KEY]:
             return None
-        backupEntity = obj['result']
+        backupEntity = obj[CONTINUATION_RESULT_KEY]
         context['model'] = backupEntity.model
         context['backupId'] = backupEntity.backupId
         db.delete(backupEntity)
@@ -214,8 +215,8 @@ class DeleteBackupEntity(DatastoreContinuationFSMAction):
         
     def execute(self, context, obj):
         """ Actually delete the keys. """
-        if obj['results']:
-            db.delete(obj['results'])
+        if obj[CONTINUATION_RESULTS_KEY]:
+            db.delete(obj[CONTINUATION_RESULTS_KEY])
 
 
 FIRST_NAMES = ['Abe', 'Bob', 'Carol', 'Dale', 'Ewan', 'Fred', 'Georgina', 'Hanna']

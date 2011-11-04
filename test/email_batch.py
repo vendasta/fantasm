@@ -4,6 +4,7 @@ from datetime import datetime
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from fantasm.action import DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULT_KEY
 
 # pylint: disable-msg=C0111, W0613, C0103
 # - docstring not reqd
@@ -36,9 +37,9 @@ class SendEmail(DatastoreContinuationFSMAction):
         return Subscriber.all()
         
     def execute(self, context, obj):
-        if not obj['result']:
+        if not obj[CONTINUATION_RESULT_KEY]:
             return None # datastore continuations can go "one past" the end of the results; we need to handle this here
-        subscriber = obj['result']
+        subscriber = obj[CONTINUATION_RESULT_KEY]
 
         # TODO: here's where the actual email would be send with Mail API
         # from google.appengine.api import mail
