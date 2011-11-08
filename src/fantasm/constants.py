@@ -49,6 +49,7 @@ STARTED_AT_PARAM = '__sa__'
 FAN_IN_GROUP_PARAM = '__fig__'
 CONTINUATION_RESULTS_COUNTER_PARAM = '__crc__'
 CONTINUATION_COMPLETE_PARAM = '__cc__'
+CONTINUATION_RESULTS_SIZE_PARAM = '__crs__'
 CONTEXT_PARAMS = (STEPS_PARAM, CONTINUATION_PARAM, GEN_PARAM, INDEX_PARAM, WORK_INDEX_PARAM, 
                   FORK_PARAM, STARTED_AT_PARAM, FAN_IN_GROUP_PARAM, CONTINUATION_RESULTS_COUNTER_PARAM,
                   CONTINUATION_COMPLETE_PARAM)
@@ -68,8 +69,13 @@ PARAM_TYPES = {
 
 CHARS_FOR_RANDOM = 'BDGHJKLMNPQRTVWXYZ23456789' # no vowels or things that look like vowels - profanity-free!
 
+# these are part of the continuation interface, and are generally used as
+# keys in the temporary state object 'obj'. this is whey they are not included
+# above in the __var__ settings
 CONTINUATION_RESULTS_KEY = 'results'
+CONTINUATION_RESULTS_PARAM = CONTINUATION_RESULTS_KEY
 CONTINUATION_RESULT_KEY = 'result'
+CONTINUATION_RESULT_PARAM = CONTINUATION_RESULT_KEY
 
 REQUEST_LENGTH = 30
 

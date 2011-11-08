@@ -20,6 +20,7 @@ Copyright 2010 VendAsta Technologies Inc.
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 from fantasm.constants import CONTINUATION_RESULT_KEY
 from fantasm.constants import CONTINUATION_RESULTS_COUNTER_PARAM
+from fantasm.constants import CONTINUATION_RESULTS_SIZE_PARAM
 from fantasm.constants import CONTINUATION_COMPLETE_PARAM
 from fantasm.constants import STEPS_PARAM
 from fantasm.constants import GEN_PARAM
@@ -54,6 +55,35 @@ class ContinuationFSMAction(FSMAction):
         """
         raise NotImplementedError()
     
+    @staticmethod
+    def checkFanInForTotalResultsCount(contexts, obj):
+        """ Checks for the total number of continuation results 
+        
+        @param contexts: a list of FSMContext instances, from a fan-in
+        @param obj: An object which the action can operate on
+        @return: the total number of results from the continuation, or None if that is not yet available
+        
+        FIXME: this currently only handles single-level continuations
+        """
+        totalResultsCount = None
+        for context in contexts:
+            if context.get(CONTINUATION_COMPLETE_PARAM):
+                totalResultsCount = context[CONTINUATION_RESULTS_COUNTER_PARAM]
+        return totalResultsCount
+    
+    @staticmethod
+    def getResultsCount(context, obj):
+        """ Returns the number of continuation results from the current batch 
+        
+        @param token: the continuation token
+        @param context The FSMContext (i.e., machine). context.get() and context.put() can be used to get data
+                       from/to the context.
+        @return: the number of continuation results in this batch 
+        
+        FIXME: this currently only handles single-level continuations
+        """
+        return context.get(CONTINUATION_RESULTS_SIZE_PARAM, 0)
+    
 class DatastoreContinuationFSMAction(ContinuationFSMAction):
     """ A datastore continuation. """
     
@@ -82,6 +112,7 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
         context[CONTINUATION_RESULTS_COUNTER_PARAM] = \
             context.get(GEN_PARAM, {}).get(str(context[STEPS_PARAM]), 0) * limit + len(obj[CONTINUATION_RESULTS_KEY])
         context[CONTINUATION_COMPLETE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY]) < limit
+        context[CONTINUATION_RESULTS_SIZE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY])
         
         if len(obj[CONTINUATION_RESULTS_KEY]) == limit:
             return query.cursor()
@@ -132,6 +163,7 @@ class ListContinuationFSMAction(ContinuationFSMAction):
         context[CONTINUATION_RESULTS_COUNTER_PARAM] = \
             context.get(GEN_PARAM, {}).get(str(context[STEPS_PARAM]), 0) * limit + len(obj[CONTINUATION_RESULTS_KEY])
         context[CONTINUATION_COMPLETE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY]) < limit
+        context[CONTINUATION_RESULTS_SIZE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY])
         
         # unlike a datastore continuation, we know when the end of the data
         # occurs by the value of the token.

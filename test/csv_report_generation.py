@@ -6,6 +6,7 @@ import pickle
 import logging
 
 from fantasm.action import FSMAction
+from fantasm.action import ContinuationFSMAction
 from fantasm.action import DatastoreContinuationFSMAction
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 from fantasm.constants import CONTINUATION_RESULTS_COUNTER_PARAM
@@ -136,17 +137,14 @@ class CsvFanIn( FSMAction ):
             
             # check to see if we have fanned in the final continuation, and know
             # the final number of results that were processed
-            expectedCounter = None
-            for context in contexts:
-                if context.get(CONTINUATION_COMPLETE_PARAM):
-                    expectedCounter = context[CONTINUATION_RESULTS_COUNTER_PARAM]
+            expectedCounter = ContinuationFSMAction.checkFanInForTotalResultsCount(contexts, obj)
             
             # fetch the current counter
             counter = CsvProgressCounter.get_by_key_name(context.instanceName)
             if not counter:
                 counter = CsvProgressCounter(key_name=context.instanceName, 
                                              counter=0)
-            counter.counter += sum([c.get(NUM_ENTITIES_PARAM, 0) for c in contexts])
+            counter.counter += sum([ContinuationFSMAction.getResultsCount(context, obj) for context in contexts])
             counter.expectedCounter = expectedCounter
             toPut = [counter]
             
