@@ -70,16 +70,16 @@ class ReadWriteLockTest(AppEngineTestCase):
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         
     def test_acquireWriteLock_failure(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index) # need to call before acquireReadLock
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         lock.acquireReadLock(index)
-        self.assertEqual('32769', memcache.get(lock.lockKey(index)))
+        self.assertEqual(32769, memcache.get(lock.lockKey(index)))
         self.assertRaises(FanInWriteLockFailureRuntimeError, lock.acquireWriteLock, index)
         
     def test_releaseWriteLock(self):
@@ -87,9 +87,9 @@ class ReadWriteLockTest(AppEngineTestCase):
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         lock.releaseWriteLock(index)
-        self.assertEqual('65536', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65536, memcache.get(lock.lockKey(index)))
         
     def test_acquireReadLock_before_acquireWriteLock(self):
         lock = ReadWriteLock('foo', self.context)
@@ -105,9 +105,9 @@ class ReadWriteLockTest(AppEngineTestCase):
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         lock.acquireReadLock(index)
-        self.assertEqual('32769', memcache.get(lock.lockKey(index)))
+        self.assertEqual(32769, memcache.get(lock.lockKey(index)))
         self.assertEqual(["Tried to acquire read lock 'foo-lock-3626764237' 1 times...",
                           "Tried to acquire read lock 'foo-lock-3626764237' 2 times..."], 
                           self.loggingDouble.messages['debug'])
@@ -119,11 +119,11 @@ class ReadWriteLockTest(AppEngineTestCase):
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         lock.releaseWriteLock(index)
-        self.assertEqual('65536', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65536, memcache.get(lock.lockKey(index)))
         lock.acquireReadLock(index)
-        self.assertEqual('32768', memcache.get(lock.lockKey(index)))
+        self.assertEqual(32768, memcache.get(lock.lockKey(index)))
         self.assertEqual([], self.loggingDouble.messages['debug'])
         self.assertEqual([], self.loggingDouble.messages['critical'])
         
@@ -132,12 +132,12 @@ class ReadWriteLockTest(AppEngineTestCase):
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
-        self.assertEqual('65537', memcache.get(lock.lockKey(index)))
+        self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         def sleepAndRelease(seconds): # pylint: disable-msg=W0613
             lock.releaseWriteLock(index)
         mock('time.sleep', returns_func=sleepAndRelease, tracker=None)
         lock.acquireReadLock(index)
-        self.assertEqual('32768', memcache.get(lock.lockKey(index)))
+        self.assertEqual(32768, memcache.get(lock.lockKey(index)))
         self.assertEqual(["Tried to acquire read lock 'foo-lock-3626764237' 1 times..."], 
                          self.loggingDouble.messages['debug'])
         self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'foo-lock-3626764237'."], 
