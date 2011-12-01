@@ -16,6 +16,7 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+from __future__ import with_statement
 
 import os
 import yaml
@@ -23,6 +24,7 @@ import logging
 import simplejson
 import datetime
 import pickle
+import threading
 from fantasm import exceptions, constants, utils
 
 TASK_ATTRIBUTES = (
@@ -38,18 +40,23 @@ TASK_ATTRIBUTES = (
      exceptions.InvalidMaxDoublingsError),
 )
 
+_configLock = threading.Lock()
 _config = None
 
 def currentConfiguration(filename=None):
     """ Retrieves the current configuration specified by the fsm.yaml file. """
-    # W0603: 32:currentConfiguration: Using the global statement
-    global _config # pylint: disable-msg=W0603
     
     # always reload the config for dev_appserver to grab recent dev changes
     if _config and not constants.DEV_APPSERVER:
         return _config
         
-    _config = loadYaml(filename=filename)
+    with _configLock:
+        
+        if _config and not constants.DEV_APPSERVER:
+            return _config
+        
+        _config = loadYaml(filename=filename)
+    
     return _config
 
 # following function is borrowed from mapreduce code
