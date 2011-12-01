@@ -45,6 +45,7 @@ _config = None
 
 def currentConfiguration(filename=None):
     """ Retrieves the current configuration specified by the fsm.yaml file. """
+    global _config, _configLock
     
     # always reload the config for dev_appserver to grab recent dev changes
     if _config and not constants.DEV_APPSERVER:
