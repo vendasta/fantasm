@@ -1,0 +1,25 @@
+state_machines:
+
+- name: SendBlobKeysToNewApp
+  namespace: blobstore_migration_fsm
+  queue: default
+  
+  states:
+  
+  - name: Send
+    initial: True
+    final: True
+    continuation: True
+    action: Send
+    
+- name: PullBlobDataFromOldApp
+  namespace: blobstore_migration_fsm
+  queue: default
+  
+  states:
+  
+  - name: Pull
+    initial: True
+    final: True
+    action: Pull
+    

@@ -1,0 +1,19 @@
+application: change-me
+version: blobstore-migration
+runtime: python
+api_version: 1
+threadsafe: no
+
+handlers:
+
+# you can change the 'blobstore_migration' part here for 'security through obscurity'
+# but this needs to be publicly accessible so the apps can communicate freely. if you
+# change this value, be sure to also change blobstore_migration_fsm.BASE_PATH.
+- url: /blobstore_migration/.*
+  script: main.py
+
+- url: /fantasm/.*
+  script: fantasm/main.py
+  login: admin
+
+  
