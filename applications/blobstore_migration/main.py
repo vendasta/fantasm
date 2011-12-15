@@ -38,7 +38,7 @@ CONTENT = """
 <body>
 <form method="POST">
 Source: http://<input name="source_host" value="%(source_host)s" size="50"/>%(path)s<br/>
-Destination: http://<input name="target_host" value="%(target_host)s" size="50"/>%(path)s<br/>
+Target: http://<input name="target_host" value="%(target_host)s" size="50"/>%(path)s<br/>
 Task Name: <input name="task_name" value="%(task_name)s" size="25"/><br/>
 <input type="submit"/>
 </form>
