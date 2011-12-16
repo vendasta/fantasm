@@ -922,3 +922,17 @@ class StartStateMachineTests(unittest.TestCase):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
         self.assertEquals(len(self.mockQueue.tasks), 2)
         self.assertNotEquals(self.getTask(0).name, self.getTask(1).name)
+        
+    def test_raiseIfTaskExists_True(self):
+        ld = getLoggingDouble()
+        startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], taskName='a', _currentConfig=self.currentConfig)
+        startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], taskName='a', _currentConfig=self.currentConfig)
+        self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.'], 
+                         ld.messages['info'])
+        from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
+        self.assertRaises(TaskAlreadyExistsError, startStateMachine, self.machineName, [{'a': '1'}, {'b': '2'}], 
+                          taskName='a', _currentConfig=self.currentConfig, raiseIfTaskExists=True)
+        self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.',
+                          'Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.'], 
+                         ld.messages['info'])
+        restore()

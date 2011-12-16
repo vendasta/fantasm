@@ -927,7 +927,7 @@ def _queueTasks(Queue, queueName, tasks):
         raise tombstonedTask
 
 def startStateMachine(machineName, contexts, taskName=None, method='POST', countdown=0,
-                      _currentConfig=None, headers=None):
+                      _currentConfig=None, headers=None, raiseIfTaskExists=False):
     """ Starts a new machine(s), by simply queuing a task. 
     
     @param machineName the name of the machine in the FSM to start
@@ -937,6 +937,7 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
     @param countdown the number of seconds into the future to start the machine (default 0 - immediately)
                      or a list of sumber of seconds (must be same length as contexts)
     @param headers: a dict of X-Fantasm request headers to pass along in Tasks 
+    @param raiseIfTaskExists: a bool indicating method should re-raise TaskAlreadyExistsError and TombstonedTaskErrors
     
     @param _currentConfig used for test injection (default None - use fsm.yaml definitions)
     """
@@ -974,3 +975,5 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
         import logging
         logging.info('Unable to queue new machine %s with taskName %s as it has been previously enqueued.',
                       machineName, taskName)
+        if raiseIfTaskExists:
+            raise
