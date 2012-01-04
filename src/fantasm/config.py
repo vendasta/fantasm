@@ -196,7 +196,8 @@ def _resolveClass(className, namespace):
         'long': long,
         'json': simplejson.loads,
         'pickle': pickle.loads,
-        'datetime': lambda x: datetime.datetime.utcfromtimestamp(int(x)),
+        'datetime': pickle.loads,
+        'date': pickle.loads,
     }
     if className in shortTypes:
         return shortTypes[className] # FIXME: is this valid with methods?

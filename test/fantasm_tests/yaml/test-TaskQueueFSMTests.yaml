@@ -79,6 +79,8 @@ state_machines:
       list_of_custom_len_1: fantasm_tests.actions.Custom
       plain_old_object: pickle
       list_of_plain_old_object: pickle
+      datetime_obj: datetime
+      list_of_datetime_obj: datetime
 
   states:
     

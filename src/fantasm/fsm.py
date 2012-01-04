@@ -801,8 +801,6 @@ class FSMContext(dict):
                     value = simplejson.dumps(value, cls=models.Encoder)
                 if self.contextTypes.get(key) is pickle.loads:
                     value = pickle.dumps(value)
-                if isinstance(value, datetime.datetime):
-                    value = str(int(time.mktime(value.utctimetuple())))
                 if isinstance(value, dict):
                     # FIXME: should we issue a warning that they should update fsm.yaml?
                     value = simplejson.dumps(value, cls=models.Encoder)

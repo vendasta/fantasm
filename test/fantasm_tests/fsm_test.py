@@ -5,6 +5,7 @@ import urllib
 import datetime
 import simplejson
 import random # pylint: disable-msg=W0611
+import pickle
 from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable-msg=W0611
 from google.appengine.api import memcache # pylint: disable-msg=W0611
 from google.appengine.ext import db
@@ -740,14 +741,15 @@ class ContextTypesCoercionTests(unittest.TestCase):
         setUpByFilename(self, 'test-TypeCoercionTests.yaml')
         
     def test_incomingItemsArePlacedIntoContextAsCorrectDatatype(self):
+        dt = datetime.datetime(2010, 9, 7, 1, 31, 10)
         self.context.putTypedValue('counter', '123')
         self.context.putTypedValue('batch-key', 'agxmYW50YXNtLXRlc3RyEAsSCkVtYWlsQmF0Y2gYUAw')
         self.context.putTypedValue('data', simplejson.dumps({'a': 'a'}))
-        self.context.putTypedValue('start-date', '1283823070')
+        self.context.putTypedValue('start-date', pickle.dumps(dt))
         self.assertEquals(self.context['counter'], 123)
         self.assertTrue(isinstance(self.context['batch-key'], db.Key))
         self.assertEqual({'a': 'a'}, self.context['data'])
-        self.assertEqual(datetime.datetime(2010, 9, 7, 1, 31, 10), self.context['start-date'])
+        self.assertEqual(dt, self.context['start-date'])
         
     def test_internalParametersArePlacedIntoContextAsCorrectDatatype(self):
         self.context.putTypedValue(STEPS_PARAM, '123')
