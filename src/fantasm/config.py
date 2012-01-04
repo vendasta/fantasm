@@ -25,6 +25,7 @@ import simplejson
 import datetime
 import pickle
 import threading
+from google.appengine.ext.ndb import key as ndb_key
 from fantasm import exceptions, constants, utils
 
 TASK_ATTRIBUTES = (
@@ -198,6 +199,9 @@ def _resolveClass(className, namespace):
         'pickle': pickle.loads,
         'datetime': pickle.loads,
         'date': pickle.loads,
+        'google.appengine.ext.ndb.key.Key': lambda x: ndb_key.Key(urlsafe=x),
+        'google.appengine.ext.ndb.model.Key': lambda x: ndb_key.Key(urlsafe=x),
+        'google.appengine.ext.ndb.context.Key': lambda x: ndb_key.Key(urlsafe=x),
     }
     if className in shortTypes:
         return shortTypes[className] # FIXME: is this valid with methods?

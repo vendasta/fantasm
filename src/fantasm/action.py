@@ -83,23 +83,21 @@ class ContinuationFSMAction(FSMAction):
         FIXME: this currently only handles single-level continuations
         """
         return context.get(CONTINUATION_RESULTS_SIZE_PARAM, 0)
-    
+        
 class DatastoreContinuationFSMAction(ContinuationFSMAction):
     """ A datastore continuation. """
+    
+    __NEXT_TOKEN = '__next_token__'
     
     def continuation(self, context, obj, token=None):
         """ Accepts a token (an optional cursor) and returns the next token for the continutation. 
         The results of the query are stored on obj.results.
         """
-        # the continuation query comes
-        query = self.getQuery(context, obj)
-        cursor = token
-        if cursor:
-            query.with_cursor(cursor)
         limit = self.getBatchSize(context, obj)
+        results = self._fetchResults(limit, context, obj, token=token)
         
         # place results on obj.results
-        obj[CONTINUATION_RESULTS_KEY] = query.fetch(limit)
+        obj[CONTINUATION_RESULTS_KEY] = results
         obj.results = obj[CONTINUATION_RESULTS_KEY] # deprecated interface
         
         # add first obj.results item on obj.result - convenient for batch size 1
@@ -115,7 +113,21 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
         context[CONTINUATION_RESULTS_SIZE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY])
         
         if len(obj[CONTINUATION_RESULTS_KEY]) == limit:
-            return query.cursor()
+            return self._getNextToken(context, obj, token=token)
+        return None
+            
+    def _fetchResults(self, limit, context, obj, token=None):
+        """ Actually fetches the results. """
+        query = self.getQuery(context, obj)
+        if token:
+            query.with_cursor(token)
+        results = query.fetch(limit)
+        obj[self.__NEXT_TOKEN] = query.cursor()
+        return results
+        
+    def _getNextToken(self, context, obj, token=None):
+        """ Gets the next token. """
+        return obj.pop(self.__NEXT_TOKEN)
         
     def getQuery(self, context, obj):
         """ Returns a GqlQuery """
@@ -125,6 +137,50 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
     def getBatchSize(self, context, obj): # pylint: disable-msg=W0613
         """ Returns a batch size, default 1. Override for different values. """
         return 1
+
+class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
+    """ A datastore continuation, using the NDB API. """
+
+    __NEXT_TOKEN = '__next_token__'
+
+    def _fetchResults(self, limit, context, obj, token=None):
+        """ Actually fetches the results. """
+        from google.appengine.ext.ndb import query as ndb_query
+        
+        query = self.getQuery(context, obj)
+        assert isinstance(query, ndb_query.Query)
+        
+        kwargs = {
+            'produce_cursors': True,
+            'keys_only': self.getKeysOnly(context, obj),
+            'deadline': self.getDeadline(context, obj)
+        }
+        if token:
+            kwargs['start_cursor'] = ndb_query.Cursor.from_websafe_string(token)
+            
+        results, cursor, more = query.fetch_page(limit, **kwargs)
+        
+        obj[self.__NEXT_TOKEN] = more and cursor.to_websafe_string() or None
+        #obj[self.__NEXT_TOKEN] = cursor and cursor.to_websafe_string() or None
+        return results
+        
+    def _getNextToken(self, context, obj, token=None):
+        """ Gets the next token. """
+        return obj.pop(self.__NEXT_TOKEN)
+
+    def getQuery(self, context, obj):
+        """ Returns a google.appengine.ext.ndb.query.Query object. """
+        raise NotImplementedError()
+
+    # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
+    def getKeysOnly(self, context, obj): # pylint: disable-msg=W0613
+        """ Returns if the query should returns keys_only. Default False. """
+        return False
+        
+    # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
+    def getDeadline(self, context, obj): # pylint: disable-msg=W0613
+        """ Returns the RPC deadline. Default 5 seconds."""
+        return 5
 
 class ListContinuationFSMAction(ContinuationFSMAction):
     """ A list-of-things continuation. """

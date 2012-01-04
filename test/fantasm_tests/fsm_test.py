@@ -9,6 +9,7 @@ import pickle
 from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable-msg=W0611
 from google.appengine.api import memcache # pylint: disable-msg=W0611
 from google.appengine.ext import db
+from google.appengine.ext.ndb import model as ndb_model, key as ndb_key
 from fantasm import config
 from fantasm.handlers import TemporaryStateObject
 from fantasm.fsm import FSMContext, FSM, startStateMachine
@@ -534,6 +535,7 @@ class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
         self.assertEqual('state-continuation', self.context.currentState.name)
         self.assertTrue(self.context.currentState.isContinuation)
         self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        self.assertTrue(event is not None)
         
         event = self.context.dispatch(event, TemporaryStateObject())
         self.assertEqual('state-final', self.context.currentState.name)
@@ -734,6 +736,135 @@ class DatastoreFSMContinuationFanInTests(DatastoreFSMContinuationBaseTests):
         self.assertEqual('state-final', self.context.currentState.name)
         self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
 
+class NDBTestModel(ndb_model.Model):
+    prop1 = ndb_model.StringProperty()
+
+class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
+    
+    FILENAME = 'test-NDBDatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'NDBDatastoreFSMContinuationTests'
+        
+    def setUp(self):
+        super(NDBDatastoreFSMContinuationTests, self).setUp()
+        setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
+        self.mockQueue = TaskQueueDouble()
+        mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
+        self.loggingDouble = getLoggingDouble()
+        self.modelKeys = []
+        for i in range(10):
+            modelKey = NDBTestModel().put()
+            self.modelKeys.append(modelKey)
+            
+    def tearDown(self):
+        super(NDBDatastoreFSMContinuationTests, self).tearDown()
+        restore()
+
+    def test_NDBDatastoreFSMContinuation_smoke_test(self):
+        event = self.context.initialize()
+        self.assertTrue(FSM.PSEUDO_INIT, self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-continuation', self.context.currentState.name)
+        self.assertTrue(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        self.assertTrue(event is not None)
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-final', self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        self.assertEqual(None, event)
+        
+    def test_NDBDatastoreFSMContinuation_continuation_param_is_popped_from_context(self):
+        event = self.context.initialize()
+        self.assertTrue(FSM.PSEUDO_INIT, self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        
+        # test that continuation pops the continuation param out for current machine
+        obj = TemporaryStateObject()
+        query = NDBTestModel.query().order(NDBTestModel.prop1)
+        _, cursor, _ = query.fetch_page(5)
+        self.context[CONTINUATION_PARAM] = cursor.to_websafe_string()
+        event = self.context.dispatch(event, obj)
+        self.assertEqual('state-continuation', self.context.currentState.name)
+        self.assertTrue(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM)) # continuation param is popped out
+        self.assertEqual(self.modelKeys[5:7], [m.key for m in obj[CONTINUATION_RESULTS_KEY]])
+        
+        # and check that the expected cursor is in the continuation task
+        _, cursor, _ = query.fetch_page(2, start_cursor=cursor)
+        self.assertTrue(urllib.quote(cursor.to_websafe_string()) in self.mockQueue.tasks[-2][0].url)
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-final', self.context.currentState.name)
+        self.assertFalse(self.context.currentState.isContinuation)
+        self.assertFalse(self.context.get(CONTINUATION_PARAM))
+        self.assertEqual(None, event)
+        
+    def test_NDBDatastoreFSMContinuation_queues_a_continuation_task(self):
+        event = self.context.initialize()
+        self.assertEqual(1, len(self.mockQueue.tasks))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        self.assertEqual(2, len(self.mockQueue.tasks))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-continuation', self.context.currentState.name)
+        self.assertEqual('instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1', 
+                         self.mockQueue.tasks[-2][0].name)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-final', self.context.currentState.name)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+        
+        self.assertEqual(None, event)
+        
+    def test_NDBDatastoreFSMContinuation_queue_continuation_fails_if_already_queued(self):
+        event = self.context.initialize()
+        self.assertEqual(1, len(self.mockQueue.tasks))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        self.assertEqual(2, len(self.mockQueue.tasks))
+        
+        # patch a failing do action
+        originalAction = self.context.currentState.getTransition(event).target.doAction
+        try:
+            self.context.currentState.getTransition(event).target.doAction = RaiseExceptionContinuationAction()
+            self.assertRaises(Exception, self.context.dispatch, event, TemporaryStateObject())
+            self.assertEqual('state-initial', self.context.currentState.name)
+            self.assertEqual(3, len(self.mockQueue.tasks))
+            self.assertEqual('instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1', 
+                             self.mockQueue.tasks[-1][0].name)
+        finally:
+            self.context.currentState.getTransition(event).target.doAction = originalAction # patch it back
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('Unable to queue continuation Task as it already exists. ' +
+                         '(Machine NDBDatastoreFSMContinuationTests, State state-continuation)', 
+                         self.loggingDouble.messages['info'][-1])
+        self.assertEqual('state-continuation', self.context.currentState.name)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+        
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-final', self.context.currentState.name)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+        
+        self.assertEqual(None, event)
+        
 class ContextTypesCoercionTests(unittest.TestCase):
     
     def setUp(self):
@@ -741,15 +872,22 @@ class ContextTypesCoercionTests(unittest.TestCase):
         setUpByFilename(self, 'test-TypeCoercionTests.yaml')
         
     def test_incomingItemsArePlacedIntoContextAsCorrectDatatype(self):
+        nkey = ndb_key.Key('MyModel', '123')
         dt = datetime.datetime(2010, 9, 7, 1, 31, 10)
         self.context.putTypedValue('counter', '123')
         self.context.putTypedValue('batch-key', 'agxmYW50YXNtLXRlc3RyEAsSCkVtYWlsQmF0Y2gYUAw')
         self.context.putTypedValue('data', simplejson.dumps({'a': 'a'}))
         self.context.putTypedValue('start-date', pickle.dumps(dt))
+        self.context.putTypedValue('ndb_key_key', nkey.urlsafe())
+        self.context.putTypedValue('ndb_model_key', nkey.urlsafe())
+        self.context.putTypedValue('ndb_context_key', nkey.urlsafe())
         self.assertEquals(self.context['counter'], 123)
         self.assertTrue(isinstance(self.context['batch-key'], db.Key))
         self.assertEqual({'a': 'a'}, self.context['data'])
         self.assertEqual(dt, self.context['start-date'])
+        self.assertEqual(self.context['ndb_key_key'], nkey)
+        self.assertEqual(self.context['ndb_model_key'], nkey)
+        self.assertEqual(self.context['ndb_context_key'], nkey)
         
     def test_internalParametersArePlacedIntoContextAsCorrectDatatype(self):
         self.context.putTypedValue(STEPS_PARAM, '123')

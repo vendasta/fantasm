@@ -39,6 +39,7 @@ import pickle
 from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsError, TombstonedTaskError, \
                                                      TaskRetryOptions
 from google.appengine.ext import db
+from google.appengine.ext.ndb import key as ndb_key
 from fantasm import constants, config
 from fantasm.log import Logger
 from fantasm.state import State
@@ -801,6 +802,8 @@ class FSMContext(dict):
                     value = simplejson.dumps(value, cls=models.Encoder)
                 if self.contextTypes.get(key) is pickle.loads:
                     value = pickle.dumps(value)
+                if isinstance(value, ndb_key.Key):
+                    value = value.urlsafe()
                 if isinstance(value, dict):
                     # FIXME: should we issue a warning that they should update fsm.yaml?
                     value = simplejson.dumps(value, cls=models.Encoder)

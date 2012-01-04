@@ -10,6 +10,9 @@ state_machines:
     batch-key: google.appengine.ext.db.Key
     data: json
     start-date: datetime
+    ndb_key_key: google.appengine.ext.ndb.key.Key
+    ndb_model_key: google.appengine.ext.ndb.model.Key
+    ndb_context_key: google.appengine.ext.ndb.context.Key
 
   states:
     

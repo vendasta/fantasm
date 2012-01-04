@@ -12,12 +12,13 @@ from fantasm_tests.helpers import overrideFails
 from fantasm_tests.helpers import setUpByFilename
 from fantasm_tests.helpers import getCounts
 from fantasm_tests.fixtures import AppEngineTestCase
-from fantasm_tests.fsm_test import TestModel
+from fantasm_tests.fsm_test import TestModel, NDBTestModel
 from fantasm_tests.fsm_test import getLoggingDouble
 from fantasm_tests.actions import ContextRecorder, CountExecuteCallsFanIn, TestFileContinuationFSMAction, \
                                   DoubleContinuation1, DoubleContinuation2, ResultModel, CustomImpl
 from minimock import mock, restore
 from google.appengine.api import datastore_types
+from google.appengine.ext.ndb import key as ndb_key
 
 # pylint: disable-msg=C0111, W0212, W0612, W0613, C0301
 # - docstrings not reqd in unit tests
@@ -35,6 +36,8 @@ class RunTasksBaseTest(AppEngineTestCase):
         super(RunTasksBaseTest, self).setUp()
         for i in range(10):
             TestModel(key_name=str(i)).put()
+            nkey = ndb_key.Key('NDBTestModel', str(i))
+            NDBTestModel(key=nkey).put()
         self.setUpByFilename(self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME, 
                              method=self.METHOD)
         
@@ -188,6 +191,12 @@ class ParamsTests(RunTasksBaseTest):
         self.context['datetime_obj'] = dt
         self.context['list_of_datetime_obj'] = [dt, dt, dt]
         
+        # NDB Key stuff
+        nkey1 = ndb_key.Key('NDBTestModel', '1')
+        self.context['ndb_key_Key'] = nkey1
+        self.context['ndb_model_Key'] = nkey1
+        self.context['ndb_context_Key'] = nkey1
+        
         self.context.initialize() # queues the first task
         ran = runQueuedTasks(queueName=self.context.queueName)
         
@@ -224,7 +233,14 @@ class ParamsTests(RunTasksBaseTest):
                            'dict_db_Key': '{"a": {"__db.Key__": true, "key": "agdmYW50YXNtchALEglUZXN0TW9kZWwiATEM"}}',
                            'dict_db_Key_defined_in_context_types': {'a': datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')},
                            'unicode2': u"  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ",
-                           '__step__': 1}], ContextRecorder.CONTEXTS)
+                           '__step__': 1,
+                           
+                           # NDB Key stuff
+                           'ndb_key_Key': nkey1,
+                           'ndb_model_Key': nkey1,
+                           'ndb_context_Key': nkey1,
+                           
+                           }], ContextRecorder.CONTEXTS)
         
     def test_GET_lots_of_different_data_types(self):
         self._test_lots_of_different_data_types('GET')
@@ -352,6 +368,35 @@ class RunTasksTests_DatastoreFSMContinuationTests(RunTasksBaseTest):
 class RunTasksTests_DatastoreFSMContinuationTests_POST(RunTasksTests_DatastoreFSMContinuationTests):
     METHOD = 'POST'
     
+class RunTasksTests_NDBDatastoreFSMContinuationTests(RunTasksBaseTest):
+    
+    FILENAME = 'test-NDBDatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'NDBDatastoreFSMContinuationTests'
+        
+    def test_NDBDatastoreFSMContinuationTests(self):
+        self.context.initialize() # queues the first task
+        ran = runQueuedTasks(queueName=self.context.queueName)
+        self.assertEqual(['instanceName--pseudo-init--pseudo-init--state-initial--step-0', 
+                          'instanceName--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-2--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-1--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-3--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-2--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-4--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-3--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-4--state-continuation--next-event--state-final--step-2'], ran)
+        self.assertEqual({'state-initial': {'entry': 1, 'action': 1, 'exit': 0},
+                          'state-continuation': {'entry': 5, 'action': 5, 'continuation': 5, 'exit': 0},
+                          'state-final': {'entry': 5, 'action': 5, 'exit': 0},
+                          'state-initial--next-event': {'action': 0},
+                          'state-continuation--next-event': {'action': 0}}, 
+                         getCounts(self.machineConfig))
+        
+class RunTasksTests_NDBDatastoreFSMContinuationTests_POST(RunTasksTests_NDBDatastoreFSMContinuationTests):
+    METHOD = 'POST'
+    
 class RunTasksTests_DatastoreFSMContinuationQueueTests(RunTasksBaseTest):
     
     FILENAME = 'test-DatastoreFSMContinuationTests.yaml'
@@ -395,6 +440,50 @@ class RunTasksTests_DatastoreFSMContinuationQueueTests(RunTasksBaseTest):
                          getCounts(self.machineConfig))
         
 class RunTasksTests_DatastoreFSMContinuationQueueTests_POST(RunTasksTests_DatastoreFSMContinuationQueueTests):
+    METHOD = 'POST'
+    
+class RunTasksTests_NDBDatastoreFSMContinuationQueueTests(RunTasksBaseTest):
+    
+    FILENAME = 'test-NDBDatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'NDBDatastoreFSMContinuationQueueTests'
+    
+    def setUp(self):
+        super(RunTasksTests_NDBDatastoreFSMContinuationQueueTests, self).setUp()
+        
+        import google.appengine.api.taskqueue.taskqueue_stub as taskqueue_stub
+        import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
+        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path='./test/fantasm_tests/yaml/')
+        apiproxy_stub_map.apiproxy._APIProxyStubMap__stub_map.pop('taskqueue')
+        apiproxy_stub_map.apiproxy.RegisterStub('taskqueue', self.__taskqueue)
+        
+    def test_NDBDatastoreFSMContinuationTests(self):
+        self.context.initialize() # queues the first task
+        
+        ran1 = runQueuedTasks(queueName='queue1')
+        self.assertEqual(['instanceName--pseudo-init--pseudo-init--state-initial--step-0'], ran1)
+        
+        ran2 = runQueuedTasks(queueName='queue2')
+        self.assertEqual(['instanceName--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-2--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-3--state-initial--next-event--state-continuation--step-1', 
+                          'instanceName--continuation-1-4--state-initial--next-event--state-continuation--step-1'], ran2)
+        
+        ran3 = runQueuedTasks(queueName='queue3')
+        self.assertEqual(['instanceName--state-continuation--next-event--state-final--step-2',  
+                          'instanceName--continuation-1-1--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-2--state-continuation--next-event--state-final--step-2', 
+                          'instanceName--continuation-1-3--state-continuation--next-event--state-final--step-2',  
+                          'instanceName--continuation-1-4--state-continuation--next-event--state-final--step-2'], ran3)
+        
+        self.assertEqual({'state-initial': {'entry': 1, 'action': 1, 'exit': 0},
+                          'state-continuation': {'entry': 5, 'action': 5, 'continuation': 5, 'exit': 0},
+                          'state-final': {'entry': 5, 'action': 5, 'exit': 0},
+                          'state-initial--next-event': {'action': 0},
+                          'state-continuation--next-event': {'action': 0}}, 
+                         getCounts(self.machineConfig))
+        
+class RunTasksTests_NDBDatastoreFSMContinuationQueueTests_POST(RunTasksTests_NDBDatastoreFSMContinuationQueueTests):
     METHOD = 'POST'
     
 class RunTasksTests_FileFSMContinuationTests(RunTasksBaseTest):
@@ -567,6 +656,38 @@ class RunTasksTests_DatastoreFSMContinuationAndForkTests(RunTasksBaseTest):
 class RunTasksTests_DatastoreFSMContinuationAndForkTests_POST(RunTasksTests_DatastoreFSMContinuationAndForkTests):
     METHOD = 'POST'
     
+class RunTasksTests_NDBDatastoreFSMContinuationAndForkTests(RunTasksBaseTest):
+    
+    FILENAME = 'test-NDBDatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'NDBDatastoreFSMContinuationAndForkTests'
+        
+    def test_NDBDatastoreFSMContinuationTests(self):
+        self.context.initialize() # queues the first task
+        ran = runQueuedTasks(queueName=self.context.queueName)
+        self.assertEqual(
+            ['instanceName--pseudo-init--pseudo-init--state-continuation-and-fork--step-0', 
+             'instanceName--continuation-0-1--pseudo-init--pseudo-init--state-continuation-and-fork--step-0', 
+             'instanceName--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--fork--1--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-2--pseudo-init--pseudo-init--state-continuation-and-fork--step-0', 
+             'instanceName--continuation-0-1--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-1--fork--1--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-3--pseudo-init--pseudo-init--state-continuation-and-fork--step-0', 
+             'instanceName--continuation-0-2--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-2--fork--1--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-4--pseudo-init--pseudo-init--state-continuation-and-fork--step-0', 
+             'instanceName--continuation-0-3--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-3--fork--1--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-4--state-continuation-and-fork--next-event--state-final--step-1', 
+             'instanceName--continuation-0-4--fork--1--state-continuation-and-fork--next-event--state-final--step-1'],ran)
+        self.assertEqual({'state-continuation-and-fork': {'entry': 5, 'action': 5, 'continuation': 5, 'exit': 0},
+                          'state-final': {'entry': 10, 'action': 10, 'exit': 0},
+                          'state-continuation-and-fork--next-event': {'action': 0}}, 
+                         getCounts(self.machineConfig))
+        
+class RunTasksTests_NDBDatastoreFSMContinuationAndForkTests_POST(RunTasksTests_NDBDatastoreFSMContinuationAndForkTests):
+    METHOD = 'POST'
+    
 class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
     
     FILENAME = 'test-DatastoreFSMContinuationFanInTests.yaml'
@@ -642,6 +763,32 @@ class RunTasksTests_DatastoreFSMContinuationTestsInitCont(RunTasksBaseTest):
                          getCounts(self.machineConfig))
         
 class RunTasksTests_DatastoreFSMContinuationTestsInitCont_POST(RunTasksTests_DatastoreFSMContinuationTestsInitCont):
+    method = 'POST'
+        
+class RunTasksTests_NDBDatastoreFSMContinuationTestsInitCont(RunTasksBaseTest):
+    
+    FILENAME = 'test-NDBDatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'NDBDatastoreFSMContinuationTestsInitCont'
+        
+    def test_NDBDatastoreFSMContinuationTestsInitCont(self):
+        self.context.initialize() # queues the first task
+        ran = runQueuedTasks(queueName=self.context.queueName)
+        self.assertEqual(['instanceName--pseudo-init--pseudo-init--state-continuation--step-0', 
+                          'instanceName--continuation-0-1--pseudo-init--pseudo-init--state-continuation--step-0', 
+                          'instanceName--state-continuation--next-event--state-final--step-1', 
+                          'instanceName--continuation-0-2--pseudo-init--pseudo-init--state-continuation--step-0', 
+                          'instanceName--continuation-0-1--state-continuation--next-event--state-final--step-1', 
+                          'instanceName--continuation-0-3--pseudo-init--pseudo-init--state-continuation--step-0', 
+                          'instanceName--continuation-0-2--state-continuation--next-event--state-final--step-1', 
+                          'instanceName--continuation-0-4--pseudo-init--pseudo-init--state-continuation--step-0', 
+                          'instanceName--continuation-0-3--state-continuation--next-event--state-final--step-1', 
+                          'instanceName--continuation-0-4--state-continuation--next-event--state-final--step-1'], ran)
+        self.assertEqual({'state-continuation': {'entry': 5, 'action': 5, 'continuation': 5, 'exit': 0},
+                          'state-final': {'entry': 5, 'action': 5, 'exit': 0},
+                          'state-continuation--next-event': {'action': 0}}, 
+                         getCounts(self.machineConfig))
+        
+class RunTasksTests_NDBDatastoreFSMContinuationTestsInitCont_POST(RunTasksTests_NDBDatastoreFSMContinuationTestsInitCont):
     method = 'POST'
         
 class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):

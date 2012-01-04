@@ -71,7 +71,6 @@ state_machines:
       dict_db_Key_defined_in_context_types: json
       dict_int_keys_defined_in_context_types: json
       dict_str_keys_defined_in_context_types: json
-      dict_db_Key_defined_in_context_types: json
       bool1: bool
       bool2: bool
       custom: fantasm_tests.actions.Custom
@@ -81,7 +80,11 @@ state_machines:
       list_of_plain_old_object: pickle
       datetime_obj: datetime
       list_of_datetime_obj: datetime
-
+      
+      ndb_key_Key: google.appengine.ext.ndb.key.Key
+      ndb_model_Key: google.appengine.ext.ndb.model.Key
+      ndb_context_Key: google.appengine.ext.ndb.context.Key
+      
   states:
     
     - name: state-initial
