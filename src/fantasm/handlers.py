@@ -22,6 +22,7 @@ import logging
 import simplejson
 from google.appengine.ext import deferred, webapp, db
 from google.appengine.api.capabilities import CapabilitySet
+from google.appengine.ext.ndb import context as ndb_context
 from fantasm import config, constants
 from fantasm.fsm import FSM
 from fantasm.utils import NoOpQueue
@@ -151,10 +152,12 @@ def getCurrentFSM():
 class FSMHandler(webapp.RequestHandler):
     """ The main worker handler, used to process queued machine events. """
 
+    @ndb_context.toplevel
     def get(self):
         """ Handles the GET request. """
         self.get_or_post(method='GET')
         
+    @ndb_context.toplevel
     def post(self):
         """ Handles the POST request. """
         self.get_or_post(method='POST')
