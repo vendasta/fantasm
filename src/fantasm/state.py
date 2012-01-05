@@ -113,6 +113,7 @@ class State(object):
         if transition.target.isFanIn:
             taskNameBase = context.getTaskName(event, fanIn=True)
             contextOrContexts = context.mergeJoinDispatch(event, obj)
+            obj[constants.FANNED_IN_CONTEXT] = context
             if not contextOrContexts and not contextOrContexts.guarded:
                 # by implementation, EVERY fan-in should have at least one work package available to it, this
                 # is likely caused by an index writing delay, and it is suitable to simply retry this task
@@ -169,7 +170,7 @@ class State(object):
             
             # this prevents fan-in from re-counting the data if there is an Exception
             # or DeadlineExceeded _after_ doAction.execute(...) succeeds
-            index = context.get(constants.INDEX_PARAM)
+            index = context.get(constants.INDEX_PARAM) or contextOrContexts[0].get(constants.INDEX_PARAM)
             workIndex = '%s-%d' % (taskNameBase, knuthHash(index))
             semaphore = RunOnceSemaphore(workIndex, context)
             semaphore.writeRunOnceSemaphore(payload=obj[constants.TASK_NAME_PARAM])

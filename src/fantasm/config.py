@@ -190,19 +190,37 @@ def deserializeNDBKey(serialized):
 def _resolveClass(className, namespace):
     """ Given a string representation of a class, locates and returns the class object. """
     
-    # some shortcuts for context_types
+    # some shortcuts for context_types. the values must take a string and return an instance
+    # of the key. it is not possible to "import long" so this dictionary simplifies looking up the correct
+    # machinery to convert the context entry. datetime and ndb keys are handled specially in here 
+    # because serialization is more difficult with them.
     shortTypes = {
+        # basestring types
         'str': str,
         'unicode': unicode,
-        'dict': simplejson.loads,
+        
+        # numeric types
         'int': int,
         'float': float,
-        'bool': utils.boolConverter, 
         'long': long,
+        
+        # bool('False') does not work as expected, so this helper function facilitates the conversions
+        'bool': utils.boolConverter, 
+        
+        # json is a useful thing to have around
         'json': simplejson.loads,
+        
+        # using json to encode dicts is generally OK, but can lead to unexpected issues with integer keys etc.
+        'dict': simplejson.loads,
+        
+        # pickle is a useful thing to have around, although it generates rather large srings
         'pickle': pickle.loads,
+        
+        # datetime/dates are hard to pass back and forth through strings, due to timezone issues in python2.5
         'datetime': pickle.loads,
         'date': pickle.loads,
+        
+        # ndb keys are not easily serializable
         'google.appengine.ext.ndb.Key': deserializeNDBKey,
         'google.appengine.ext.ndb.key.Key': deserializeNDBKey,
         'google.appengine.ext.ndb.model.Key': deserializeNDBKey,
