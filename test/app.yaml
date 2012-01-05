@@ -16,6 +16,8 @@ handlers:
 # security is enforced in a different manner to facilitate integration test automation
 - url: /integration-test/
   script: main.py
+- url: /ndb-integration-test/
+  script: main.py
 - url: /integration-test-results/
   script: main.py
 
