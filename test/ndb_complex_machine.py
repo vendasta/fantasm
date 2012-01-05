@@ -34,7 +34,7 @@ class MyDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
-        context['key'] = [r.key() for r in obj[CONTINUATION_RESULTS_KEY]] # would be nice for this casting on .put()
+        context['key'] = [r.key for r in obj[CONTINUATION_RESULTS_KEY]] # would be nice for this casting on .put()
         time.sleep(5.0 * random.random())
         return 'event2'
 
