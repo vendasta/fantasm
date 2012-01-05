@@ -139,7 +139,20 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
         return 1
 
 class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
-    """ A datastore continuation, using the NDB API. """
+    """ A datastore continuation, using the NDB API. 
+    
+    IMPORTANT!!!
+    
+    To use this effectively, you must uncomment some lines in handlers.py. Search for "ndb_context" to see
+    the specific lines to uncomment (there are 3). If you do not do this, errors in your own code may end up
+    surfacing as:
+    
+        Deadlock waiting for <Future 94c0fd8731c2dca0 created by tasklet_wrapper(tasklets.py:906) 
+        for tasklet positional_wrapper(datastore_rpc.py:84); pending>
+    
+    with seemingly unrelated stacktraces. These are very difficult to debug. Uncommenting the lines in
+    handlers.py will give you nice stacktraces again.
+    """
 
     __NEXT_TOKEN = '__next_token__'
 

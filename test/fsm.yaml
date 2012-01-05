@@ -156,6 +156,9 @@ state_machines:
   logging: persistent
   use_run_once_semaphore: True
   
+  context_types:
+    ids: json
+
   states:
   - name: state1
     initial: True # must be exactly one
