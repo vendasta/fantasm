@@ -7,6 +7,7 @@ import pickle
 from fantasm.action import FSMAction, NDBDatastoreContinuationFSMAction
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext.ndb import model as ndb_model
+from google.appengine.ext import db
 
 # pylint: disable-msg=C0111
 # - docstring not reqd
@@ -19,11 +20,11 @@ class NDBTestModel(ndb_model.Model):
         return 'TestModel'
     prop1 = ndb_model.StringProperty()
     
-class ResultsModel(ndb_model.Model):
-    createdTime = ndb_model.DateTimeProperty(auto_now_add=True)
-    total = ndb_model.IntegerProperty()
-    version = ndb_model.StringProperty()
-    data = ndb_model.BlobProperty(indexed=False)
+class ResultsModel(db.Model):
+    createdTime = db.DateTimeProperty(auto_now_add=True)
+    total = db.IntegerProperty()
+    version = db.StringProperty()
+    data = db.BlobProperty(indexed=False)
 
 class MyDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def getQuery(self, context, obj):
