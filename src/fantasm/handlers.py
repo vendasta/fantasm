@@ -152,12 +152,12 @@ def getCurrentFSM():
 class FSMHandler(webapp.RequestHandler):
     """ The main worker handler, used to process queued machine events. """
 
-    #@ndb_context.toplevel
+    @ndb_context.toplevel
     def get(self):
         """ Handles the GET request. """
         self.get_or_post(method='GET')
         
-    #@ndb_context.toplevel
+    @ndb_context.toplevel
     def post(self):
         """ Handles the POST request. """
         self.get_or_post(method='POST')
