@@ -193,6 +193,7 @@ class ParamsTests(RunTasksBaseTest):
         
         # NDB Key stuff
         nkey1 = ndb_key.Key('NDBTestModel', '1')
+        self.context['ndb_Key'] = nkey1
         self.context['ndb_key_Key'] = nkey1
         self.context['ndb_model_Key'] = nkey1
         self.context['ndb_context_Key'] = nkey1
@@ -236,6 +237,7 @@ class ParamsTests(RunTasksBaseTest):
                            '__step__': 1,
                            
                            # NDB Key stuff
+                           'ndb_Key': nkey1,
                            'ndb_key_Key': nkey1,
                            'ndb_model_Key': nkey1,
                            'ndb_context_Key': nkey1,

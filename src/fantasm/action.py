@@ -161,7 +161,6 @@ class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
         results, cursor, more = query.fetch_page(limit, **kwargs)
         
         obj[self.__NEXT_TOKEN] = more and cursor.to_websafe_string() or None
-        #obj[self.__NEXT_TOKEN] = cursor and cursor.to_websafe_string() or None
         return results
         
     def _getNextToken(self, context, obj, token=None):

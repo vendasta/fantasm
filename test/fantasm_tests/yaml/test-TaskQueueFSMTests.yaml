@@ -81,6 +81,7 @@ state_machines:
       datetime_obj: datetime
       list_of_datetime_obj: datetime
       
+      ndb_Key: google.appengine.ext.ndb.Key
       ndb_key_Key: google.appengine.ext.ndb.key.Key
       ndb_model_Key: google.appengine.ext.ndb.model.Key
       ndb_context_Key: google.appengine.ext.ndb.context.Key

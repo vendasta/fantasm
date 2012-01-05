@@ -1,8 +1,7 @@
 """ FSMActions used in unit tests """
 
-from fantasm.action import NDBDatastoreContinuationFSMAction, ContinuationFSMAction
-#from google.appengine.ext import db
-from google.appengine.ext.ndb import query as ndb_query, model as ndb_model
+from fantasm.action import NDBDatastoreContinuationFSMAction
+from google.appengine.ext.ndb import model as ndb_model
 from fantasm.constants import FORK_PARAM
 from fantasm.constants import CONTINUATION_RESULT_KEY
 from fantasm.constants import CONTINUATION_RESULTS_KEY
@@ -14,35 +13,6 @@ from fantasm.constants import CONTINUATION_RESULTS_KEY
 class NDBTestModel(ndb_model.Model):
     prop1 = ndb_model.StringProperty()
 
-
-# class Custom(object):
-#     def __init__(self, string):
-#         self.impl = eval(string)
-#     def __repr__(self):
-#         return repr(self.impl)
-# 
-# class CustomImpl(Custom):
-#     def __init__(self, a=None, b=None): # pylint: disable-msg=W0231
-#         self.a = a
-#         self.b = b
-#     def __repr__(self):
-#         return 'CustomImpl(a="%s", b="%s")' % (self.a, self.b)
-#     def __eq__(self, other):
-#         # just for unit test equality
-#         if other.__class__ is Custom:
-#             other = other.impl
-#         return self.a == other.a and self.b == other.b
-#     def __ne__(self, other):
-#         # just for unit test inequality
-#         if other.__class__ is Custom:
-#             other = other.impl
-#         return self.a != other.a or self.b != other.b
-# 
-# class ContextRecorder(object):
-#     CONTEXTS = []
-#     def execute(self, context, obj):
-#         self.CONTEXTS.append(context)
-# 
 class CountExecuteCalls(object):
     def __init__(self):
         self.count = 0
@@ -57,122 +27,11 @@ class CountExecuteCalls(object):
     def event(self):
         return 'next-event'
         
-# class CountExecuteCallsWithSpawn(CountExecuteCalls):
-#     def execute(self, context, obj):
-#         context.spawn('MachineToSpawn', [{'a': '1'}, {'b': '2'}])
-#         super(CountExecuteCallsWithSpawn, self).execute(context, obj)
-#         return None
-#         
-# class CountExecuteCallsWithFork(object):
-#     def __init__(self):
-#         self.count = 0
-#         self.fails = 0
-#         self.numFork = 0
-#     def execute(self, context, obj):
-#         self.count += 1
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         context.fork()
-#         context.fork()
-#         return self.event
-#     @property
-#     def event(self):
-#         return 'next-event'
-#     
-# class CountExecuteAndContinuationCalls(object):
-#     def __init__(self):
-#         self.count = 0
-#         self.ccount = 0
-#         self.fails = 0
-#         self.failat = 0
-#         self.cfailat = 0
-#     def continuation(self, context, obj, token=None):
-#         self.ccount += 1
-#         if self.ccount == self.cfailat:
-#             raise Exception()
-#         return None
-#     def execute(self, context, obj):
-#         self.count += 1
-#         if self.count == self.failat:
-#             raise Exception()
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         return self.event
-#     @property
-#     def event(self):
-#         return 'next-event'
-#     
-# class CountExecuteCallsFanInEntry(object):
-#     def __init__(self):
-#         self.count = 0
-#         self.fcount = 0
-#         self.fails = 0
-#     def execute(self, context, obj):
-#         if not isinstance(context, list):
-#             context = [context]
-#         self.count += 1
-#         self.fcount += len(context)
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         return self.event
-#     @property
-#     def event(self):
-#         return None
-#     
-# class ResultModel( db.Model ):
-#     total = db.IntegerProperty()
-#     
-# class CountExecuteCallsFanIn(CountExecuteCallsFanInEntry):
-#     CONTEXTS = []
-#     def execute(self, context, obj):
-#         CountExecuteCallsFanIn.CONTEXTS.extend(context)
-#         result = ResultModel.get_by_key_name(context.instanceName)
-#         if not result:
-#             result = ResultModel(total=0, key_name=context.instanceName)
-#         result.total += sum([len(c.get('fan-me-in', [])) for c in context])
-#         result.put() # txn is overkill for this test
-#         return super(CountExecuteCallsFanIn, self).execute(context, obj)
-#     @property
-#     def event(self):
-#         return 'next-event'
-#     
-# class CountExecuteCallsFanInFinal(CountExecuteCallsFanIn):
-#     @property
-#     def event(self):
-#         return None
-# 
 class CountExecuteCallsFinal(CountExecuteCalls):
     @property
     def event(self):
         return None
     
-# class CountExecuteCallsSelfTransition(object):
-#     def __init__(self):
-#         self.count = 0
-#         self.fails = 0
-#     def execute(self, context, obj):
-#         self.count += 1
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         if self.count <= 5:
-#             return 'next-event1'
-#         else:
-#             return 'next-event2'
-#     
-# class RaiseExceptionAction(object):
-#     def execute(self, context, obj):
-#         raise Exception('instrumented exception')
-#     
-# class RaiseExceptionContinuationAction(object):
-#     def continuation(self, context, obj, token=None):
-#         return "token"
-#     def execute(self, context, obj):
-#         raise Exception('instrumented exception')
-#         
 class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def __init__(self):
         super(TestDatastoreContinuationFSMAction, self).__init__()
@@ -193,8 +52,6 @@ class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
-        # for item in obj[CONTINUATION_RESULTS_KEY]:
-        #     print "\n\n\n%s\n\n\n" % item
         self.count += 1
         context['__count__'] = self.count
         context['fan-me-in'] = context.get('fan-me-in', []) + [r.key for r in obj[CONTINUATION_RESULTS_KEY]]
@@ -204,59 +61,7 @@ class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
             self.fails -= 1
             raise Exception()
         return 'next-event'
-#     
-# class TestDatastoreContinuationFSMActionFanInGroupFSMAction(TestDatastoreContinuationFSMAction):
-#     def execute(self, context, obj):
-#         if obj.has_key(CONTINUATION_RESULTS_KEY) and obj[CONTINUATION_RESULTS_KEY]:
-#             context['fan-in-group'] = obj[CONTINUATION_RESULTS_KEY][0].key().id_or_name()
-#         return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)    
-#     
-# class HappySadContinuationFSMAction(TestDatastoreContinuationFSMAction):
-#     def execute(self, context, obj):
-#         if not obj[CONTINUATION_RESULTS_KEY]:
-#             return None
-#         self.count += 1
-#         if self.count == self.failat:
-#             raise Exception()
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         if self.count % 2:
-#             return 'happy'
-#         else:
-#             return 'sad'
-#         
-# class TestFileContinuationFSMAction(ContinuationFSMAction):
-#     CONTEXTS = []
-#     ENTRIES = ['a', 'b', 'c', 'd']
-#     def __init__(self):
-#         super(TestFileContinuationFSMAction, self).__init__()
-#         self.count = 0
-#         self.ccount = 0
-#         self.fails = 0
-#         self.failat = 0
-#         self.cfailat = 0
-#     def continuation(self, context, obj, token=None):
-#         token = int(token or 0) # awkward
-#         self.ccount += 1
-#         if self.ccount == self.cfailat:
-#             raise Exception()
-#         obj[CONTINUATION_RESULTS_KEY] = [TestFileContinuationFSMAction.ENTRIES[token]]
-#         nextToken = token + 1
-#         if nextToken >= len(TestFileContinuationFSMAction.ENTRIES):
-#             return None
-#         return nextToken
-#     def execute(self, context, obj):
-#         self.count += 1
-#         context[CONTINUATION_RESULT_KEY] = obj[CONTINUATION_RESULTS_KEY][0]
-#         TestFileContinuationFSMAction.CONTEXTS.append(context)
-#         if self.count == self.failat:
-#             raise Exception()
-#         if self.fails:
-#             self.fails -= 1
-#             raise Exception()
-#         return 'next-event'
-#     
+
 class TestContinuationAndForkFSMAction(NDBDatastoreContinuationFSMAction):
     def __init__(self):
         super(TestContinuationAndForkFSMAction, self).__init__()
@@ -300,68 +105,3 @@ class TestContinuationAndForkFSMAction(NDBDatastoreContinuationFSMAction):
         
         # this event will be dispatched to this machine an all the forked contexts
         return 'next-event'
-
-# class DoubleContinuation1(ContinuationFSMAction):
-#     CONTEXTS = []
-#     ENTRIES = ['1', '2', '3']
-#     def __init__(self):
-#         super(DoubleContinuation1, self).__init__()
-#         self.count = 0
-#         self.ccount = 0
-#     def continuation(self, context, obj, token=None):
-#         token = int(token or 0) # awkward
-#         self.ccount += 1
-#         obj[CONTINUATION_RESULTS_KEY] = [DoubleContinuation1.ENTRIES[token]]
-#         nextToken = token + 1
-#         if nextToken >= len(DoubleContinuation1.ENTRIES):
-#             return None
-#         return nextToken
-#     def execute(self, context, obj):
-#         self.count += 1
-#         context['c1'] = obj[CONTINUATION_RESULTS_KEY][0]
-#         #logging.critical('%s' % (context['c1']))
-#         DoubleContinuation1.CONTEXTS.append(context)
-#         return 'ok'
-# 
-# class DoubleContinuation2(object):
-#     CONTEXTS = []
-#     ENTRIES = ['a', 'b', 'c']
-#     def __init__(self):
-#         super(DoubleContinuation2, self).__init__()
-#         self.count = 0
-#         self.ccount = 0
-#     def continuation(self, context, obj, token=None):
-#         token = int(token or 0) # awkward
-#         self.ccount += 1
-#         obj[CONTINUATION_RESULTS_KEY] = [DoubleContinuation2.ENTRIES[token]]
-#         nextToken = token + 1
-#         if nextToken >= len(DoubleContinuation2.ENTRIES):
-#             return None
-#         return nextToken
-#     def execute(self, context, obj):
-#         self.count += 1
-#         context['c2'] = obj[CONTINUATION_RESULTS_KEY][0]
-#         #logging.critical('%s-%s' % (context['c1'], context['c2']))
-#         DoubleContinuation2.CONTEXTS.append(context)
-#         return 'okfinal'
-# 
-# class FSCEE_InitialState(object):
-#     def __init__(self):
-#         self.count = 0
-#     def execute(self, context, obj):
-#         self.count += 1
-#         return 'ok'
-#         
-# class FSCEE_OptionalFinalState(object):
-#     def __init__(self):
-#         self.count = 0
-#     def execute(self, context, obj):
-#         self.count += 1
-#         # a final state should be able to emit an event
-#         return 'ok'
-#         
-# class FSCEE_FinalState(object):
-#     def __init__(self):
-#         self.count = 0
-#     def execute(self, context, obj):
-#         self.count += 1

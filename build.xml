@@ -95,8 +95,15 @@
                        match="version:.+" 
                        replace="version: ${app.yaml.version}"/>
     </target>
+    
+    <target name="_setup-integration-test-properties">
+        <property name="integration-test-url" value="integration-test"/>
+    </target>
+    <target name="_setup-ndb-integration-test-properties">
+        <property name="integration-test-url" value="ndb-integration-test"/>
+    </target>
 
-    <target name="integration-test" depends="copy-test-files, rewrite-app-yaml">
+    <target name="_integration-test" depends="copy-test-files, rewrite-app-yaml">
         <!--
             This target is used to run a consistent integration test by the owners of Fantasm.
         -->
@@ -114,8 +121,11 @@
         
         <!-- kick off the integration run -->
         <tempfile property="temp.file" suffix=".html"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/integration-test/?token=${integration_test_token}" dest="${temp.file}"/>
+        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/${integration-test-url}/?token=${integration_test_token}" dest="${temp.file}"/>
     </target>
+    
+    <target name="integration-test" depends="_setup-integration-test-properties, _integration-test"/>
+    <target name="ndb-integration-test" depends="_setup-ndb-integration-test-properties, _integration-test"/>
 
     <!-- work in progress 
     

@@ -25,7 +25,6 @@ import simplejson
 import datetime
 import pickle
 import threading
-from google.appengine.ext.ndb import key as ndb_key
 from fantasm import exceptions, constants, utils
 
 TASK_ATTRIBUTES = (
@@ -183,6 +182,11 @@ class Configuration(object):
             importedConfig = loadYaml(filename=yamlFile, importedAlready=importedAlready)
             self.__addMachinesFromImportedConfig(importedConfig)
 
+def deserializeNDBKey(serialized):
+    """ Deserializes an NDB key. """
+    from google.appengine.ext.ndb import key as ndb_key
+    return ndb_key.Key(urlsafe=serialized)
+
 def _resolveClass(className, namespace):
     """ Given a string representation of a class, locates and returns the class object. """
     
@@ -199,9 +203,10 @@ def _resolveClass(className, namespace):
         'pickle': pickle.loads,
         'datetime': pickle.loads,
         'date': pickle.loads,
-        'google.appengine.ext.ndb.key.Key': lambda x: ndb_key.Key(urlsafe=x),
-        'google.appengine.ext.ndb.model.Key': lambda x: ndb_key.Key(urlsafe=x),
-        'google.appengine.ext.ndb.context.Key': lambda x: ndb_key.Key(urlsafe=x),
+        'google.appengine.ext.ndb.Key': deserializeNDBKey,
+        'google.appengine.ext.ndb.key.Key': deserializeNDBKey,
+        'google.appengine.ext.ndb.model.Key': deserializeNDBKey,
+        'google.appengine.ext.ndb.context.Key': deserializeNDBKey,
     }
     if className in shortTypes:
         return shortTypes[className] # FIXME: is this valid with methods?

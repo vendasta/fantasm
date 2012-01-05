@@ -139,6 +139,19 @@ class IntegrationTest(webapp.RequestHandler):
         for _ in range(10):
             fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
 
+class NDBIntegrationTest(webapp.RequestHandler):
+
+    def get(self):
+
+        # security check
+        if not checkSecurity('integration-test', self.request):
+            self.response.set_status(401)
+            return
+
+        import fantasm
+        for _ in range(10):
+            fantasm.fsm.startStateMachine('NDBComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
+
 class IntegrationTestResults(webapp.RequestHandler):
     
     def get(self):
@@ -168,6 +181,7 @@ application = webapp.WSGIApplication([
     ('/Start100ComplexMachine/', Start100ComplexMachine),
     ('/Start100ComplexMachineCountdown/', Start100ComplexMachineCountdown),
     ('/integration-test/', IntegrationTest),
+    ('/ndb-integration-test/', NDBIntegrationTest),
     ('/integration-test-results/', IntegrationTestResults),
     ('/create-subscribers/', email_batch.CreateSubscribers),
     ('/backup/populate/', backup.PopulateBackupExample)
