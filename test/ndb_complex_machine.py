@@ -34,8 +34,7 @@ class MyDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
-        ids = [r.key.id() for r in obj[CONTINUATION_RESULTS_KEY]]
-        context['ids'] = ids
+        context['ids'] = [r.key.id() for r in obj[CONTINUATION_RESULTS_KEY]]
         time.sleep(5.0 * random.random())
         return 'event2'
 
