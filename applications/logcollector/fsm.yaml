@@ -1,0 +1,14 @@
+state_machines:
+
+- name: LogCollector
+  namespace: logcollector_fsm
+  queue: default
+  
+  states:
+  
+  - name: Collect
+    initial: True
+    final: True
+    continuation: True
+    action: Collect
+    

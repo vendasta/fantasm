@@ -1,0 +1,13 @@
+application: fantasm-test
+version: logcollector
+runtime: python
+api_version: 1
+threadsafe: no
+
+handlers:
+
+- url: /fantasm/.*
+  script: fantasm/main.py
+  login: admin
+
+  
