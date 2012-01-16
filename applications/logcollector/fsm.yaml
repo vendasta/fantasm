@@ -3,12 +3,26 @@ state_machines:
 - name: LogCollector
   namespace: logcollector_fsm
   queue: default
+  max_backoff_seconds: 60
+  
+  context_types:
+    INCLUDE_INOMPLETE_PARAM: bool
+    INCLUDE_APP_LOGS_PARAM: bool
+    MINIMUM_LOG_LEVEL_PARAM: int
+    BATCH_SIZE_PARAM: int
+    START_TIME_PARAM: float
   
   states:
   
-  - name: Collect
+  - name: SetStartTime
     initial: True
+    action: SetStartTime
+    transitions:
+      - event: OK
+        to: CollectLogs
+  
+  - name: CollectLogs
     final: True
     continuation: True
-    action: Collect
+    action: CollectLogs
     

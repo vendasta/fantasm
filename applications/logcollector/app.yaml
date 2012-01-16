@@ -1,4 +1,4 @@
-application: fantasm-test
+application: change-me
 version: logcollector
 runtime: python
 api_version: 1
