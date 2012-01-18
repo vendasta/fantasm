@@ -26,6 +26,7 @@ START_TIME_PARAM = 'start-time'
 
 SENDER_EMAIL_PARAM = 'sender'
 TO_EMAIL_PARAM = 'to'
+SUBJECT_PREFIX_PARAM = 'subject'
 
 OK = 'ok'
 
@@ -70,11 +71,11 @@ class CollectLogs( ContinuationFSMAction ):
         @param obj: a temporary state dictionary 
         """
         if not token:
-            offset = None
+            startTime = context[START_TIME_PARAM] # need a recent start_time, or an F1 instance runs out of memory
         else:
-            offset = pickle.loads(str(token))
+            startTime = pickle.loads(str(token))
         
-        startTime = context[START_TIME_PARAM]
+        offset = None
         endTime = None
         minimumLogLevel = context.get(MINIMUM_LOG_LEVEL_PARAM, DEFAULT_MINIMUM_LOG_LEVEL)
         includeIncomplete = context.get(INCLUDE_INCOMPLETE_PARAM, False)
@@ -94,6 +95,7 @@ class CollectLogs( ContinuationFSMAction ):
                                            batch_size=batchSize)
         
         logRequests = list(logRequestsIter)
+        logRequests = [l for l in logRequests if l.end_time > startTime] # fetch does no strictly obey start_time
         
         # This effectively implements polling with exponential backoff, up to a
         # maximum of 60s, as defined in fsm.yaml.
@@ -102,7 +104,7 @@ class CollectLogs( ContinuationFSMAction ):
         
         obj[LOG_REQUESTS_PARAM] = logRequests
         
-        return pickle.dumps(logRequests[0].offset)
+        return pickle.dumps(logRequests[0].end_time + 0.000001) # start_time and end_time seem to bother be inclusive
     
     def handleLogRequests(self, context, obj):
         """ Handles the logs. Currently just send an email to admin
@@ -117,11 +119,12 @@ class CollectLogs( ContinuationFSMAction ):
             if sender and to:
                 minimumLogLevel = context.get(MINIMUM_LOG_LEVEL_PARAM, DEFAULT_MINIMUM_LOG_LEVEL)
                 for logRequest in logRequests:
+                    subjectPrefix = context.get(SUBJECT_PREFIX_PARAM, '')
                     subject = 'LogCollector detected LEVEL=%s on PATH=%s' % \
                                   (LOG_LEVEL_DESCRIPTION.get(minimumLogLevel, 'logservice.LOG_LEVEL_UNKNOWN'),
                                    logRequest.resource)
                     body = '\n'.join([appLog.message for appLog in logRequest.app_logs]) or 'empty'
-                    mail.send_mail(sender, to, subject, body)
+                    mail.send_mail(sender, to, subjectPrefix + subject, body)
         
     def execute(self, context, obj):
         """ Delegates to self.handleLogRequests
