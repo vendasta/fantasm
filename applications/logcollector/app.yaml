@@ -6,6 +6,10 @@ threadsafe: no
 
 handlers:
 
+- url: /logcollector/
+  script: main.py
+  login: admin
+
 - url: /fantasm/.*
   script: fantasm/main.py
   login: admin
