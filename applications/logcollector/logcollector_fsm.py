@@ -2,7 +2,7 @@
 
 This application consists of a single state machine that runs as a continuation
 over App Engine logs fetched via the Log Reader API. The continuation token is
-the 'offset' parameter returned by logservice.fetch. When no logs are available,
+the end_time parameter returned by logservice.fetch. When no logs are available,
 the fantasm infrastructure raises and re-tries the Task, backing off up to a 
 maximum of 60 seconds.
 
@@ -104,7 +104,7 @@ class CollectLogs( ContinuationFSMAction ):
         
         obj[LOG_REQUESTS_PARAM] = logRequests
         
-        return pickle.dumps(logRequests[0].end_time + 0.000001) # start_time and end_time seem to bother be inclusive
+        return pickle.dumps(logRequests[0].end_time) # pickle the float to avoid loss of precision
     
     def handleLogRequests(self, context, obj):
         """ Handles the logs. Currently just send an email to admin
