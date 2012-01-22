@@ -6,7 +6,7 @@ state_machines:
   max_backoff_seconds: 60
   
   context_types:
-    INCLUDE_INOMPLETE_PARAM: bool
+    INCLUDE_INCOMPLETE_PARAM: bool
     INCLUDE_APP_LOGS_PARAM: bool
     MINIMUM_LOG_LEVEL_PARAM: int
     BATCH_SIZE_PARAM: int
