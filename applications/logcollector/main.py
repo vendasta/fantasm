@@ -47,7 +47,7 @@ class StartLogCollectorHandler(webapp.RequestHandler):
     
     def post(self):
         """ see RequestHandler.post() """
-        assert VERSION_IDS_PARAM in self.request.POST.keys()
+        assert VERSION_IDS_PARAM in self.request.POST.keys(), "Require deployed version to monitor."
         assert self.request.POST[VERSION_IDS_PARAM] != CURRENT_VERSION_ID, "Cannot monitor own version."
         assert SENDER_EMAIL_PARAM in self.request.POST.keys(), "Require admin sender email address."
         assert TO_EMAIL_PARAM in self.request.POST.keys(), "Require email address."
