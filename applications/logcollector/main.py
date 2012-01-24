@@ -1,4 +1,4 @@
-""" blobstore migration CGI script
+""" log collector CGI script
 """
 import os
 
