@@ -26,8 +26,17 @@
         <delete dir="${releasedir}"/>
     </target>
 
-    <target name="test">
-        <exec dir="${basedir}" executable="python" failonerror="true">
+    <target name="test-python">
+        <property name="python.executable" value="python"/>
+    </target>
+
+    <target name="test-python27">
+        <property name="python.executable" value="python2.7"/>
+    </target>
+
+    <target name="_test">
+        <echo>${python.executable}</echo>
+        <exec dir="${basedir}" executable="${python.executable}" failonerror="true">
             <env key="PYTHONPATH" value="${tests.pythonpath}"/>
             <env key='APPENGINEDIR' value='${appenginedir}'/>
             <env key="UNITTEST_VERBOSITY" value="${test.verbosity}"/>
@@ -35,7 +44,10 @@
             <arg line="${toolsdir}/test_runner.py ${tests}"/>
         </exec>
     </target>
-    
+
+    <target name="test" depends="test-python, _test"/>
+    <target name="test27" depends="test-python27, _test"/>
+
     <target name="pylint-module-src">
         <property name="pylint.module" value="fantasm"/>
         <property name="pylint.cwd" value="${srcdir}"/>

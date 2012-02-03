@@ -19,7 +19,12 @@ Copyright 2010 VendAsta Technologies Inc.
 
 import os
 import re
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
 
 # these parameters are not stored in the FSMContext, but are used to drive the fantasm task/event dispatching mechanism
 STATE_PARAM = '__st__'
@@ -60,7 +65,7 @@ PRIVATE_PARAMS = set(NON_CONTEXT_PARAMS) | set(CONTEXT_PARAMS)
 # this dict is used for casting strings in HttpRequest.GET to the appropriate type to put into FSMContext
 PARAM_TYPES = {
     STEPS_PARAM : int,
-    GEN_PARAM : simplejson.loads,
+    GEN_PARAM : json.loads,
     INDEX_PARAM: int,
     FORK_PARAM: int,
     STARTED_AT_PARAM: float,

@@ -19,7 +19,13 @@ Copyright 2010 VendAsta Technologies Inc.
 
 import time
 import logging
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+
 from google.appengine.ext import deferred, webapp, db
 from google.appengine.api.capabilities import CapabilitySet
 # Uncomment the following line if you intend on using NDB
@@ -317,4 +323,4 @@ class FSMHandler(webapp.RequestHandler):
                 'obj' : obj,
                 'context': fsm,
             }
-            self.response.out.write(simplejson.dumps(data, cls=Encoder))
+            self.response.out.write(json.dumps(data, cls=Encoder))

@@ -1,5 +1,11 @@
 """ Url fanout actions """
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+
 from google.appengine.ext import db
 from google.appengine.api import urlfetch
 
@@ -39,7 +45,7 @@ class TwitterSearch(object):
         if response.status_code != 200:
             raise Exception('Non-200 from Twitter. Terminating. status_code: %s' % response.status_code)
         
-        data = simplejson.loads(response.content)
+        data = json.loads(response.content)
         results = data['results']
 
         statuses = []

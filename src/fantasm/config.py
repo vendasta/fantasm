@@ -21,7 +21,13 @@ from __future__ import with_statement
 import os
 import yaml
 import logging
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+    
 import datetime
 import pickle
 import threading
@@ -208,10 +214,10 @@ def _resolveClass(className, namespace):
         'bool': utils.boolConverter, 
         
         # json is a useful thing to have around
-        'json': simplejson.loads,
+        'json': json.loads,
         
         # using json to encode dicts is generally OK, but can lead to unexpected issues with integer keys etc.
-        'dict': simplejson.loads,
+        'dict': json.loads,
         
         # pickle is a useful thing to have around, although it generates rather large srings
         'pickle': pickle.loads,

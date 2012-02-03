@@ -34,7 +34,13 @@ import datetime
 import random
 import copy
 import time
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+
 import pickle
 from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsError, TombstonedTaskError, \
                                                      TaskRetryOptions
@@ -313,7 +319,7 @@ class FSMContext(dict):
         # cast the value to the appropriate type TODO: should this be in FSMContext?
         cast = self.contextTypes[key]
         kwargs = {}
-        if cast is simplejson.loads:
+        if cast is json.loads:
             kwargs = {'object_hook': models.decode}
         if cast is pickle.loads:
             value = pickle.loads(str(value))
@@ -797,15 +803,15 @@ class FSMContext(dict):
                   constants.INSTANCE_NAME_PARAM: self.instanceName}
         for key, value in self.items():
             if key not in constants.NON_CONTEXT_PARAMS:
-                if self.contextTypes.get(key) is simplejson.loads:
-                    value = simplejson.dumps(value, cls=models.Encoder)
+                if self.contextTypes.get(key) is json.loads:
+                    value = json.dumps(value, cls=models.Encoder)
                 if self.contextTypes.get(key) is pickle.loads:
                     value = pickle.dumps(value)
                 if self.contextTypes.get(key) is config.deserializeNDBKey:
                     value = value.urlsafe()
                 if isinstance(value, dict):
                     # FIXME: should we issue a warning that they should update fsm.yaml?
-                    value = simplejson.dumps(value, cls=models.Encoder)
+                    value = json.dumps(value, cls=models.Encoder)
                     
                 valueIsNotBasestring = False
                 if isinstance(value, (list, tuple)):

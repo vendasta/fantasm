@@ -19,8 +19,15 @@ Copyright 2010 VendAsta Technologies Inc.
 
 from google.appengine.ext import db
 from google.appengine.api import datastore_types
-import simplejson
+
 import datetime
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+
 
 def decode(dct):
     """ Special handler for db.Key/datetime.datetime decoding """
@@ -35,11 +42,11 @@ def decode(dct):
     return dct
 
 # W0232: 30:Encoder: Class has no __init__ method
-class Encoder(simplejson.JSONEncoder): # pylint: disable-msg=W0232
+class Encoder(json.JSONEncoder): # pylint: disable-msg=W0232
     """ A JSONEncoder that handles db.Key """
     # E0202: 36:Encoder.default: An attribute inherited from JSONEncoder hide this method
     def default(self, obj): # pylint: disable-msg=E0202
-        """ see simplejson.JSONEncoder.default """
+        """ see json.JSONEncoder.default """
         if isinstance(obj, set):
             return {'__set__': True, 'key': list(obj)}
         if isinstance(obj, db.Key):
@@ -55,7 +62,7 @@ class Encoder(simplejson.JSONEncoder): # pylint: disable-msg=W0232
                                                                 'minute': obj.minute,
                                                                 'second': obj.second,
                                                                 'microsecond': obj.microsecond}}
-        return simplejson.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, obj)
 
 class JSONProperty(db.Property):
     """
@@ -81,12 +88,12 @@ class JSONProperty(db.Property):
         if value is None:
             return {}
         if isinstance(value, unicode) or isinstance(value, str):
-            return simplejson.loads(value, object_hook=decode)
+            return json.loads(value, object_hook=decode)
         return value
     
     def _deflate(self, value):
         """ encodes dict -> string """
-        return simplejson.dumps(value, cls=Encoder)
+        return json.dumps(value, cls=Encoder)
     
     
 class _FantasmFanIn( db.Model ):

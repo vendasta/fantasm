@@ -3,7 +3,13 @@
 import unittest
 import urllib
 import datetime
-import simplejson
+import sys
+
+if sys.version_info < (2, 7):
+    import simplejson as json
+else:
+    import json
+
 import random # pylint: disable-msg=W0611
 import pickle
 from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable-msg=W0611
@@ -876,7 +882,7 @@ class ContextTypesCoercionTests(unittest.TestCase):
         dt = datetime.datetime(2010, 9, 7, 1, 31, 10)
         self.context.putTypedValue('counter', '123')
         self.context.putTypedValue('batch-key', 'agxmYW50YXNtLXRlc3RyEAsSCkVtYWlsQmF0Y2gYUAw')
-        self.context.putTypedValue('data', simplejson.dumps({'a': 'a'}))
+        self.context.putTypedValue('data', json.dumps({'a': 'a'}))
         self.context.putTypedValue('start-date', pickle.dumps(dt))
         self.context.putTypedValue('ndb_key_key', nkey.urlsafe())
         self.context.putTypedValue('ndb_model_key', nkey.urlsafe())
