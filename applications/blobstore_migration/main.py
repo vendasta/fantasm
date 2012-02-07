@@ -53,10 +53,9 @@ class StartMigrationHandler(webapp.RequestHandler):
     
     def get(self):
         """ see RequestHandler.get() """
-        app = os.environ['APPLICATION_ID']
         version = os.environ['CURRENT_VERSION_ID'].split('.')[0]
-        sourceHost = '%s.%s.appspot.com' % (version, app)
-        targetHost = '%s.FIXME.appspot.com' % (version,)
+        sourceHost = '%s.FIXME_SOURCE.appspot.com' % (version,)
+        targetHost = '%s.FIXME_TARGET.appspot.com' % (version,)
         content = CONTENT % {SOURCE_HOST_PARAM: sourceHost,
                              TARGET_HOST_PARAM: targetHost,
                              TASK_NAME_PARAM: DEFAULT_TASK_NAME,
