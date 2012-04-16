@@ -1,5 +1,6 @@
 <project name="fantasm" default="test" basedir=".">
 
+    <property environment="env"/>
     <property name="test.verbosity" value="1"/>
     <property name="test.loglevel" value="40"/>
     <property name="tests" value=""/>
@@ -119,8 +120,8 @@
         <!--
             This target is used to run a consistent integration test by the owners of Fantasm.
         -->
-        <exec executable="${appenginedir}/appcfg.py" resultproperty="appcfg.retcode" inputstring="${gae.password}">
-            <arg line="update ${releasedir} --no_cookies --email=${gae.email} --passin"/>
+        <exec executable="${appenginedir}/appcfg.py" resultproperty="appcfg.retcode" inputstring="${env.gae.pwd}">
+            <arg line="update ${releasedir} --no_cookies --email=${env.gae.email} --passin"/>
         </exec>
         
         <fail message="App Engine deployment failed; non-zero return code.">
