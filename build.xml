@@ -9,7 +9,7 @@
     <property name="toolsdir" value="${basedir}/tools"/>
     <property name="releasedir" value="${basedir}/release"/>
     <property name="appenginedir" value="/usr/local/google_appengine"/>
-    <property name="tests.pythonpath" value="${testdir}:${srcdir}:${basedir}:${appenginedir}:${appenginedir}/lib/simplejson:${appenginedir}/lib/yaml/lib:${appenginedir}/lib/webob:${appenginedir}/lib/django:${appenginedir}/lib/fancy_urllib:${toolsdir}"/>
+    <property name="tests.pythonpath" value="${testdir}:${srcdir}:${basedir}:${appenginedir}:${appenginedir}/lib/simplejson:${appenginedir}/lib/yaml/lib:${appenginedir}/lib/webob_1_1_1:${appenginedir}/lib/django:${appenginedir}/lib/fancy_urllib:${toolsdir}"/>
 
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
         <classpath>
