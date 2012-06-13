@@ -110,11 +110,17 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
 
         context[CONTINUATION_RESULTS_COUNTER_PARAM] = \
             context.get(GEN_PARAM, {}).get(str(context[STEPS_PARAM]), 0) * limit + len(obj[CONTINUATION_RESULTS_KEY])
-        context[CONTINUATION_COMPLETE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY]) < limit
         context[CONTINUATION_RESULTS_SIZE_PARAM] = len(obj[CONTINUATION_RESULTS_KEY])
 
         if len(obj[CONTINUATION_RESULTS_KEY]) == limit:
-            return self._getNextToken(context, obj, token=token)
+            nextToken = self._getNextToken(context, obj, token=token)
+            if nextToken:
+                context[CONTINUATION_COMPLETE_PARAM] = False
+            else:
+                context[CONTINUATION_COMPLETE_PARAM] = True
+            return nextToken
+        else:
+            context[CONTINUATION_COMPLETE_PARAM] = True
         return None
 
     def _fetchResults(self, limit, context, obj, token=None):
