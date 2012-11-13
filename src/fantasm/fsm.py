@@ -903,13 +903,14 @@ class FSMContext(dict):
         return context
 
 # pylint: disable-msg=C0103
-def _queueTasks(Queue, queueName, tasks):
+def _queueTasks(Queue, queueName, tasks, transactional=False):
     """
     Add a list of Tasks to the supplied Queue/queueName
 
     @param Queue: taskqueue.Queue or other object with .add() method
     @param queueName: a queue name from queue.yaml
     @param tasks: a list of taskqueue.Tasks
+    @param transactional: tasks are only queued if transaction commits successfully; default False
 
     @raise TaskAlreadyExistsError:
     @raise TombstonedTaskError:
@@ -927,7 +928,7 @@ def _queueTasks(Queue, queueName, tasks):
 
         # queue them up, and loop back for more, even if there are failures
         try:
-            Queue(name=queueName).add(someTasks)
+            Queue(name=queueName).add(someTasks, transactional=transactional)
 
         except TaskAlreadyExistsError, e:
             taskAlreadyExists = e
@@ -944,7 +945,7 @@ def _queueTasks(Queue, queueName, tasks):
         raise tombstonedTask
 
 def startStateMachine(machineName, contexts, taskName=None, method='POST', countdown=0,
-                      _currentConfig=None, headers=None, raiseIfTaskExists=False):
+                      _currentConfig=None, headers=None, raiseIfTaskExists=False, transactional=False):
     """ Starts a new machine(s), by simply queuing a task.
 
     @param machineName the name of the machine in the FSM to start
@@ -955,6 +956,7 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
                      or a list of sumber of seconds (must be same length as contexts)
     @param headers: a dict of X-Fantasm request headers to pass along in Tasks
     @param raiseIfTaskExists: a bool indicating method should re-raise TaskAlreadyExistsError and TombstonedTaskErrors
+    @param transactional: task to start machine is only emitted if the transaction succeeds (default: False)
 
     @param _currentConfig used for test injection (default None - use fsm.yaml definitions)
     """
@@ -985,7 +987,7 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
     queueName = instances[0].queueName # same machineName, same queues
     try:
         from google.appengine.api.taskqueue.taskqueue import Queue
-        _queueTasks(Queue, queueName, tasks)
+        _queueTasks(Queue, queueName, tasks, transactional=transactional)
     except (TaskAlreadyExistsError, TombstonedTaskError):
         # FIXME: what happens if _some_ of the tasks were previously enqueued?
         # normal result for idempotency
