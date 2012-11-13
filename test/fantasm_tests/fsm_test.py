@@ -1086,3 +1086,14 @@ class StartStateMachineTests(unittest.TestCase):
                           'Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.'],
                          ld.messages['info'])
         restore()
+
+    def test_transactionalStartStateMachineTasksNotEmittedIfTransactionFails(self):
+        def tx():
+            startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
+            raise Exception('instrumented exception')
+        try:
+            db.run_in_transaction(tx)
+            self.fail('exception should be raised.')
+        except Exception:
+            pass # this is expected
+        self.assertEquals(len(self.mockQueue.tasks), 0) # nothing should be queued
