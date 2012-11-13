@@ -331,13 +331,16 @@ class FSMContext(dict):
         # update the context
         self[key] = value
 
-    def generateInitializationTask(self, countdown=0, taskName=None):
+    def generateInitializationTask(self, countdown=0, taskName=None, transactional=False):
         """ Generates a task for initializing the machine. """
         assert self.currentState.name == FSM.PSEUDO_INIT
 
         url = self.buildUrl(self.currentState, FSM.PSEUDO_INIT)
         params = self.buildParams(self.currentState, FSM.PSEUDO_INIT)
-        taskName = taskName or self.getTaskName(FSM.PSEUDO_INIT)
+        if transactional:
+            taskName = None
+        else:
+            taskName = taskName or self.getTaskName(FSM.PSEUDO_INIT)
         transition = self.currentState.getTransition(FSM.PSEUDO_INIT)
         task = Task(name=taskName,
                     method=self.method,
@@ -981,7 +984,7 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
         tname = None
         if taskName:
             tname = '%s--startStateMachine-%d' % (taskName, i)
-        task = instance.generateInitializationTask(countdown=countdown[i], taskName=tname)
+        task = instance.generateInitializationTask(countdown=countdown[i], taskName=tname, transactional=transactional)
         tasks.append(task)
 
     queueName = instances[0].queueName # same machineName, same queues

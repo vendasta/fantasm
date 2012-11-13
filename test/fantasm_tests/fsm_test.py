@@ -1089,7 +1089,8 @@ class StartStateMachineTests(unittest.TestCase):
 
     def test_transactionalStartStateMachineTasksNotEmittedIfTransactionFails(self):
         def tx():
-            startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
+            startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], transactional=True,
+                              _currentConfig=self.currentConfig)
             raise Exception('instrumented exception')
         try:
             db.run_in_transaction(tx)
