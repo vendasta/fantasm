@@ -16,13 +16,38 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+from google.appengine.api import urlfetch_errors, datastore_errors, taskqueue
+from google.appengine.runtime import apiproxy_errors
 
 from fantasm import constants
+
+class UserTransientError(Exception):
+    """ Can be raised by client code so that only warning-level messages are emitted. """
+    pass
+
+# The following exceptions are "transient" errors that can occur on Google App Engine.
+# Since one of Fantasm's primary advantages is to retry when these occur, this list of
+# errors will only be logged at "warn" level (instead of "error" level). If you have
+# other transient errors you want to raise for a retry, but to be logged at the lower
+# "warn" level, then raise a UserTransientError.
+TRANSIENT_ERRORS = [
+    urlfetch_errors.DownloadError,
+    urlfetch_errors.InternalTransientError,
+    urlfetch_errors.ConnectionClosedError,
+    urlfetch_errors.DeadlineExceededError,
+    datastore_errors.TransactionFailedError,
+    datastore_errors.InternalError,
+    datastore_errors.Timeout,
+    apiproxy_errors.DeadlineExceededError,
+    taskqueue.TransientError,
+    taskqueue.InternalError,
+    UserTransientError,
+]
 
 class FSMRuntimeError(Exception):
     """ The parent class of all Fantasm runtime errors. """
     pass
-    
+
 class UnknownMachineError(FSMRuntimeError):
     """ A machine could not be found. """
     def __init__(self, machineName):
@@ -36,14 +61,14 @@ class UnknownStateError(FSMRuntimeError):
         """ Initialize exception """
         message = 'State "%s" is unknown. (Machine %s)' % (stateName, machineName)
         super(UnknownStateError, self).__init__(message)
-    
+
 class UnknownEventError(FSMRuntimeError):
     """ An event and the transition bound to it could not be found. """
     def __init__(self, event, machineName, stateName):
         """ Initialize exception """
         message = 'Cannot find transition for event "%s". (Machine %s, State %s)' % (event, machineName, stateName)
         super(UnknownEventError, self).__init__(message)
-        
+
 class InvalidEventNameRuntimeError(FSMRuntimeError):
     """ Event returned from dispatch is invalid (and would cause problems with task name restrictions). """
     def __init__(self, event, machineName, stateName, instanceName):
@@ -52,7 +77,7 @@ class InvalidEventNameRuntimeError(FSMRuntimeError):
                   '(Machine %s, State %s, Instance %s)' % \
                   (event, constants.NAME_PATTERN, machineName, stateName, instanceName)
         super(InvalidEventNameRuntimeError, self).__init__(message)
-        
+
 class InvalidFinalEventRuntimeError(FSMRuntimeError):
     """ Event returned when a final state action returns an event. """
     def __init__(self, event, machineName, stateName, instanceName):
@@ -61,7 +86,7 @@ class InvalidFinalEventRuntimeError(FSMRuntimeError):
                   '(Machine %s, State %s, Instance %s)' % \
                   (event, machineName, stateName, instanceName)
         super(InvalidFinalEventRuntimeError, self).__init__(message)
-        
+
 class FanInWriteLockFailureRuntimeError(FSMRuntimeError):
     """ Exception when fan-in writers are unable to acquire a lock. """
     def __init__(self, event, machineName, stateName, instanceName):
@@ -70,7 +95,7 @@ class FanInWriteLockFailureRuntimeError(FSMRuntimeError):
                   '(Machine %s, State %s, Instance %s)' % \
                   (event, machineName, stateName, instanceName)
         super(FanInWriteLockFailureRuntimeError, self).__init__(message)
-        
+
 class FanInReadLockFailureRuntimeError(FSMRuntimeError):
     """ Exception when fan-in readers are unable to acquire a lock. """
     def __init__(self, event, machineName, stateName, instanceName):
@@ -79,7 +104,7 @@ class FanInReadLockFailureRuntimeError(FSMRuntimeError):
                   '(Machine %s, State %s, Instance %s)' % \
                   (event, machineName, stateName, instanceName)
         super(FanInReadLockFailureRuntimeError, self).__init__(message)
-        
+
 class FanInNoContextsAvailableRuntimeError(FSMRuntimeError):
     """ Exception when fan-in results in 0 contexts - ie. appengine index write timing issue. """
     def __init__(self, event, machineName, stateName, instanceName):
@@ -87,7 +112,7 @@ class FanInNoContextsAvailableRuntimeError(FSMRuntimeError):
         message = 'Fan-in resulted in 0 contexts. (Event %s, Machine %s, State %s, Instance %s)' % \
                   (event, machineName, stateName, instanceName)
         super(FanInNoContextsAvailableRuntimeError, self).__init__(message)
-        
+
 class RequiredServicesUnavailableRuntimeError(FSMRuntimeError):
     """ Some of the required API services are not available. """
     def __init__(self, unavailableServices):
@@ -95,25 +120,25 @@ class RequiredServicesUnavailableRuntimeError(FSMRuntimeError):
         message = 'The following services will not be available in the %d seconds: %s. This task will be retried.' % \
                   (constants.REQUEST_LENGTH, unavailableServices)
         super(RequiredServicesUnavailableRuntimeError, self).__init__(message)
-        
+
 class ConfigurationError(Exception):
     """ Parent class for all Fantasm configuration errors. """
     pass
-    
+
 class YamlFileNotFoundError(ConfigurationError):
     """ The Yaml file could not be found. """
     def __init__(self, filename):
         """ Initialize exception """
         message = 'Yaml configuration file "%s" not found.' % filename
         super(YamlFileNotFoundError, self).__init__(message)
-        
+
 class YamlFileCircularImportError(ConfigurationError):
     """ The Yaml is involved in a circular import. """
     def __init__(self, filename):
         """ Initialize exception """
         message = 'Yaml configuration file "%s" involved in a circular import.' % filename
         super(YamlFileCircularImportError, self).__init__(message)
-    
+
 class StateMachinesAttributeRequiredError(ConfigurationError):
     """ The YAML file requires a 'state_machines' attribute. """
     def __init__(self):
@@ -127,7 +152,7 @@ class MachineNameRequiredError(ConfigurationError):
         """ Initialize exception """
         message = '"%s" is required attribute of machine.' % constants.MACHINE_NAME_ATTRIBUTE
         super(MachineNameRequiredError, self).__init__(message)
-        
+
 class InvalidQueueNameError(ConfigurationError):
     """ The queue name was not valid. """
     def __init__(self, queueName, machineName):
@@ -148,21 +173,21 @@ class MachineNameNotUniqueError(ConfigurationError):
         """ Initialize exception """
         message = 'Machine names must be unique. (Machine %s)' % machineName
         super(MachineNameNotUniqueError, self).__init__(message)
-        
+
 class MachineHasMultipleInitialStatesError(ConfigurationError):
     """ Each machine must have exactly one initial state. """
     def __init__(self, machineName):
         """ Initialize exception """
         message = 'Machine has multiple initial states, but only one is allowed. (Machine %s)' % machineName
         super(MachineHasMultipleInitialStatesError, self).__init__(message)
-        
+
 class MachineHasNoInitialStateError(ConfigurationError):
     """ Each machine must have exactly one initial state. """
     def __init__(self, machineName):
         """ Initialize exception """
         message = 'Machine has no initial state, exactly one is required. (Machine %s)' % machineName
         super(MachineHasNoInitialStateError, self).__init__(message)
-        
+
 class MachineHasNoFinalStateError(ConfigurationError):
     """ Each machine must have at least one final state. """
     def __init__(self, machineName):
@@ -214,21 +239,21 @@ class UnknownClassError(ConfigurationError):
         """ Initialize exception """
         message = 'Class "%s" was not found in module "%s".' % (className, moduleName)
         super(UnknownClassError, self).__init__(message)
-        
+
 class UnknownObjectError(ConfigurationError):
     """ When resolving actions, the object was not found. """
     def __init__(self, objectName):
         """ Initialize exception """
         message = 'Object "%s" was not found.' % (objectName)
         super(UnknownObjectError, self).__init__(message)
-        
+
 class UnexpectedObjectTypeError(ConfigurationError):
     """ When resolving actions, the object was not found. """
     def __init__(self, objectName, expectedType):
         """ Initialize exception """
         message = 'Object "%s" is not of type "%s".' % (objectName, expectedType)
         super(UnexpectedObjectTypeError, self).__init__(message)
-        
+
 class InvalidMaxRetriesError(ConfigurationError):
     """ max_retries must be a positive integer. """
     def __init__(self, machineName, maxRetries):
@@ -252,7 +277,7 @@ class InvalidMinBackoffSecondsError(ConfigurationError):
         message = '%s "%s" is invalid. Must be an integer. (Machine %s)' % \
                   (constants.MIN_BACKOFF_SECONDS_ATTRIBUTE, minBackoffSeconds, machineName)
         super(InvalidMinBackoffSecondsError, self).__init__(message)
-        
+
 class InvalidMaxBackoffSecondsError(ConfigurationError):
     """ max_backoff_seconds must be a positive integer. """
     def __init__(self, machineName, maxBackoffSeconds):
@@ -260,7 +285,7 @@ class InvalidMaxBackoffSecondsError(ConfigurationError):
         message = '%s "%s" is invalid. Must be an integer. (Machine %s)' % \
                   (constants.MAX_BACKOFF_SECONDS_ATTRIBUTE, maxBackoffSeconds, machineName)
         super(InvalidMaxBackoffSecondsError, self).__init__(message)
-        
+
 class InvalidTaskAgeLimitError(ConfigurationError):
     """ task_age_limit must be a positive integer. """
     def __init__(self, machineName, taskAgeLimit):
@@ -268,7 +293,7 @@ class InvalidTaskAgeLimitError(ConfigurationError):
         message = '%s "%s" is invalid. Must be an integer. (Machine %s)' % \
                   (constants.TASK_AGE_LIMIT_ATTRIBUTE, taskAgeLimit, machineName)
         super(InvalidTaskAgeLimitError, self).__init__(message)
-        
+
 class InvalidMaxDoublingsError(ConfigurationError):
     """ max_doublings must be a positive integer. """
     def __init__(self, machineName, maxDoublings):
@@ -276,7 +301,7 @@ class InvalidMaxDoublingsError(ConfigurationError):
         message = '%s "%s" is invalid. Must be an integer. (Machine %s)' % \
                   (constants.MAX_DOUBLINGS_ATTRIBUTE, maxDoublings, machineName)
         super(InvalidMaxDoublingsError, self).__init__(message)
-        
+
 class MaxRetriesAndTaskRetryLimitMutuallyExclusiveError(ConfigurationError):
     """ max_retries and task_retry_limit cannot both be specified on a machine. """
     def __init__(self, machineName):
@@ -284,7 +309,7 @@ class MaxRetriesAndTaskRetryLimitMutuallyExclusiveError(ConfigurationError):
         message = 'max_retries and task_retry_limit cannot both be specified on a machine. (Machine %s)' % \
                   machineName
         super(MaxRetriesAndTaskRetryLimitMutuallyExclusiveError, self).__init__(message)
-        
+
 class InvalidLoggingError(ConfigurationError):
     """ The logging value was not valid. """
     def __init__(self, machineName, loggingValue):
@@ -348,7 +373,7 @@ class TransitionEventRequiredError(ConfigurationError):
         message = '"%s" is required attribute of transition. (Machine %s, State %s)' % \
                   (constants.TRANS_EVENT_ATTRIBUTE, machineName, fromStateName)
         super(TransitionEventRequiredError, self).__init__(message)
-        
+
 class InvalidCountdownError(ConfigurationError):
     """ Countdown must be a positive integer. """
     def __init__(self, countdown, machineName, fromStateName):
@@ -420,7 +445,7 @@ class InvalidFanInError(ConfigurationError):
         message = '%s "%s" is invalid. Must be an integer. (Machine %s, State %s)' % \
                   (constants.STATE_FAN_IN_ATTRIBUTE, fanInPeriod, machineName, stateName)
         super(InvalidFanInError, self).__init__(message)
-        
+
 class InvalidFanInGroupError(ConfigurationError):
     """ fan_in_group must be a string key. """
     def __init__(self, machineName, stateName, fanInGroup):

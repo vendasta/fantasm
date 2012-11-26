@@ -16,23 +16,24 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+from fantasm.exceptions import TRANSIENT_ERRORS
 
 class Transition(object):
     """ A transition object for a machine. """
-    
+
     def __init__(self, name, target, action=None, countdown=0, retryOptions=None, queueName=None, taskTarget=None):
-        """ Constructor 
-        
+        """ Constructor
+
         @param name: the name of the Transition instance
         @param target: a State instance
         @param action: the optional action for a state
         @param countdown: the number of seconds to wait before firing this transition. Default 0.
         @param retryOptions: the TaskRetryOptions for this transition
-        @param queueName: the name of the queue to Queue into 
+        @param queueName: the name of the queue to Queue into
         @param taskTarget: the target for tasks created for this transition
         """
         assert queueName
-        
+
         self.target = target
         self.name = name
         self.action = action
@@ -40,22 +41,23 @@ class Transition(object):
         self.retryOptions = retryOptions
         self.queueName = queueName
         self.taskTarget = taskTarget
-        
+
     # W0613:144:Transition.execute: Unused argument 'obj'
     # args are present for a future(?) transition action
     def execute(self, context, obj): # pylint: disable-msg=W0613
-        """ Moves the machine to the next state. 
-        
+        """ Moves the machine to the next state.
+
         @param context: an FSMContext instance
-        @param obj: an object that the Transition can operate on  
+        @param obj: an object that the Transition can operate on
         """
         if self.action:
             try:
                 self.action.execute(context, obj)
-            except Exception:
-                context.logger.error('Error processing action for transition. (Machine %s, Transition %s, Action %s)',
-                              context.machineName, 
-                              self.name, 
-                              self.action.__class__)
+            except Exception, e:
+                level = context.logger.error
+                if e.__class__ in TRANSIENT_ERRORS:
+                    level = context.logger.warn
+                level('Error processing action for transition. (Machine %s, Transition %s, Action %s)',
+                      context.machineName, self.name, self.action.__class__)
                 raise
         context.currentState = self.target
