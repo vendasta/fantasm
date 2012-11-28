@@ -30,7 +30,7 @@ class State(object):
 
     def __init__(self, name, entryAction, doAction, exitAction, machineName=None,
                  isFinalState=False, isInitialState=False, isContinuation=False, fanInPeriod=constants.NO_FAN_IN,
-                 fanInGroup=None):
+                 fanInGroup=None, continuationCountdown=0):
         """
         @param name: the name of the State instance
         @param entryAction: an FSMAction instance
@@ -42,6 +42,7 @@ class State(object):
         @param isContinuation: a boolean indicating this is a continuation State
         @param fanInPeriod: integer (seconds) representing how long these states should collect before dispatching
         @param fanInGroup: name of value in context to use for grouping fan-in tasks.
+        @param continuationCountdown: the number of seconds to countdown when executing a continuation task
         """
         assert not (exitAction and isContinuation) # TODO: revisit this with jcollins, we want to get it right
         assert not (exitAction and fanInPeriod > constants.NO_FAN_IN) # TODO: revisit this with jcollins
@@ -54,6 +55,7 @@ class State(object):
         self.isInitialState = isInitialState
         self.isFinalState = isFinalState
         self.isContinuation = isContinuation
+        self.continuationCountdown = continuationCountdown
         self.isFanIn = fanInPeriod != constants.NO_FAN_IN
         self.fanInPeriod = fanInPeriod
         self.fanInGroup = fanInGroup

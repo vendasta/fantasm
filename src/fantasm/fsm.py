@@ -172,6 +172,7 @@ class FSM(object):
         isInitialState = stateConfig.initial
         isFinalState = stateConfig.final
         isContinuation = stateConfig.continuation
+        continuationCountdown = stateConfig.continuationCountdown
         fanInPeriod = stateConfig.fanInPeriod
         fanInGroup = stateConfig.fanInGroup
 
@@ -184,7 +185,8 @@ class FSM(object):
                      isFinalState=isFinalState,
                      isContinuation=isContinuation,
                      fanInPeriod=fanInPeriod,
-                     fanInGroup=fanInGroup)
+                     fanInGroup=fanInGroup,
+                     continuationCountdown=continuationCountdown)
 
     def _getTransition(self, machineConfig, transitionConfig):
         """ Returns a Transition instance based on the machineConfig/transitionConfig
@@ -518,8 +520,10 @@ class FSMContext(dict):
             # pylint: disable-msg=W0212
             # - accessing the protected method is fine here, since it is an instance of the same class
             transition = self.startingState.getTransition(self.startingEvent)
+            countdown = self.currentState.continuationCountdown
             context._queueDispatchNormal(self.startingEvent, queue=True, queueName=transition.queueName,
-                                         retryOptions=transition.retryOptions, taskTarget=transition.taskTarget)
+                                         retryOptions=transition.retryOptions, taskTarget=transition.taskTarget,
+                                         countdown=countdown)
 
         except (TaskAlreadyExistsError, TombstonedTaskError):
             # this can happen when currentState.dispatch() previously succeeded in queueing the continuation

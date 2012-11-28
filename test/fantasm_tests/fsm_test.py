@@ -1,5 +1,6 @@
 """ Tests for fantasm.fsm """
 
+import time
 import unittest
 import urllib
 import datetime
@@ -594,6 +595,9 @@ class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
         self.assertEqual('state-continuation', self.context.currentState.name)
         self.assertEqual('instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1',
                          self.mockQueue.tasks[-2][0].name)
+        now = time.time()
+        expectedEta = now + 30
+        self.assertTrue(self.mockQueue.tasks[-2][0].eta_posix - expectedEta < 2)
         self.assertEqual(4, len(self.mockQueue.tasks))
 
         event = self.context.dispatch(event, TemporaryStateObject())

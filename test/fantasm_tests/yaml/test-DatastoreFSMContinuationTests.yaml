@@ -1,10 +1,10 @@
 state_machines:
-  
+
 - name: DatastoreFSMContinuationQueueTests
   namespace: fantasm_tests.actions
   queue: queue1
   states:
-    
+
     - name: state-initial
       entry: CountExecuteCalls
       action: CountExecuteCalls
@@ -13,7 +13,7 @@ state_machines:
         - event: next-event
           to: state-continuation
           queue: queue2
-      
+
     - name: state-continuation
       entry: CountExecuteCalls
       action: TestDatastoreContinuationFSMAction
@@ -23,16 +23,16 @@ state_machines:
         - event: next-event
           to: state-final
           queue: queue3
-      
+
     - name: state-final
       entry: CountExecuteCalls
       action: CountExecuteCallsFinal
       final: True
-  
+
 - name: DatastoreFSMContinuationTests
   namespace: fantasm_tests.actions
   states:
-    
+
     - name: state-initial
       entry: CountExecuteCalls
       action: CountExecuteCalls
@@ -40,16 +40,17 @@ state_machines:
       transitions:
         - event: next-event
           to: state-continuation
-      
+
     - name: state-continuation
       entry: CountExecuteCalls
       action: TestDatastoreContinuationFSMAction
       continuation: True
+      continuation_countdown: 30
       final: True # query may return no results
       transitions:
         - event: next-event
           to: state-final
-      
+
     - name: state-final
       entry: CountExecuteCalls
       action: CountExecuteCallsFinal
@@ -58,7 +59,7 @@ state_machines:
 - name: DatastoreFSMContinuationTestsInitCont
   namespace: fantasm_tests.actions
   states:
-    
+
     - name: state-continuation
       entry: CountExecuteCalls
       action: TestDatastoreContinuationFSMAction
@@ -68,20 +69,20 @@ state_machines:
       transitions:
         - event: next-event
           to: state-final
-      
+
     - name: state-final
       entry: CountExecuteCalls
       action: CountExecuteCallsFinal
       final: True
-      
+
 - name: DatastoreFSMContinuationAndForkTests
   namespace: fantasm_tests.actions
   context_types:
     key: google.appengine.ext.db.Key
     data: json
-  
+
   states:
-    
+
     - name: state-continuation-and-fork
       entry: CountExecuteCalls
       action: TestContinuationAndForkFSMAction
@@ -91,9 +92,9 @@ state_machines:
       transitions:
         - event: next-event
           to: state-final
-      
+
     - name: state-final
       entry: CountExecuteCalls
       action: CountExecuteCallsFinal
       final: True
-      
+
