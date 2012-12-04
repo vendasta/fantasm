@@ -533,6 +533,10 @@ class FSMContext(dict):
                           self.machineName,
                           self.currentState.name)
 
+    def setQueue(self, queueName):
+        """ Used to override the queue defined in fsm.yaml, e.g., for dynamic queue selection. """
+        self.__obj[constants.QUEUE_NAME_PARAM] = queueName
+
     def queueDispatch(self, nextEvent, queue=True):
         """ Queues a .dispatch(nextEvent) call in the appengine Task queue.
 
@@ -544,7 +548,11 @@ class FSMContext(dict):
 
         # self.currentState is already transitioned away from self.startingState
         transition = self.currentState.getTransition(nextEvent)
-        queueName = self.__obj.get(constants.QUEUE_NAME_PARAM) or transition.queueName
+        queueName = transition.queueName
+        if self.headers and self.headers.get(constants.HTTP_REQUEST_HEADER_QUEUENAME):
+            queueName = self.headers[constants.HTTP_REQUEST_HEADER_QUEUENAME]
+        elif self.__obj.get(constants.QUEUE_NAME_PARAM):
+            queueName = self.__obj[constants.QUEUE_NAME_PARAM]
         if transition.target.isFanIn:
             task = self._queueDispatchFanIn(nextEvent, fanInPeriod=transition.target.fanInPeriod,
                                             retryOptions=transition.retryOptions,
@@ -955,7 +963,8 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
         raise tombstonedTask
 
 def startStateMachine(machineName, contexts, taskName=None, method='POST', countdown=0,
-                      _currentConfig=None, headers=None, raiseIfTaskExists=False, transactional=False):
+                      _currentConfig=None, headers=None, raiseIfTaskExists=False, transactional=False,
+                      queueName=None):
     """ Starts a new machine(s), by simply queuing a task.
 
     @param machineName the name of the machine in the FSM to start
@@ -967,6 +976,9 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
     @param headers: a dict of X-Fantasm request headers to pass along in Tasks
     @param raiseIfTaskExists: a bool indicating method should re-raise TaskAlreadyExistsError and TombstonedTaskErrors
     @param transactional: task to start machine is only emitted if the transaction succeeds (default: False)
+    @param queueName: The queue to use for the machine. Note this queue is only used _after_ the initialization task,
+                      which will still be queued up on the machine default. This allows a single switch to halt
+                      new machines, but still allows for dynamically running machines on non-default queues.
 
     @param _currentConfig used for test injection (default None - use fsm.yaml definitions)
     """
@@ -983,6 +995,14 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
 
     fsm = FSM(currentConfig=_currentConfig) # loads the FSM definition
 
+    if queueName:
+        if not headers:
+            headers = {}
+        if constants.HTTP_REQUEST_HEADER_QUEUENAME in headers:
+            logging.warn('queueName "%s" overrides existing queueName in headers "%s". Using former.' % \
+                         queueName, headers[contants.HTTP_REQUEST_HEADER_QUEUENAME])
+        headers[constants.HTTP_REQUEST_HEADER_QUEUENAME] = queueName
+
     instances = [fsm.createFSMInstance(machineName, data=context, method=method, headers=headers)
                  for context in contexts]
 
@@ -994,10 +1014,10 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
         task = instance.generateInitializationTask(countdown=countdown[i], taskName=tname, transactional=transactional)
         tasks.append(task)
 
-    queueName = instances[0].queueName # same machineName, same queues
+    initialQueueName = instances[0].queueName # same machineName, same queues
     try:
         from google.appengine.api.taskqueue.taskqueue import Queue
-        _queueTasks(Queue, queueName, tasks, transactional=transactional)
+        _queueTasks(Queue, initialQueueName, tasks, transactional=transactional)
     except (TaskAlreadyExistsError, TombstonedTaskError):
         # FIXME: what happens if _some_ of the tasks were previously enqueued?
         # normal result for idempotency

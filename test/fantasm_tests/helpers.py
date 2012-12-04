@@ -50,7 +50,7 @@ class TaskQueueDouble(object):
         self.tasknames = set([])
         self.tasks = []
         self.name = name
-        
+
     def add(self, task_or_tasks, transactional=False):
         """ mock for google.appengine.api.taskqueue.add """
         if isinstance(task_or_tasks, list):
@@ -78,7 +78,7 @@ class LoggingDouble(object):
     def __init__(self):
         self.count = defaultdict(int)
         self.messages = defaultdict(list)
-        
+
     def _log(self, level, message, *args, **kwargs):
         self.count[level] += 1
         if not isinstance(message, basestring):
@@ -100,20 +100,20 @@ class LoggingDouble(object):
 
     def warning(self, message, *args, **kwargs):
         self._log('warning', message, *args, **kwargs)
-        
+
     warn = warning
 
     def error(self, message, *args, **kwargs):
         self._log('error', message, *args, **kwargs)
-        
+
     def critical(self, message, *args, **kwargs):
         self._log('critical', message, *args, **kwargs)
 
 def getLoggingDouble():
-    """ Creates a logging double and wires it up with minimock. 
-    
+    """ Creates a logging double and wires it up with minimock.
+
     You are responsible for restoring the minimock environment (ususally in your tearDown).
-    
+
     @param printMessages A list of 'debug', 'info', 'warning', 'error', 'critical' indicating which
                          error levels to dump to STDERR.
     """
@@ -139,39 +139,39 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
     tq = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
     if assertTasks:
         assert tq.GetTasks(queueName)
-        
+
     retries = {}
     runList = []
     alreadyRun = []
     runAgain = True
     while runAgain:
-        
+
         runAgain = False
         tasks = tasksOverride or tq.GetTasks(queueName)
         lastRunList = list(runList)
-        
+
         for task in tasks:
-            
+
             if task['name'] in alreadyRun:
                 continue
-            
+
             if maxRetries is not None:
                 if retries.get(task['name'], 0) > maxRetries:
                     continue
-            
+
             if task.has_key('eta'):
-                
+
                 UTC_OFFSET_TIMEDELTA = datetime.datetime.utcnow() - datetime.datetime.now()
                 now = datetime.datetime.utcfromtimestamp(time.time())
                 eta = datetime.datetime.strptime(task['eta'], "%Y/%m/%d %H:%M:%S") - UTC_OFFSET_TIMEDELTA
-                
+
                 if speedup and (runList == lastRunList):
                     # nothing ran list loop around, just force this task to speedup the tests
                     pass
                 elif eta > now:
                     runAgain = True
                     continue
-                
+
             record = True
             if task['url'] == constants.DEFAULT_CLEANUP_URL:
                 record = False
@@ -183,75 +183,75 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
                 handler = FSMHandler()
             parts = task['url'].split('?')
             assert 1 <= len(parts) <= 2
-            
+
             environ = {'PATH_INFO': parts[0]}
             if len(parts) == 2:
                 environ['QUERY_STRING'] = parts[1]
             if task['method'] == 'POST':
                 environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
             environ['REQUEST_METHOD'] = task['method']
-            
+
             handler.request = webapp.Request(environ)
             handler.response = webapp.Response()
-            
+
             if task['method'] == 'POST':
                 handler.request.body = base64.decodestring(task['body'])
-            
-            handler.request.headers[random.choice(['X-AppEngine-TaskName', 
+
+            handler.request.headers[random.choice(['X-AppEngine-TaskName',
                                                    'X-Appengine-Taskname'])] = task['name']
             if retries.get(task['name']):
-                handler.request.headers[random.choice(['X-AppEngine-TaskRetryCount', 
+                handler.request.headers[random.choice(['X-AppEngine-TaskRetryCount',
                                                        'X-Appengine-Taskretrycount'])] = retries[task['name']]
-            
+
             try:
                 {'GET': handler.get, 'POST': handler.post}[task['method']]() # call the correct dispatch
                 runAgain = True
                 alreadyRun.append(task['name'])
                 if record:
                     runList.append(task['name'])
-                
+
             except Exception:
                 logging.debug("Error running Task. This would be a 500 error.", exc_info=1)
                 runAgain = True
                 if record:
                     runList.append(task['name'])
                 retries[task['name']] = retries.get(task['name'], 0) + 1
-            
+
     return runList
 
 class ConfigurationMock(object):
     """ A mock object that looks like a config._Configuration instance """
     def __init__(self, machines):
         self.machines = dict([(m.name, m) for m in machines])
-        
+
 def getFSMFactoryByFilename(filename):
-    """ Returns an FSM instance 
-    
+    """ Returns an FSM instance
+
     @param filename: a filename like 'test-Foo.yaml'
-    @return: an FSM instance 
+    @return: an FSM instance
     """
     machineName = getMachineNameByFilename(filename)
     filename = os.path.join(os.path.dirname(__file__), 'yaml', filename)
     currentConfig = config.loadYaml(filename=filename)
     factory = FSM(currentConfig=currentConfig)
     return factory
-    
+
 def getMachineNameByFilename(filename):
-    """ Returns a fsm name based on the input filename 
-    
+    """ Returns a fsm name based on the input filename
+
     @param filename: a filename like 'test-Foo.yaml'
     @return: a machine name like 'Foo'
     """
     return filename.replace('test-', '').replace('.yaml', '')
-    
+
 def setUpByFilename(obj, filename, machineName=None, instanceName=None, taskRetryLimitOverrides=None, method='GET'):
-    """ Configures obj (a unittest.TestCase instance) with obj.context 
-    
+    """ Configures obj (a unittest.TestCase instance) with obj.context
+
     @param obj: a unittest.TestCase instance
     @param filename: a filename like 'test-Foo.yaml'
     @param machineName: a machine name define in filename
-    @param instanceName: an fsm instance name   
-    @param taskRetryLimitOverrides: a dict of {'transitionName' : taskRetryLimit} use to override values in .yaml 
+    @param instanceName: an fsm instance name
+    @param taskRetryLimitOverrides: a dict of {'transitionName' : taskRetryLimit} use to override values in .yaml
     """
     obj.machineName = machineName or filename.replace('test-', '').replace('.yaml', '')
     if not filename.startswith('/'):
@@ -261,14 +261,15 @@ def setUpByFilename(obj, filename, machineName=None, instanceName=None, taskRetr
     if taskRetryLimitOverrides:
         overrideTaskRetryLimit(obj.machineConfig, taskRetryLimitOverrides)
     obj.factory = FSM(currentConfig=obj.currentConfig)
-    obj.context = obj.factory.createFSMInstance(obj.machineConfig.name, instanceName=instanceName, method=method)
+    obj.context = obj.factory.createFSMInstance(obj.machineConfig.name, instanceName=instanceName, method=method,
+                                                obj={}, headers={})
     obj.initialState = obj.context.initialState
-    
+
 def setUpByString(obj, yaml, machineName=None, instanceName=None):
-    """ Configures obj (a unittest.TestCase instance) with obj.context 
-    
+    """ Configures obj (a unittest.TestCase instance) with obj.context
+
     @param obj: a unittest.TestCase instance
-    @param yaml: a yaml string 
+    @param yaml: a yaml string
     """
     f = tempfile.NamedTemporaryFile()
     f.write(yaml)
@@ -280,52 +281,52 @@ class ZeroCountMock(object):
     count = 0
     fcount = 0
     ccount = 0
-    
+
 def getCounts(machineConfig):
-    """ Returns the count values from all the states' entry/action/exit FSMActions 
-    
+    """ Returns the count values from all the states' entry/action/exit FSMActions
+
     @param machineConfig: a config._MachineConfig instance
-    @return: a dict of { 'stateName' : {'entry' : count, 'action' : count, 'exit' : count } } 
-    
+    @return: a dict of { 'stateName' : {'entry' : count, 'action' : count, 'exit' : count } }
+
     NOTE: relies on the config._StateConfig and FSMState instances sharing the FSMActions
     """
     counts = {}
     for stateName, state in machineConfig.states.items():
         if state.continuation:
-            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count, 
+            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count,
                                   'continuation': (state.action or ZeroCountMock).ccount,
-                                  'action': (state.action or ZeroCountMock).count, 
+                                  'action': (state.action or ZeroCountMock).count,
                                   'exit': (state.exit or ZeroCountMock).count}
-            
+
         elif state.fanInPeriod > 0:
-            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count, 
-                                  'action': (state.action or ZeroCountMock).count, 
+            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count,
+                                  'action': (state.action or ZeroCountMock).count,
                                   'exit': (state.exit or ZeroCountMock).count,
-                                  'fan-in-entry': (state.entry or ZeroCountMock).fcount, 
-                                  'fan-in-action': (state.action or ZeroCountMock).fcount, 
+                                  'fan-in-entry': (state.entry or ZeroCountMock).fcount,
+                                  'fan-in-action': (state.action or ZeroCountMock).fcount,
                                   'fan-in-exit': (state.exit or ZeroCountMock).fcount}
-            
+
         else:
-            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count, 
-                                  'action': (state.action or ZeroCountMock).count, 
+            counts[state.name] = {'entry': (state.entry or ZeroCountMock).count,
+                                  'action': (state.action or ZeroCountMock).count,
                                   'exit': (state.exit or ZeroCountMock).count}
-                                  
+
     for transition in machineConfig.transitions.values():
         counts['%s--%s' % (transition.fromState.name, transition.event)] = {
             'action': (transition.action or ZeroCountMock).count
         }
-        
+
     return counts
 
 def overrideFails(machineConfig, fails, tranFails):
     """ Configures all the .fail parameters on the actions defined in fails
-    
+
     @param machineConfig: a config._MachineConfig instance
     @param fails: a list of ('stateName', 'actionName', #failures)
-        ie. [('state-initial', 'entry', 2), ('state-final', 'entry', 2)] 
+        ie. [('state-initial', 'entry', 2), ('state-final', 'entry', 2)]
     @param tranFails: a list of ('transitionName', #failures)
         ie. [('state-event', 1), ('state2-event2', 3)]
-    
+
     NOTE: relies on the config._StateConfig and FSMState instances sharing the FSMActions
     """
     for (stateName, action, fail) in fails:
@@ -336,15 +337,15 @@ def overrideFails(machineConfig, fails, tranFails):
             getattr(state, action).cfailat = fail[2]
         else:
             getattr(state, action).fails = fail
-            
+
     for (tranName, fail) in tranFails:
         transition = machineConfig.transitions[tranName]
         transition.action.fails = fail
-            
-        
+
+
 def overrideTaskRetryLimit(machineConfig, overrides):
-    """ Configures all the .taskRetryLimit parameters on all the Transitions 
-    
+    """ Configures all the .taskRetryLimit parameters on all the Transitions
+
     @param machineConfig: a config._MachineConfig instance
     @param overrides: a dict of {'transitionName' : task_retry_limit} to override
     """
@@ -352,7 +353,7 @@ def overrideTaskRetryLimit(machineConfig, overrides):
         transition = machineConfig.transitions[transitionName]
         transition.taskRetryLimit = taskRetryLimit
 
-def buildRequest(method='GET', get_args=None, post_args=None, referrer=None, 
+def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
                   path=None, cookies=None, host=None, port=None):
     """ Builds a request suitable for view.initialize(). """
     from urllib import urlencode
@@ -361,7 +362,7 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
 
     if not get_args:
         get_args = {}
-        
+
     if not post_args:
         post_args = {}
 
@@ -371,26 +372,26 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
             'SERVER_NAME': 'localhost',
             'SERVER_PORT' : '80'
     }
-    
+
     if get_args:
         wsgi['QUERY_STRING'] = urlencode(get_args)
-        
+
     if referrer:
         wsgi['HTTP_REFERER'] = referrer
-        
+
     if path:
         wsgi['PATH_INFO'] = path
-        
+
     if host:
         wsgi['SERVER_NAME'] = host
-        
+
     if port:
         wsgi['SERVER_PORT'] = str(port)
-        
+
     if cookies:
         if not isinstance(cookies, BaseCookie):
             raise Exception('cookies, if set, must be a BaseCookie or subclass.')
-            
+
         # HACK the replace('"', '') below is super-weird. For some reason, cookies.output is
         # creating a string like this:
         #
@@ -403,7 +404,7 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
         # I'm sure this hack will eventually break and I sincerely apologize to whomever this
         # affects.
         wsgi['HTTP_COOKIE'] = cookies.output(header='', sep=';').strip().replace('"', '')
-        
+
     request = webapp.Request(wsgi)
 
     if post_args:
@@ -411,5 +412,5 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
         post_body = urlencode(post_args)
         wsgi['wsgi.input'] = StringIO(post_body)
         wsgi['CONTENT_LENGTH'] = len(post_body)
-    
+
     return request

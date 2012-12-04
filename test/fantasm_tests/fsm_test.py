@@ -28,7 +28,8 @@ from fantasm.state import State
 from fantasm.models import _FantasmFanIn
 from fantasm.constants import STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, STEPS_PARAM, MACHINE_STATES_ATTRIBUTE, \
                               CONTINUATION_PARAM, INDEX_PARAM, GEN_PARAM, FORKED_CONTEXTS_PARAM, \
-                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY
+                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY, \
+                              HTTP_REQUEST_HEADER_QUEUENAME, QUEUE_NAME_PARAM
 from fantasm_tests.fixtures import AppEngineTestCase
 from fantasm_tests.actions import RaiseExceptionAction, RaiseExceptionContinuationAction
 from fantasm_tests.helpers import TaskQueueDouble, getLoggingDouble
@@ -124,6 +125,11 @@ class FSMContextTests(unittest.TestCase):
     def test_contextValueSet(self):
         self.context['foo'] = 'bar'
         self.assertEquals(self.context.get('foo'), 'bar')
+
+    def test_contextSetQueue(self):
+        queue = 'some-queue'
+        self.context.setQueue(queue)
+        self.assertEquals(self.obj[QUEUE_NAME_PARAM], queue)
 
     def test_contextValuePop(self):
         self.context['foo'] = 'bar'
@@ -400,6 +406,27 @@ class TaskQueueFSMTests(AppEngineTestCase):
 
         self.assertEquals(mockQueue.tasks[0][0].target, 'correct-target')
 
+    def test_setQueueCanAlterTheDispatchQueue(self):
+        mockQueue = TaskQueueDouble()
+        mock(name='Queue.__init__', returns_func=mockQueue.__init__, tracker=None)
+        mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
+        self.transNormalToFinal.queueName = 'fantasm-queue' # this is what we'll override
+        self.context.currentState = self.stateInitial
+        alternateQueue = 'some-other-queue'
+        self.context.setQueue(alternateQueue)
+        self.context.dispatch('next-event', {})
+        self.assertEquals(mockQueue.name, alternateQueue)
+
+    def test_headerCanAlterTheDispatchQueue(self):
+        mockQueue = TaskQueueDouble()
+        mock(name='Queue.__init__', returns_func=mockQueue.__init__, tracker=None)
+        mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
+        self.transNormalToFinal.queueName = 'fantasm-queue' # this is what we'll override
+        self.context.currentState = self.stateInitial
+        alternateQueue = 'some-other-queue'
+        self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME] = alternateQueue
+        self.context.dispatch('next-event', {})
+        self.assertEquals(mockQueue.name, alternateQueue)
 
     # These tests are not raising as expected. The mock object is not being called. TODO sort this out
     # def test_nextEventNotStringRaisesException(self):
@@ -523,6 +550,34 @@ class DatastoreFSMContinuationBaseTests(AppEngineTestCase):
         super(DatastoreFSMContinuationBaseTests, self).tearDown()
         restore()
 
+class DatastoreFSMContinuationWithContinuationCountdownTests(DatastoreFSMContinuationBaseTests):
+
+    FILENAME = 'test-DatastoreFSMContinuationTests.yaml'
+    MACHINE_NAME = 'DatastoreFSMContinuationCountdownTests'
+
+    def test_DatastoreFSMContinuation_queues_a_continuation_task(self):
+        event = self.context.initialize()
+        self.assertEqual(1, len(self.mockQueue.tasks))
+
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        self.assertEqual(2, len(self.mockQueue.tasks))
+
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-continuation', self.context.currentState.name)
+        self.assertEqual('instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1',
+                         self.mockQueue.tasks[-2][0].name)
+        now = time.time()
+        expectedEta = now + 30
+        self.assertTrue(self.mockQueue.tasks[-2][0].eta_posix - expectedEta < 2)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-final', self.context.currentState.name)
+        self.assertEqual(4, len(self.mockQueue.tasks))
+
+        self.assertEqual(None, event)
+
 class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
 
     FILENAME = 'test-DatastoreFSMContinuationTests.yaml'
@@ -595,9 +650,6 @@ class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
         self.assertEqual('state-continuation', self.context.currentState.name)
         self.assertEqual('instanceName--continuation-1-1--state-initial--next-event--state-continuation--step-1',
                          self.mockQueue.tasks[-2][0].name)
-        now = time.time()
-        expectedEta = now + 30
-        self.assertTrue(self.mockQueue.tasks[-2][0].eta_posix - expectedEta < 2)
         self.assertEqual(4, len(self.mockQueue.tasks))
 
         event = self.context.dispatch(event, TemporaryStateObject())
@@ -1102,3 +1154,9 @@ class StartStateMachineTests(unittest.TestCase):
         except Exception:
             pass # this is expected
         self.assertEquals(len(self.mockQueue.tasks), 0) # nothing should be queued
+
+    def test_queuedInitializationTaskContainsAlternateQueueHeader(self):
+        alternateQueue = 'some-queue'
+        startStateMachine(self.machineName, {'a': '1'}, queueName=alternateQueue, _currentConfig=self.currentConfig)
+        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEquals(self.getTask(0).headers[HTTP_REQUEST_HEADER_QUEUENAME], alternateQueue)

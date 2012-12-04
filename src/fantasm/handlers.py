@@ -29,8 +29,7 @@ else:
 
 from google.appengine.ext import deferred, webapp, db
 from google.appengine.api.capabilities import CapabilitySet
-# Uncomment the following line if you intend on using NDB
-#from google.appengine.ext.ndb import context as ndb_context
+from google.appengine.ext import ndb
 from fantasm import config, constants
 from fantasm.fsm import FSM
 from fantasm.utils import NoOpQueue
@@ -161,16 +160,12 @@ def getCurrentFSM():
 class FSMHandler(webapp.RequestHandler):
     """ The main worker handler, used to process queued machine events. """
 
-    ### Uncomment the following line if you intend on using NDB
-    ### Failure to do so may leave you will very difficult stacktraces to understand.
-    #@ndb_context.toplevel
+    @ndb.toplevel
     def get(self):
         """ Handles the GET request. """
         self.get_or_post(method='GET')
 
-    ### Uncomment the following line if you intend on using NDB
-    ### Failure to do so may leave you will very difficult stacktraces to understand.
-    #@ndb_context.toplevel
+    @ndb.toplevel
     def post(self):
         """ Handles the POST request. """
         self.get_or_post(method='POST')
