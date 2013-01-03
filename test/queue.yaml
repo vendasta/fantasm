@@ -1,7 +1,7 @@
 total_storage_limit: 1G
 
 queue:
-  
+
 - name: backup
   rate: 50/s
   bucket_size: 50
@@ -9,16 +9,19 @@ queue:
 - name: default
   rate: 100/s
   bucket_size: 100
-  
+
 - name: fan-in
   rate: 100/s
   bucket_size: 100
-  
+
 - name: log
   rate: 100/s
   bucket_size: 100
-  
+
 - name: cleanup
   rate: 100/s
   bucket_size: 100
 
+- name: alternate-queue
+  rate: 100/s
+  bucket_size: 100

@@ -1,0 +1,24 @@
+# Tests for dynamic queues
+state_machines:
+- name: TestDynamicQueue
+  namespace: test_dynamic_queue
+  queue: default
+  task_retry_limit: 10
+
+  states:
+  - name: OnDefaultQueue
+    action: OnDefaultQueue
+    initial: True
+    transitions:
+    - event: OK_EVENT
+      to: OnDynamicQueue
+
+  - name: OnDynamicQueue
+    action: OnDynamicQueue
+    transitions:
+    - event: OK_EVENT
+      to: BackOnDefaultQueue
+
+  - name: BackOnDefaultQueue
+    action: BackOnDefaultQueue
+    final: True

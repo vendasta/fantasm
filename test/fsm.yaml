@@ -8,6 +8,7 @@ state_machines:
 
 - import: backup.yaml
 - import: csv_report_generation.yaml
+- import: test_dynamic_queue.yaml
 
 ##############################################################################
 - name: SimpleMachine
@@ -24,7 +25,7 @@ state_machines:
       - event: event1
         to: state2
         action: TransitionAction1
-  
+
   - name: state2
     entry: EntryAction2
     action: DoAction2
@@ -34,7 +35,7 @@ state_machines:
         to: state3
         action: TransitionAction2
         task_retry_limit: 3
-    
+
   - name: state3
     entry: EntryAction3
     action: DoAction3
@@ -45,9 +46,9 @@ state_machines:
 ##############################################################################
 - name: UrlFanoutExample
   namespace: url_fanout
- 
+
   states:
-   
+
   - name: TwitterSearch
     action: TwitterSearch
     initial: True
@@ -58,19 +59,19 @@ state_machines:
 ##############################################################################
 - name: EmailBatch
   namespace: email_batch
-  
+
   context_types:
     batch-key: google.appengine.ext.db.Key
-  
+
   states:
-    
+
   - name: start-batch
     action: StartBatch
     initial: True
     transitions:
       - event: next
         to: send-email
-    
+
   - name: send-email
     action: SendEmail
     continuation: True
@@ -78,7 +79,7 @@ state_machines:
     transitions:
       - event: next
         to: update-counter
-    
+
   - name: update-counter
     action: UpdateCounter
     final: True
@@ -86,12 +87,12 @@ state_machines:
 
 - name: ValidateEmailBatch
   namespace: email_batch
-  
+
   context_types:
     batch-key: google.appengine.ext.db.Key
 
   states:
-    
+
   - name: validate-batch
     action: ValidateBatch
     initial: True
@@ -103,7 +104,7 @@ state_machines:
   task_retry_limit: 2
   logging: persistent
   use_run_once_semaphore: True
-  
+
   context_types:
     key: google.appengine.ext.db.Key
 
@@ -155,7 +156,7 @@ state_machines:
   task_retry_limit: 2
   logging: persistent
   use_run_once_semaphore: True
-  
+
   context_types:
     ids: json
 
