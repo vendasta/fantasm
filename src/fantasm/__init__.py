@@ -15,6 +15,12 @@ Copyright 2010 VendAsta Technologies Inc.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+Release Notes:
+
+v1.0.0
+- we've been out for a long time, but never had formal release notes. Gotta start somewhere!
+
 """
 
 # W0401:  2: Wildcard import fsm

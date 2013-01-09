@@ -29,7 +29,7 @@ from fantasm.models import _FantasmFanIn
 from fantasm.constants import STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, STEPS_PARAM, MACHINE_STATES_ATTRIBUTE, \
                               CONTINUATION_PARAM, INDEX_PARAM, GEN_PARAM, FORKED_CONTEXTS_PARAM, \
                               FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY, \
-                              HTTP_REQUEST_HEADER_QUEUENAME, QUEUE_NAME_PARAM
+                              HTTP_REQUEST_HEADER_QUEUENAME
 from fantasm_tests.fixtures import AppEngineTestCase
 from fantasm_tests.actions import RaiseExceptionAction, RaiseExceptionContinuationAction
 from fantasm_tests.helpers import TaskQueueDouble, getLoggingDouble
@@ -129,7 +129,7 @@ class FSMContextTests(unittest.TestCase):
     def test_contextSetQueue(self):
         queue = 'some-queue'
         self.context.setQueue(queue)
-        self.assertEquals(self.obj[QUEUE_NAME_PARAM], queue)
+        self.assertEquals(self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME], queue)
 
     def test_contextValuePop(self):
         self.context['foo'] = 'bar'
@@ -425,6 +425,18 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.context.currentState = self.stateInitial
         alternateQueue = 'some-other-queue'
         self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME] = alternateQueue
+        self.context.dispatch('next-event', {})
+        self.assertEquals(mockQueue.name, alternateQueue)
+
+    def test_setQueueCanAlterTheDispatchQueueEvenHeadersArePresent(self):
+        mockQueue = TaskQueueDouble()
+        mock(name='Queue.__init__', returns_func=mockQueue.__init__, tracker=None)
+        mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
+        self.transNormalToFinal.queueName = 'fantasm-queue' # this is what we'll override
+        self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME] = 'queueName'
+        self.context.currentState = self.stateInitial
+        alternateQueue = 'some-other-queue'
+        self.context.setQueue(alternateQueue)
         self.context.dispatch('next-event', {})
         self.assertEquals(mockQueue.name, alternateQueue)
 

@@ -535,7 +535,7 @@ class FSMContext(dict):
 
     def setQueue(self, queueName):
         """ Used to override the queue defined in fsm.yaml, e.g., for dynamic queue selection. """
-        self.__obj[constants.QUEUE_NAME_PARAM] = queueName
+        self.headers[constants.HTTP_REQUEST_HEADER_QUEUENAME] = queueName
 
     def queueDispatch(self, nextEvent, queue=True):
         """ Queues a .dispatch(nextEvent) call in the appengine Task queue.
@@ -551,8 +551,6 @@ class FSMContext(dict):
         queueName = transition.queueName
         if self.headers and self.headers.get(constants.HTTP_REQUEST_HEADER_QUEUENAME):
             queueName = self.headers[constants.HTTP_REQUEST_HEADER_QUEUENAME]
-        elif self.__obj.get(constants.QUEUE_NAME_PARAM):
-            queueName = self.__obj[constants.QUEUE_NAME_PARAM]
         if transition.target.isFanIn:
             task = self._queueDispatchFanIn(nextEvent, fanInPeriod=transition.target.fanInPeriod,
                                             retryOptions=transition.retryOptions,
