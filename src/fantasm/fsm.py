@@ -535,6 +535,8 @@ class FSMContext(dict):
 
     def setQueue(self, queueName):
         """ Used to override the queue defined in fsm.yaml, e.g., for dynamic queue selection. """
+        if self.headers is None:
+            self.headers = {}
         self.headers[constants.HTTP_REQUEST_HEADER_QUEUENAME] = queueName
 
     def queueDispatch(self, nextEvent, queue=True):

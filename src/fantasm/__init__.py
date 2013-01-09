@@ -18,10 +18,15 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.0.1
+- fixed an issue with context.setQueue()
+
 v1.0.0
 - we've been out for a long time, but never had formal release notes. Gotta start somewhere!
 
 """
+
+__version__ = '1.0.1'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401
