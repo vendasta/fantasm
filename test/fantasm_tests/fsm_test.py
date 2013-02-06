@@ -1,5 +1,5 @@
 """ Tests for fantasm.fsm """
-
+import logging
 import time
 import unittest
 import urllib
@@ -1172,3 +1172,101 @@ class StartStateMachineTests(unittest.TestCase):
         startStateMachine(self.machineName, {'a': '1'}, queueName=alternateQueue, _currentConfig=self.currentConfig)
         self.assertEquals(len(self.mockQueue.tasks), 1)
         self.assertEquals(self.getTask(0).headers[HTTP_REQUEST_HEADER_QUEUENAME], alternateQueue)
+
+
+class HaltMachineErrorTest(AppEngineTestCase):
+
+    FILENAME = None
+    MACHINE_NAME = None
+
+    def setUp(self):
+        super(HaltMachineErrorTest, self).setUp()
+        setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
+        self.mockQueue = TaskQueueDouble()
+        mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
+        self.loggingDouble = getLoggingDouble()
+
+    def tearDown(self):
+        super(HaltMachineErrorTest, self).tearDown()
+        restore()
+
+class HaltMachineErrorEntryTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in state's entry. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltMachineInEntry'
+
+    def test_error_in_entry_halts_machine(self):
+        event = self.context.initialize()
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertIsNone(event) # machine stopping
+        self.assertEqual('state-initial', self.context.currentState.name)
+
+class HaltMachineErrorExitTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in state's exit. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltMachineInExit'
+
+    def test_error_in_exit_halts_machine(self):
+        event = self.context.initialize()
+         # "advance" to state-intermediate since the exit state is actually executed before the next state
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertIsNone(event) # machine stopping
+        self.assertEqual('state-initial', self.context.currentState.name) # didn't successfully transition
+
+class HaltMachineErrorTransitionTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in transition's action. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltMachineInTransition'
+
+    def test_error_in_transition_halts_machine(self):
+        event = self.context.initialize()
+         # "advance" to state-intermediate since the transition action is actually executed before the next state
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEqual('state-initial', self.context.currentState.name)
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertIsNone(event) # machine stopping
+        self.assertEqual('state-initial', self.context.currentState.name) # didn't successfully transition
+
+class HaltMachineErrorActionTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in state's action. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltMachineInAction'
+
+    def test_error_in_action_halts_machine(self):
+        event = self.context.initialize()
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertIsNone(event) # machine stopping
+        self.assertEqual('state-initial', self.context.currentState.name)
+
+    def test_message_logged_at_appropriate_level(self):
+        event = self.context.initialize()
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEquals(self.loggingDouble.count['debug'], 1)
+        self.assertEquals(self.loggingDouble.messages['debug'][0], 'instrumented exception')
+
+class HaltMachineErrorContinuationTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in state's continuation. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltInContinuation'
+
+    def test_error_in_continuation_halts_machine(self):
+        event = self.context.initialize()
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertIsNone(event) # machine stopping
+        self.assertEqual('state-initial', self.context.currentState.name)
+
+class HaltMachineErrorActionNoMessageEmittedTests(HaltMachineErrorTest):
+    """ Tests for raising HaltMachineError in state's action. """
+    FILENAME = 'test-HaltMachineErrorTests.yaml'
+    MACHINE_NAME = 'HaltMachineInActionNoMessage'
+
+    def test_message_logged_at_appropriate_level(self):
+        event = self.context.initialize()
+        event = self.context.dispatch(event, TemporaryStateObject())
+        self.assertEquals(self.loggingDouble.count['debug'], 0)
+        self.assertEquals(self.loggingDouble.count['info'], 0)
+        self.assertEquals(self.loggingDouble.count['warning'], 0)
+        self.assertEquals(self.loggingDouble.count['error'], 0)
+        self.assertEquals(self.loggingDouble.count['critical'], 0)

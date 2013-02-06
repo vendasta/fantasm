@@ -1,0 +1,93 @@
+state_machines:
+
+- name: HaltMachineInEntry
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      entry: RaiseHaltMachineErrorAction
+      action: CountExecuteCalls
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True
+
+- name: HaltMachineInExit
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      action: CountExecuteCalls
+      exit: RaiseHaltMachineErrorAction
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-intermediate
+    - name: state-intermediate
+      action: CountExecuteCalls
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True
+
+- name: HaltMachineInTransition
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      action: CountExecuteCalls
+      initial: True
+      transitions:
+        - event: next-event
+          action: RaiseHaltMachineErrorAction
+          to: state-intermediate
+    - name: state-intermediate
+      action: CountExecuteCalls
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True
+
+- name: HaltMachineInAction
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      action: RaiseHaltMachineErrorAction
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True
+
+- name: HaltInContinuation
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      action: RaiseHaltMachineErrorContinuationAction
+      continuation: True
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True
+
+- name: HaltMachineInActionNoMessage
+  namespace: fantasm_tests.actions
+  states:
+    - name: state-initial
+      action: RaiseHaltMachineErrorActionNoMessage
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-final
+    - name: state-final
+      action: CountExecuteCalls
+      final: True

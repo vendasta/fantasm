@@ -16,6 +16,8 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import logging
+
 from google.appengine.api import urlfetch_errors, datastore_errors, taskqueue
 from google.appengine.runtime import apiproxy_errors
 
@@ -43,6 +45,13 @@ TRANSIENT_ERRORS = [
     taskqueue.InternalError,
     UserTransientError,
 ]
+
+class HaltMachineError(Exception):
+    """ Raise this exception in your code to cause the machine to halt. """
+    def __init__(self, message, logLevel=logging.WARNING):
+        self.message = message
+        self.level = logLevel
+        super(HaltMachineError, self).__init__(message)
 
 class FSMRuntimeError(Exception):
     """ The parent class of all Fantasm runtime errors. """

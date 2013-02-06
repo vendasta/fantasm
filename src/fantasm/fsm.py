@@ -49,7 +49,8 @@ from fantasm import constants, config
 from fantasm.log import Logger
 from fantasm.state import State
 from fantasm.transition import Transition
-from fantasm.exceptions import UnknownEventError, UnknownStateError, UnknownMachineError, TRANSIENT_ERRORS
+from fantasm.exceptions import UnknownEventError, UnknownStateError, UnknownMachineError, TRANSIENT_ERRORS, \
+                               HaltMachineError
 from fantasm.models import _FantasmFanIn, _FantasmInstance
 from fantasm import models
 from fantasm.utils import knuthHash
@@ -487,6 +488,10 @@ class FSMContext(dict):
                     self[constants.STEPS_PARAM] = int(self.get(constants.STEPS_PARAM, '0')) + 1
                     self.queueDispatch(FSM.PSEUDO_FINAL)
 
+        except HaltMachineError, e:
+            if e.level is not None and e.message:
+                self.logger.log(e.level, e.message)
+            return None # stop the machine
         except Exception, e:
             level = self.logger.error
             if e.__class__ in TRANSIENT_ERRORS:

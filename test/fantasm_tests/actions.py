@@ -1,10 +1,13 @@
 """ FSMActions used in unit tests """
+import logging
+
+from google.appengine.ext import db
 
 from fantasm.action import DatastoreContinuationFSMAction, ContinuationFSMAction
-from google.appengine.ext import db
 from fantasm.constants import FORK_PARAM
 from fantasm.constants import CONTINUATION_RESULT_KEY
 from fantasm.constants import CONTINUATION_RESULTS_KEY
+from fantasm.exceptions import HaltMachineError
 
 # pylint: disable-msg=C0111, W0613
 # - docstrings not reqd in unit tests
@@ -51,13 +54,13 @@ class CountExecuteCalls(object):
     @property
     def event(self):
         return 'next-event'
-        
+
 class CountExecuteCallsWithSpawn(CountExecuteCalls):
     def execute(self, context, obj):
         context.spawn('MachineToSpawn', [{'a': '1'}, {'b': '2'}])
         super(CountExecuteCallsWithSpawn, self).execute(context, obj)
         return None
-        
+
 class CountExecuteCallsWithFork(object):
     def __init__(self):
         self.count = 0
@@ -74,7 +77,7 @@ class CountExecuteCallsWithFork(object):
     @property
     def event(self):
         return 'next-event'
-    
+
 class CountExecuteAndContinuationCalls(object):
     def __init__(self):
         self.count = 0
@@ -98,7 +101,7 @@ class CountExecuteAndContinuationCalls(object):
     @property
     def event(self):
         return 'next-event'
-    
+
 class CountExecuteCallsFanInEntry(object):
     def __init__(self):
         self.count = 0
@@ -116,10 +119,10 @@ class CountExecuteCallsFanInEntry(object):
     @property
     def event(self):
         return None
-    
+
 class ResultModel( db.Model ):
     total = db.IntegerProperty()
-    
+
 class CountExecuteCallsFanIn(CountExecuteCallsFanInEntry):
     CONTEXTS = []
     def execute(self, context, obj):
@@ -133,7 +136,7 @@ class CountExecuteCallsFanIn(CountExecuteCallsFanInEntry):
     @property
     def event(self):
         return 'next-event'
-    
+
 class CountExecuteCallsFanInFinal(CountExecuteCallsFanIn):
     @property
     def event(self):
@@ -143,7 +146,7 @@ class CountExecuteCallsFinal(CountExecuteCalls):
     @property
     def event(self):
         return None
-    
+
 class CountExecuteCallsSelfTransition(object):
     def __init__(self):
         self.count = 0
@@ -157,17 +160,31 @@ class CountExecuteCallsSelfTransition(object):
             return 'next-event1'
         else:
             return 'next-event2'
-    
+
 class RaiseExceptionAction(object):
     def execute(self, context, obj):
         raise Exception('instrumented exception')
-    
+
 class RaiseExceptionContinuationAction(object):
     def continuation(self, context, obj, token=None):
         return "token"
     def execute(self, context, obj):
         raise Exception('instrumented exception')
-        
+
+class RaiseHaltMachineErrorAction(object):
+    def execute(self, context, obj):
+        raise HaltMachineError('instrumented exception', logLevel=logging.DEBUG)
+
+class RaiseHaltMachineErrorActionNoMessage(object):
+    def execute(self, context, obj):
+        raise HaltMachineError('instrumented exception', logLevel=None) # do not log
+
+class RaiseHaltMachineErrorContinuationAction(object):
+    def continuation(self, context, obj, token=None):
+        raise HaltMachineError('instrumented exception', logLevel=logging.DEBUG)
+    def execute(self, context, obj):
+        return 'next-event'
+
 class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
     def __init__(self):
         super(TestDatastoreContinuationFSMAction, self).__init__()
@@ -197,13 +214,13 @@ class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
             self.fails -= 1
             raise Exception()
         return 'next-event'
-    
+
 class TestDatastoreContinuationFSMActionFanInGroupFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
         if obj.has_key(CONTINUATION_RESULTS_KEY) and obj[CONTINUATION_RESULTS_KEY]:
             context['fan-in-group'] = obj[CONTINUATION_RESULTS_KEY][0].key().id_or_name()
-        return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)    
-    
+        return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)
+
 class HappySadContinuationFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
@@ -218,7 +235,7 @@ class HappySadContinuationFSMAction(TestDatastoreContinuationFSMAction):
             return 'happy'
         else:
             return 'sad'
-        
+
 class TestFileContinuationFSMAction(ContinuationFSMAction):
     CONTEXTS = []
     ENTRIES = ['a', 'b', 'c', 'd']
@@ -249,7 +266,7 @@ class TestFileContinuationFSMAction(ContinuationFSMAction):
             self.fails -= 1
             raise Exception()
         return 'next-event'
-    
+
 class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
     def __init__(self):
         super(TestContinuationAndForkFSMAction, self).__init__()
@@ -278,19 +295,19 @@ class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
         if self.fails:
             self.fails -= 1
             raise Exception()
-        
+
         # FIXME: this pattern is a bit awkward, or is it?
         # FIXME: how can we drive this into yaml?
         # FIXME: maybe just another provided base class like DatastoreContinuationFSMAction?
-        
+
         # fork a machine to deal with all but one of the continuation dataset
         for result in obj[CONTINUATION_RESULTS_KEY][1:]:
             context.fork(data={'key': result.key()})
-            
+
         # and deal with the leftover data item
         context['key'] = obj[CONTINUATION_RESULT_KEY].key()
         context[FORK_PARAM] = -1
-        
+
         # this event will be dispatched to this machine an all the forked contexts
         return 'next-event'
 
@@ -344,7 +361,7 @@ class FSCEE_InitialState(object):
     def execute(self, context, obj):
         self.count += 1
         return 'ok'
-        
+
 class FSCEE_OptionalFinalState(object):
     def __init__(self):
         self.count = 0
@@ -352,7 +369,7 @@ class FSCEE_OptionalFinalState(object):
         self.count += 1
         # a final state should be able to emit an event
         return 'ok'
-        
+
 class FSCEE_FinalState(object):
     def __init__(self):
         self.count = 0

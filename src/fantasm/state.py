@@ -21,7 +21,7 @@ from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsErro
 from fantasm import constants
 from fantasm.transition import Transition
 from fantasm.exceptions import UnknownEventError, InvalidEventNameRuntimeError, FanInNoContextsAvailableRuntimeError, \
-                               TRANSIENT_ERRORS
+                               TRANSIENT_ERRORS, HaltMachineError
 from fantasm.utils import knuthHash
 from fantasm.lock import RunOnceSemaphore
 
@@ -104,6 +104,8 @@ class State(object):
             try:
                 context.currentAction = context.currentState.exitAction
                 context.currentState.exitAction.execute(context, obj)
+            except HaltMachineError:
+                raise # let it bubble up quietly
             except Exception, e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
@@ -132,6 +134,8 @@ class State(object):
             try:
                 context.currentAction = context.currentState.entryAction
                 context.currentState.entryAction.execute(contextOrContexts, obj)
+            except HaltMachineError:
+                raise # let it bubble up quietly
             except Exception, e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
@@ -147,7 +151,8 @@ class State(object):
                 if nextToken:
                     context.continuation(nextToken)
                 context.pop(constants.CONTINUATION_PARAM, None) # pop this off because it is really long
-
+            except HaltMachineError:
+                raise # let it bubble up quietly
             except Exception, e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
@@ -165,6 +170,8 @@ class State(object):
             try:
                 context.currentAction = context.currentState.doAction
                 nextEvent = context.currentState.doAction.execute(contextOrContexts, obj)
+            except HaltMachineError:
+                raise # let it bubble up quietly
             except Exception, e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:

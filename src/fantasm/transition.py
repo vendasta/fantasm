@@ -16,7 +16,7 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from fantasm.exceptions import TRANSIENT_ERRORS
+from fantasm.exceptions import TRANSIENT_ERRORS, HaltMachineError
 
 class Transition(object):
     """ A transition object for a machine. """
@@ -53,6 +53,8 @@ class Transition(object):
         if self.action:
             try:
                 self.action.execute(context, obj)
+            except HaltMachineError:
+                raise # let it bubble up quietly
             except Exception, e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:

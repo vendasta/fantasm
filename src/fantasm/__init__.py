@@ -18,6 +18,13 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.1.0
+- added fantasm.exceptions.HaltMachineError; when raised the machine will be stopped without needing
+  to specify "final: True" on the state. Normally if a None event is returned from a "final: False"
+  state, Fantasm complains loudly. HaltMachineError provides a way to kill a machine without this
+  loud complaint in the logs, though the HaltMachineError allows you to provide a log message and
+  a log level to log at (logLevel=None means do not emit a message at all).
+
 v1.0.1
 - fixed an issue with context.setQueue()
 
@@ -26,7 +33,7 @@ v1.0.0
 
 """
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401
