@@ -18,6 +18,9 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.1.1
+- very minor bug fix
+
 v1.1.0
 - added fantasm.exceptions.HaltMachineError; when raised the machine will be stopped without needing
   to specify "final: True" on the state. Normally if a None event is returned from a "final: False"
@@ -33,7 +36,7 @@ v1.0.0
 
 """
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401

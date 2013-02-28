@@ -1005,7 +1005,7 @@ def startStateMachine(machineName, contexts, taskName=None, method='POST', count
             headers = {}
         if constants.HTTP_REQUEST_HEADER_QUEUENAME in headers:
             logging.warn('queueName "%s" overrides existing queueName in headers "%s". Using former.' % \
-                         queueName, headers[contants.HTTP_REQUEST_HEADER_QUEUENAME])
+                         queueName, headers[constants.HTTP_REQUEST_HEADER_QUEUENAME])
         headers[constants.HTTP_REQUEST_HEADER_QUEUENAME] = queueName
 
     instances = [fsm.createFSMInstance(machineName, data=context, method=method, headers=headers)
