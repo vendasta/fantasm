@@ -89,7 +89,7 @@ def _findYaml(yamlNames=constants.YAML_NAMES):
         directory = parent
     return None
 
-def loadYaml(filename=None, importedAlready=None):
+def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
     """ Loads the YAML and constructs a configuration from it. """
     if not filename:
         filename = _findYaml()
@@ -105,12 +105,15 @@ def loadYaml(filename=None, importedAlready=None):
     finally:
         yamlFile.close()
 
-    return Configuration(configDict, importedAlready=importedAlready)
+    return Configuration(configDict,
+                         importedAlready=importedAlready,
+                         rootUrl=rootUrl,
+                         enableCapabilitiesCheck=enableCapabilitiesCheck)
 
 class Configuration(object):
     """ An overall configuration that corresponds to a fantasm.yaml file. """
 
-    def __init__(self, configDict, importedAlready=None):
+    def __init__(self, configDict, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
         """ Constructs the configuration from a dictionary of values. """
 
         importedAlready = importedAlready or []
@@ -118,7 +121,22 @@ class Configuration(object):
         if constants.STATE_MACHINES_ATTRIBUTE not in configDict:
             raise exceptions.StateMachinesAttributeRequiredError()
 
-        self.rootUrl = configDict.get(constants.ROOT_URL_ATTRIBUTE, constants.DEFAULT_ROOT_URL)
+        if rootUrl is None:
+            self.rootUrl = configDict.get(constants.ROOT_URL_ATTRIBUTE, constants.DEFAULT_ROOT_URL)
+        else:
+            self.rootUrl = rootUrl
+            if constants.ROOT_URL_ATTRIBUTE in configDict:
+                message = 'Cannot specify "%s" in an imported .yaml file.' % constants.ROOT_URL_ATTRIBUTE
+                raise exceptions.ConfigurationError(message)
+        if enableCapabilitiesCheck is None:
+            self.enableCapabilitiesCheck = configDict.get(constants.ENABLE_CAPABILITIES_CHECK_ATTRIBUTE,
+                                                          constants.DEFAULT_ENABLE_CAPABILITIES_CHECK)
+        else:
+            self.enableCapabilitiesCheck = enableCapabilitiesCheck
+            if constants.ENABLE_CAPABILITIES_CHECK_ATTRIBUTE in configDict:
+                message = 'Cannot specify "%s" in an imported .yaml file.' % \
+                          constants.ENABLE_CAPABILITIES_CHECK_ATTRIBUTE
+                raise exceptions.ConfigurationError(message)
         if not self.rootUrl.endswith('/'):
             self.rootUrl += '/'
 
@@ -170,7 +188,10 @@ class Configuration(object):
         if yamlFile in importedAlready:
             raise exceptions.YamlFileCircularImportError(importYamlFile)
         importedAlready.append(yamlFile)
-        importedConfig = loadYaml(filename=yamlFile, importedAlready=importedAlready)
+        importedConfig = loadYaml(filename=yamlFile,
+                                  importedAlready=importedAlready,
+                                  rootUrl=self.rootUrl,
+                                  enableCapabilitiesCheck=self.enableCapabilitiesCheck)
         self.__addMachinesFromImportedConfig(importedConfig)
 
     BUILTIN_MACHINES = (
@@ -185,7 +206,10 @@ class Configuration(object):
             if yamlFile in importedAlready:
                 continue
             importedAlready.append(yamlFile)
-            importedConfig = loadYaml(filename=yamlFile, importedAlready=importedAlready)
+            importedConfig = loadYaml(filename=yamlFile,
+                                      importedAlready=importedAlready,
+                                      rootUrl=self.rootUrl,
+                                      enableCapabilitiesCheck=self.enableCapabilitiesCheck)
             self.__addMachinesFromImportedConfig(importedConfig)
 
 def deserializeNDBKey(serialized):

@@ -116,6 +116,7 @@ YAML_NAMES = ('fsm.yaml', 'fsm.yml', 'fantasm.yaml', 'fantasm.yml')
 DEFAULT_ROOT_URL = '/fantasm/' # where all the fantasm handlers are mounted
 DEFAULT_LOG_URL = '/fantasm/log/'
 DEFAULT_CLEANUP_URL = '/fantasm/cleanup/'
+DEFAULT_ENABLE_CAPABILITIES_CHECK = True
 
 ### attribute names for YAML parsing
 
@@ -133,6 +134,7 @@ TASK_AGE_LIMIT_ATTRIBUTE = 'task_age_limit'
 MAX_DOUBLINGS_ATTRIBUTE = 'max_doublings'
 
 ROOT_URL_ATTRIBUTE = 'root_url'
+ENABLE_CAPABILITIES_CHECK_ATTRIBUTE = 'enable_capabilities_check'
 STATE_MACHINES_ATTRIBUTE = 'state_machines'
 
 MACHINE_NAME_ATTRIBUTE = 'name'

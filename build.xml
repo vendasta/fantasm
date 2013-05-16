@@ -9,7 +9,7 @@
     <property name="toolsdir" value="${basedir}/tools"/>
     <property name="releasedir" value="${basedir}/release"/>
     <property name="appenginedir" value="/usr/local/google_appengine"/>
-    <property name="tests.pythonpath" value="${testdir}:${srcdir}:${basedir}:${appenginedir}:${appenginedir}/lib/simplejson:${appenginedir}/lib/yaml/lib:${appenginedir}/lib/webob_1_1_1:${appenginedir}/lib/django:${appenginedir}/lib/fancy_urllib:${toolsdir}"/>
+    <property name="tests.pythonpath" value="${testdir}:${srcdir}:${basedir}:${appenginedir}:${appenginedir}/lib/simplejson:${appenginedir}/lib/yaml/lib:${appenginedir}/lib/webob-1.1.1:${appenginedir}/lib/django:${appenginedir}/lib/fancy_urllib:${toolsdir}"/>
 
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
         <classpath>
@@ -53,7 +53,7 @@
         <property name="pylint.module" value="fantasm"/>
         <property name="pylint.cwd" value="${srcdir}"/>
     </target>
-    
+
     <target name="pylint-module-test">
         <property name="pylint.module" value="fantasm_tests complex_machine email_batch main simple_machine url_fanout"/>
         <property name="pylint.cwd" value="${testdir}"/>
@@ -65,10 +65,10 @@
             <env key="PYTHONPATH" value="${tests.pythonpath}" />
             <arg line="--rcfile=${toolsdir}/pylintrc --include-ids=y ${pylint.module}"/>
         </exec>
-        
+
         <!-- echo for debugging -->
         <echo>${pylint.output}</echo>
-        
+
         <!-- make sure the output is as expected -->
         <fail message="Pylint produced output. It must have failed.">
             <condition>
@@ -78,10 +78,10 @@
             </condition>
         </fail>
     </target>
-    
+
     <target name="pylint" depends="pylint-module-src, _pylint"/>
     <target name="pylint-test" depends="pylint-module-test, _pylint"/>
-        
+
     <target name="copy-test-files" depends="clean">
         <!-- copy src files to builddir -->
         <delete dir="${releasedir}"/>
@@ -101,14 +101,14 @@
 
     <target name="rewrite-app-yaml" depends="copy-test-files">
         <!-- rewrite app.yaml -->
-        <replaceregexp file="${releasedir}/app.yaml" 
-                       match="application:.+" 
+        <replaceregexp file="${releasedir}/app.yaml"
+                       match="application:.+"
                        replace="application: ${app.yaml.application}"/>
-        <replaceregexp file="${releasedir}/app.yaml" 
-                       match="version:.+" 
+        <replaceregexp file="${releasedir}/app.yaml"
+                       match="version:.+"
                        replace="version: ${app.yaml.version}"/>
     </target>
-    
+
     <target name="_setup-integration-test-properties">
         <property name="integration-test-url" value="integration-test"/>
     </target>
@@ -123,7 +123,7 @@
         <exec executable="${appenginedir}/appcfg.py" resultproperty="appcfg.retcode" inputstring="${env.gae.pwd}">
             <arg line="update ${releasedir} --no_cookies --email=${env.gae.email} --passin"/>
         </exec>
-        
+
         <fail message="App Engine deployment failed; non-zero return code.">
             <condition>
                 <not>
@@ -131,17 +131,17 @@
                 </not>
             </condition>
         </fail>
-        
+
         <!-- kick off the integration run -->
         <tempfile property="temp.file" suffix=".html"/>
         <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/${integration-test-url}/?token=${integration_test_token}" dest="${temp.file}"/>
     </target>
-    
+
     <target name="integration-test" depends="_setup-integration-test-properties, _integration-test"/>
     <target name="ndb-integration-test" depends="_setup-ndb-integration-test-properties, _integration-test"/>
 
-    <!-- work in progress 
-    
+    <!-- work in progress
+
     <target name="integration-test-results">
         <tempfile property="temp.file" suffix=".html"/>
         <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/integration-test-results/?token=${integration_test_results_token}" dest="${temp.file}"/>
@@ -151,7 +151,7 @@
                 <equals arg1="${integration.result}" arg2="notdone"/>
             </condition>
         </fail>
-        
+
         ##teamcity[buildStatisticValue key='overcounts' value='3']
 
         Project-Level Charts
@@ -163,16 +163,16 @@
         Almost the same as for main-config.xml, but there is an intermediate custom-graphs tag:
 
         <settings>
- 
+
           <custom-graphs>
- 
+
            <graph title="Integration Results" hideFilters="showFailed" seriesTitle="Series">
               <valueType key="overcounts" title="Overcounts" buildTypeId="bt1119"/>
-              <valueType key="undercounts" title="Undercounts" buildTypeId="bt1119"/> 
+              <valueType key="undercounts" title="Undercounts" buildTypeId="bt1119"/>
             </graph>
- 
+
           </custom-graphs>
- 
+
         </settings>
 
 

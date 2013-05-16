@@ -1,3 +1,6 @@
+root_url: /another-root
+enable_capabilities_check: False
+
 state_machines:
 
 - import: test/fantasm_tests/yaml/test-TypeCoercionTests.yaml

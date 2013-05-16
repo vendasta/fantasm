@@ -18,6 +18,11 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.2.0
+- allow the capabilities check to be configured with "enable_capabilties_check" in fantasm.yaml (default True)
+- fixed https://code.google.com/p/fantasm/issues/detail?id=8
+- fixes https://code.google.com/p/fantasm/issues/detail?id=10
+
 v1.1.1
 - very minor bug fix
 
@@ -36,7 +41,7 @@ v1.0.0
 
 """
 
-__version__ = '1.1.1'
+__version__ = '1.2.0'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401

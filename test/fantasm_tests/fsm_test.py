@@ -989,6 +989,14 @@ class ContextYamlImportTests(unittest.TestCase):
         self.assertTrue('TypeCoercionTests' in self.currentConfig.machines)
         self.assertTrue('Foo' in self.currentConfig.machines)
 
+    def test_import_does_not_change_global_config_root_url(self):
+        setUpByFilename(self, 'test-YamlImport.yaml', machineName='Foo')
+        self.assertEquals('/another-root/', self.currentConfig.rootUrl)
+
+    def test_import_does_not_change_global_config_enable_capabilities_check(self):
+        setUpByFilename(self, 'test-YamlImport.yaml', machineName='Foo')
+        self.assertFalse(self.currentConfig.enableCapabilitiesCheck)
+
     def test_import_circular_fails(self):
         self.assertRaises(YamlFileCircularImportError, setUpByFilename,
                           self, 'test-YamlImportCircular.yaml', machineName='Foo')

@@ -201,12 +201,13 @@ class FSMHandler(webapp.RequestHandler):
         """
 
         # ensure that we have our services for the next 30s (length of a single request)
-        unavailable = set()
-        for service in REQUIRED_SERVICES:
-            if not CapabilitySet(service).is_enabled():
-                unavailable.add(service)
-        if unavailable:
-            raise RequiredServicesUnavailableRuntimeError(unavailable)
+        if config.currentConfiguration().enableCapabilitiesCheck:
+            unavailable = set()
+            for service in REQUIRED_SERVICES:
+                if not CapabilitySet(service).is_enabled():
+                    unavailable.add(service)
+            if unavailable:
+                raise RequiredServicesUnavailableRuntimeError(unavailable)
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
@@ -260,7 +261,7 @@ class FSMHandler(webapp.RequestHandler):
             if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
                 # we can simply return here, this is a duplicate fired task
                 logging.warn('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
-                self.response.status_code = 200
+                self.response.set_status(200)
                 return
 
         # in "immediate mode" we try to execute as much as possible in the current request
