@@ -17,7 +17,7 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
-from google.appengine.ext import db
+from google.appengine.ext import db, ndb
 from google.appengine.api import datastore_types
 
 import datetime
@@ -30,13 +30,17 @@ else:
 
 
 def decode(dct):
-    """ Special handler for db.Key/datetime.datetime decoding """
+    """ Special handler for db.Key/ndb.Key/datetime.datetime decoding """
     if '__set__' in dct:
         return set(dct['key'])
     if '__db.Key__' in dct:
         return db.Key(dct['key'])
     if '__db.Model__' in dct:
         return db.Key(dct['key']) # turns into a db.Key across serialization
+    if '__ndb.Key__' in dct:
+        return ndb.Key(urlsafe=dct['key'])
+    if '__ndb.Model__' in dct:
+        return ndb.Key(urlsafe=dct['key']) # turns into an ndb.Key across serialization
     if '__datetime.datetime__' in dct:
         return datetime.datetime(**dct['datetime'])
     return dct
@@ -53,6 +57,10 @@ class Encoder(json.JSONEncoder): # pylint: disable-msg=W0232
             return {'__db.Key__': True, 'key': str(obj)}
         if isinstance(obj, db.Model):
             return {'__db.Model__': True, 'key': str(obj.key())} # turns into a db.Key across serialization
+        if isinstance(obj, ndb.Key):
+            return {'__ndb.Key__': True, 'key': str(obj.urlsafe())}
+        if isinstance(obj, ndb.Model):
+            return {'__ndb.Model__': True, 'key': str(obj.key.urlsafe())}  # turns into a ndb.Key across serialization
         if isinstance(obj, datetime.datetime) and \
            obj.tzinfo is None: # only UTC datetime objects are supported
             return {'__datetime.datetime__': True, 'datetime': {'year': obj.year,
@@ -69,20 +77,20 @@ class JSONProperty(db.Property):
     From Google appengine cookbook... a Property for storing dicts in the datastore
     """
     data_type = datastore_types.Text
-    
+
     def get_value_for_datastore(self, modelInstance):
         """ see Property.get_value_for_datastore """
         value = super(JSONProperty, self).get_value_for_datastore(modelInstance)
         return db.Text(self._deflate(value))
-    
+
     def validate(self, value):
         """ see Property.validate """
         return self._inflate(value)
-    
+
     def make_value_from_datastore(self, value):
         """ see Property.make_value_from_datastore """
         return self._inflate(value)
-    
+
     def _inflate(self, value):
         """ decodes string -> dict """
         if value is None:
@@ -90,12 +98,12 @@ class JSONProperty(db.Property):
         if isinstance(value, unicode) or isinstance(value, str):
             return json.loads(value, object_hook=decode)
         return value
-    
+
     def _deflate(self, value):
         """ encodes dict -> string """
         return json.dumps(value, cls=Encoder)
-    
-    
+
+
 class _FantasmFanIn( db.Model ):
     """ A model used to store FSMContexts for fan in """
     workIndex = db.StringProperty()
@@ -103,14 +111,14 @@ class _FantasmFanIn( db.Model ):
     # FIXME: createdTime only needed for scrubbing, but indexing might be a performance hit
     #        http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
     createdTime = db.DateTimeProperty(auto_now_add=True)
-    
+
 class _FantasmInstance( db.Model ):
     """ A model used to to store FSMContext instances """
     instanceName = db.StringProperty()
     # FIXME: createdTime only needed for scrubbing, but indexing might be a performance hit
     #        http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
     createdTime = db.DateTimeProperty(auto_now_add=True)
-    
+
 class _FantasmLog( db.Model ):
     """ A model used to store log messages """
     taskName = db.StringProperty()
