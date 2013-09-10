@@ -18,6 +18,18 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.3.0
+- allow countdown on transition to accept a minimum/maximum value; the countdown will be chosen
+  randomly between these two ranges, e.g.,
+
+      transitions:
+        - event: next
+          to: next-state
+          action: MyAction
+          countdown:
+            minimum: 30
+            maximum: 60
+
 v1.2.1
 - fixed bug related to default serialization of ndb.Key on fan-in states
 
@@ -44,7 +56,7 @@ v1.0.0
 
 """
 
-__version__ = '1.2.1'
+__version__ = '1.3.0'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401

@@ -1,0 +1,34 @@
+state_machines:
+
+- name: TaskQueueFSMRandomCountdownTests
+  namespace: fantasm_tests.actions
+  queue: default
+
+  states:
+
+    - name: state-initial
+      entry: CountExecuteCalls
+      action: CountExecuteCalls
+      exit: CountExecuteCalls
+      initial: True
+      transitions:
+        - event: next-event
+          to: state-normal
+          action: CountExecuteCalls
+
+    - name: state-normal
+      entry: CountExecuteCalls
+      action: CountExecuteCalls
+      exit: CountExecuteCalls
+      transitions:
+        - event: next-event
+          to: state-final
+          action: CountExecuteCalls
+          countdown:
+            minimum: 30
+            maximum: 60
+
+    - name: state-final
+      entry: CountExecuteCalls
+      action: CountExecuteCallsFinal
+      final: True

@@ -608,10 +608,36 @@ class _TransitionConfig(object):
 
         # transition countdown
         self.countdown = transDict.get(constants.COUNTDOWN_ATTRIBUTE, machine.countdown)
-        try:
-            self.countdown = int(self.countdown)
-        except ValueError:
-            raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+        if isinstance(self.countdown, dict):
+            if len(self.countdown) > 2:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            if constants.COUNTDOWN_MINIMUM_ATTRIBUTE not in self.countdown:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            if constants.COUNTDOWN_MAXIMUM_ATTRIBUTE not in self.countdown:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            try:
+                self.countdown[constants.COUNTDOWN_MINIMUM_ATTRIBUTE] = \
+                    int(self.countdown[constants.COUNTDOWN_MINIMUM_ATTRIBUTE])
+            except ValueError:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            try:
+                self.countdown[constants.COUNTDOWN_MAXIMUM_ATTRIBUTE] = \
+                    int(self.countdown[constants.COUNTDOWN_MAXIMUM_ATTRIBUTE])
+            except ValueError:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            if self.countdown[constants.COUNTDOWN_MAXIMUM_ATTRIBUTE] < \
+                self.countdown[constants.COUNTDOWN_MINIMUM_ATTRIBUTE]:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            if self.countdown[constants.COUNTDOWN_MINIMUM_ATTRIBUTE] < 0:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
+            # turn it in to a tuple
+            self.countdown = (self.countdown[constants.COUNTDOWN_MINIMUM_ATTRIBUTE],
+                              self.countdown[constants.COUNTDOWN_MAXIMUM_ATTRIBUTE])
+        else:
+            try:
+                self.countdown = int(self.countdown)
+            except ValueError:
+                raise exceptions.InvalidCountdownError(self.countdown, self.machineName, self.fromState.name)
         if self.countdown and self.toState.fanInPeriod != constants.NO_FAN_IN:
             raise exceptions.UnsupportedConfigurationError(self.machineName, self.fromState.name,
                 'Countdown cannot be specified on a transition to a fan_in state.'

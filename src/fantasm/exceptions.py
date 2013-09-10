@@ -387,8 +387,10 @@ class InvalidCountdownError(ConfigurationError):
     """ Countdown must be a positive integer. """
     def __init__(self, countdown, machineName, fromStateName):
         """ Initialize exception """
-        message = 'Countdown "%s" must be a positive integer. (Machine %s, State %s)' % \
-                  (countdown, machineName, fromStateName)
+        message = ('Countdown "%s" must be a positive integer or a dict containing only %s and %s. ' +
+                   '(Machine %s, State %s)') % \
+                  (countdown, constants.COUNTDOWN_MINIMUM_ATTRIBUTE, constants.COUNTDOWN_MAXIMUM_ATTRIBUTE,
+                   machineName, fromStateName)
         super(InvalidCountdownError, self).__init__(message)
 
 class InvalidMachineAttributeError(ConfigurationError):

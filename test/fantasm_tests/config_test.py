@@ -650,8 +650,49 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'MockAction'
         self.assertRaises(exceptions.UnsupportedConfigurationError, self.fsm.addTransition, self.transDict, 'GoodState')
 
-    def test_countdownMustBeAnInteger(self):
+    def test_countdownMayNotBeAString(self):
         self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 'abc'
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMayBeADictionary(self):
+        d = {'minimum': 30, 'maximum': 60}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        transition = self.fsm.addTransition(self.transDict, 'GoodState')
+        self.assertEquals(transition.countdown, (30, 60)) # converted to a tuple
+
+    def test_countdownMustHaveMinimumIfDictionary(self):
+        d = {'maximum': 60}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMustHaveMaximumIfDictionary(self):
+        d = {'minimum': 30}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMustOnlyHaveMinimumAndMaximumIfDictionary(self):
+        d = {'minimum': 30, 'maximum': 60, 'other': 90}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMinimumMustBeInteger(self):
+        d = {'minimum': 'abc', 'maximum': 60}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMaximumMustBeInteger(self):
+        d = {'minimum': 30, 'maximum': 'abc'}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMinimumMustBeNonNegative(self):
+        d = {'minimum': -1, 'maximum': 60}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
+        self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
+
+    def test_countdownMaximumMustBeGreaterOrEqualToMinimum(self):
+        d = {'minimum': 60, 'maximum': 1}
+        self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
         self.assertRaises(exceptions.InvalidCountdownError, self.fsm.addTransition, self.transDict, 'GoodState')
 
     def test_countdownParsed(self):

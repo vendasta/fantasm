@@ -232,13 +232,15 @@ class TaskQueueFSMTests(AppEngineTestCase):
 
     def setUp(self):
         super(TaskQueueFSMTests, self).setUp()
+        self.maxDiff = None
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
         machineName = getMachineNameByFilename(filename)
 
-        self.stateInitial = self.factory.machines[machineName][MACHINE_STATES_ATTRIBUTE]['state-initial']
-        self.stateNormal = self.factory.machines[machineName][MACHINE_STATES_ATTRIBUTE]['state-normal']
-        self.stateFinal = self.factory.machines[machineName][MACHINE_STATES_ATTRIBUTE]['state-final']
+        states = self.factory.machines[machineName][MACHINE_STATES_ATTRIBUTE]
+        self.stateInitial = states['state-initial']
+        self.stateNormal = states['state-normal']
+        self.stateFinal = states['state-final']
         self.transInitialToNormal = self.stateInitial._eventToTransition['next-event']
         self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
 
@@ -460,6 +462,39 @@ class TaskQueueFSMTests(AppEngineTestCase):
     #     self.transNormalToFinal.taskRetryLimit = 10
     #     self.context.taskRetryLimit = 10
     #     self.assertRaises(InvalidEventNameRuntimeError, self.context.dispatch, 'next-event', None)
+
+class TaskQueueFSMRandomCountdownTests(AppEngineTestCase):
+
+    def setUp(self):
+        super(TaskQueueFSMRandomCountdownTests, self).setUp()
+        self.maxDiff = None
+        filename = 'test-TaskQueueFSMRandomCountdownTests.yaml'
+        setUpByFilename(self, filename)
+        machineName = getMachineNameByFilename(filename)
+
+        states = self.factory.machines[machineName][MACHINE_STATES_ATTRIBUTE]
+        self.stateInitial = states['state-initial']
+        self.stateNormal = states['state-normal']
+        self.stateFinal = states['state-final']
+        self.transInitialToNormal = self.stateInitial._eventToTransition['next-event']
+        self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
+
+    def tearDown(self):
+        super(TaskQueueFSMRandomCountdownTests, self).tearDown()
+        restore()
+
+    def test_normalStateDispatchUsesRandomCountdown(self):
+        import time
+        mockQueue = TaskQueueDouble()
+        mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
+
+        self.context.currentState = self.stateInitial
+        self.context.dispatch('next-event', {})
+
+        (task, transactional) = mockQueue.tasks[0]
+        # compare 29->61 instead of 30->60 just to leave a little wiggy room for test execution time
+        self.assertTrue(time.time()+29 <= getattr(task, '_Task__eta_posix'))
+        self.assertTrue(time.time()+61 >= getattr(task, '_Task__eta_posix'))
 
 # some bits borrowed from the taskqueue implementation
 class _UTCTimeZone(datetime.tzinfo):

@@ -1,33 +1,35 @@
 """ Views for the console. """
 
 from google.appengine.ext import webapp
+import fantasm
 from fantasm import config
 
 class Dashboard(webapp.RequestHandler):
     """ The main dashboard. """
-    
+
     def get(self):
         """ GET """
-        
+
         self.response.out.write(self.generateDashboard())
-        
-        
+
+
     def generateDashboard(self):
         """ Generates the HTML for the dashboard. """
-        
+
         currentConfig = config.currentConfiguration()
-        
+
         s = """
 <html>
 <head>
-  <title>Fantasm</title>
-"""
+  <title>Fantasm v%s</title>
+""" % fantasm.__version__
+
         s += STYLESHEET
         s += """
 </head>
 <body>
 
-<h1>Fantasm</h1>
+<h1>Fantasm  v%s</h1>
 
 <h4>Configured Machines</h4>
 
@@ -42,7 +44,8 @@ class Dashboard(webapp.RequestHandler):
   </tr>
 </thead>
 <tbody>
-"""
+""" % fantasm.__version__
+
         even = True
         for machineKey in sorted(currentConfig.machines.keys()):
             machine = currentConfig.machines[machineKey]

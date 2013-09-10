@@ -563,7 +563,10 @@ class FSMContext(dict):
                                             retryOptions=transition.retryOptions,
                                             queueName=queueName, taskTarget=transition.taskTarget)
         else:
-            task = self._queueDispatchNormal(nextEvent, queue=queue, countdown=transition.countdown,
+            countdown = transition.countdown
+            if isinstance(countdown, tuple): # (minumum, maximum), randomly choose
+                countdown = random.randint(countdown[0], countdown[1])
+            task = self._queueDispatchNormal(nextEvent, queue=queue, countdown=countdown,
                                              retryOptions=transition.retryOptions,
                                              queueName=queueName, taskTarget=transition.taskTarget)
 
