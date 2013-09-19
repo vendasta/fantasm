@@ -18,6 +18,10 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.3.1
+- added context.getInstanceStartTime(), which returns a datetime object with the UTC datetime
+  when the instance was started
+
 v1.3.0
 - allow countdown on transition to accept a minimum/maximum value; the countdown will be chosen
   randomly between these two ranges, e.g.,
@@ -56,7 +60,7 @@ v1.0.0
 
 """
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401

@@ -154,6 +154,11 @@ class FSMContextTests(unittest.TestCase):
         instanceName2 = context2.instanceName
         self.assertNotEquals(instanceName1, instanceName2)
 
+    def test_datetimeParsedFromInstaneName(self):
+        instanceName = self.context.instanceName
+        sdate = datetime.datetime.strptime(instanceName.rsplit('-')[-2], '%Y%m%d%H%M%S')
+        self.assertEquals(self.context.getInstanceStartTime(), sdate)
+
     def test_clone(self):
         self.context['foo'] = 'bar'
         clone = self.getContextWithoutSpecialEntries().clone()

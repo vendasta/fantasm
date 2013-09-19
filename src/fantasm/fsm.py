@@ -306,15 +306,27 @@ class FSMContext(dict):
         from google.appengine.api.taskqueue.taskqueue import Queue
         self.Queue = Queue # pylint: disable-msg=C0103
 
+    INSTANCE_NAME_DTFORMAT = '%Y%m%d%H%M%S'
+
     def _generateUniqueInstanceName(self):
         """ Generates a unique instance name for this machine.
 
         @return: a FSMContext instanceName that is (pretty darn likely to be) unique
         """
         utcnow = datetime.datetime.utcnow()
-        dateStr = utcnow.strftime('%Y%m%d%H%M%S')
+        dateStr = utcnow.strftime(self.INSTANCE_NAME_DTFORMAT)
         randomStr = ''.join(random.sample(constants.CHARS_FOR_RANDOM, 6))
+        # note this construction is important for getInstanceStartTime()
         return '%s-%s-%s' % (self.machineName, dateStr, randomStr)
+
+    def getInstanceStartTime(self):
+        """ Returns the UTC datetime when the instance was started.
+
+        @return a UTC datetime representing when the instance was started.
+        """
+        startDatetimeString = self.instanceName.rsplit('-')[-2]
+        startDatetime = datetime.datetime.strptime(startDatetimeString, self.INSTANCE_NAME_DTFORMAT)
+        return startDatetime
 
     def putTypedValue(self, key, value):
         """ Sets a value on context[key], but casts the value according to self.contextTypes. """
