@@ -173,8 +173,10 @@ class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
         kwargs = {
             'produce_cursors': True,
             'keys_only': self.getKeysOnly(context, obj),
-            'deadline': self.getDeadline(context, obj)
+            'deadline': self.getDeadline(context, obj),
+            'read_policy': self.getReadPolicy(context, obj),
         }
+
         if token:
             kwargs['start_cursor'] = ndb_query.Cursor.from_websafe_string(token)
 
@@ -201,6 +203,11 @@ class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
     def getDeadline(self, context, obj): # pylint: disable-msg=W0613
         """ Returns the RPC deadline. Default 5 seconds."""
         return 5
+
+    # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
+    def getReadPolicy(self, context, obj): # pylint: disable-msg=W0613
+        """ Returns the RPC deadline. Default 5 seconds."""
+        return 0    # Strong Consistency
 
 class ListContinuationFSMAction(ContinuationFSMAction):
     """ A list-of-things continuation. """
