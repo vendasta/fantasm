@@ -28,7 +28,10 @@ else:
     import json
 
 from google.appengine.ext import deferred, webapp, db
-from google.appengine.api.capabilities import CapabilitySet
+try:
+    from google.appengine.api.capabilities import CapabilitySet
+except ImportError:
+    CapabilitySet = None
 from google.appengine.ext import ndb
 from fantasm import config, constants
 from fantasm.fsm import FSM
@@ -204,8 +207,13 @@ class FSMHandler(webapp.RequestHandler):
         if config.currentConfiguration().enableCapabilitiesCheck:
             unavailable = set()
             for service in REQUIRED_SERVICES:
-                if not CapabilitySet(service).is_enabled():
-                    unavailable.add(service)
+                try:
+                    if not CapabilitySet(service).is_enabled():
+                        unavailable.add(service)
+                except Exception:
+                    # Something failed while checking capabilities, just assume they are going to be available.
+                    # These checks were from an era of lower-reliability which is no longer the case.
+                    pass
             if unavailable:
                 raise RequiredServicesUnavailableRuntimeError(unavailable)
 

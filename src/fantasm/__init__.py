@@ -18,6 +18,10 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v1.3.3
+- added exception handling around failures in capabilities check; if there is a failure in the
+  capabilities check, we will just assume things are okay and continue on
+
 v1.3.2
 - added hook in NDBDatastoreContinuationFSMAction allowing the query's read consistency to be set
 
@@ -63,7 +67,7 @@ v1.0.0
 
 """
 
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401
