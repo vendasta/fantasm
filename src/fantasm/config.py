@@ -432,7 +432,7 @@ class _StateConfig(object):
     """ Configuration of a state. """
 
     # R0912:268:_StateConfig.__init__: Too many branches (22/20)
-    def __init__(self, stateDict, machine): # pylint: disable-msg=R0912
+    def __init__(self, stateDict, machine): # pylint: disable=R0912
         """ Builds a _StateConfig from a dictionary representation. This state is not added to the machine. """
 
         self.machineName = machine.name
@@ -529,7 +529,7 @@ class _TransitionConfig(object):
     """ Configuration of a transition. """
 
     # R0912:326:_TransitionConfig.__init__: Too many branches (22/20)
-    def __init__(self, transDict, machine, fromStateName): # pylint: disable-msg=R0912
+    def __init__(self, transDict, machine, fromStateName): # pylint: disable=R0912
         """ Builds a _TransitionConfig from a dictionary representation.
             This transition is not added to the machine. """
 
@@ -583,7 +583,7 @@ class _TransitionConfig(object):
 
         # transition task_retry_limit, min_backoff_seconds, max_backoff_seconds, task_age_limit, max_doublings
         # W0612:439:_TransitionConfig.__init__: Unused variable 'default'
-        for (constant, attribute, default, exception) in TASK_ATTRIBUTES: # pylint: disable-msg=W0612
+        for (constant, attribute, default, exception) in TASK_ATTRIBUTES: # pylint: disable=W0612
             setattr(self, attribute, getattr(machine, attribute)) # default from the machine
             if constant in transDict:
                 setattr(self, attribute, transDict[constant])

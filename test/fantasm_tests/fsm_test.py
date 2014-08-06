@@ -11,10 +11,10 @@ if sys.version_info < (2, 7):
 else:
     import json
 
-import random # pylint: disable-msg=W0611
+import random # pylint: disable=W0611
 import pickle
-from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable-msg=W0611
-from google.appengine.api import memcache # pylint: disable-msg=W0611
+from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable=W0611
+from google.appengine.api import memcache # pylint: disable=W0611
 from google.appengine.ext import db
 from google.appengine.ext.ndb import model as ndb_model, key as ndb_key
 from fantasm import config
@@ -43,7 +43,7 @@ from fantasm_tests.actions import CountExecuteCallsWithFork
 
 from minimock import mock, restore
 
-# pylint: disable-msg=C0111, W0212, W0612, W0613
+# pylint: disable=C0111, W0212, W0612, W0613
 # - docstrings not reqd in unit tests
 # - unit tests need access to protected members
 # - lots of unused args in unit tests

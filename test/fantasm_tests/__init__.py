@@ -1,6 +1,6 @@
 """ Tests for fantasm. """
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 # - docstrings not reqd in unit tests
 
 # The following three classes are here to test namespace overriding.

@@ -1,6 +1,6 @@
 """ Tests for fantasm.models """
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 # - docstrings not reqd in unit tests
 
 import datetime
@@ -12,26 +12,26 @@ class TestModel(db.Model):
     prop1 = db.StringProperty()
 
 class FastasmFanInTest(AppEngineTestCase):
-    
+
     def setUp(self):
         super(FastasmFanInTest, self).setUp()
         self.testModel = TestModel()
         self.testModel.put()
-    
+
     def test_db_Key(self):
         model = _FantasmFanIn()
         model.context = {'a': self.testModel.key()}
         model.put()
         model = db.get(model.key())
         self.assertEqual({'a': self.testModel.key()}, model.context)
-        
+
     def test_db_Key_list(self):
         model = _FantasmFanIn()
         model.context = {'a': [self.testModel.key()]}
         model.put()
         model = db.get(model.key())
         self.assertEqual({'a': [self.testModel.key()]}, model.context)
-        
+
     def test_datetime(self):
         model = _FantasmFanIn()
         now = datetime.datetime.now()
@@ -39,7 +39,7 @@ class FastasmFanInTest(AppEngineTestCase):
         model.put()
         model = db.get(model.key())
         self.assertEqual({'a': now}, model.context)
-        
+
     def test_datetime_list(self):
         model = _FantasmFanIn()
         nows = [datetime.datetime.now(), datetime.datetime.now()]

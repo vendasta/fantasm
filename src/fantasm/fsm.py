@@ -304,7 +304,7 @@ class FSMContext(dict):
 
         # the following is monkey-patched from handler.py for 'immediate mode'
         from google.appengine.api.taskqueue.taskqueue import Queue
-        self.Queue = Queue # pylint: disable-msg=C0103
+        self.Queue = Queue # pylint: disable=C0103
 
     INSTANCE_NAME_DTFORMAT = '%Y%m%d%H%M%S'
 
@@ -436,7 +436,7 @@ class FSMContext(dict):
             nextEvent = self.currentState.dispatch(self, event, obj)
 
             if obj.get(constants.FORKED_CONTEXTS_PARAM):
-                # pylint: disable-msg=W0212
+                # pylint: disable=W0212
                 # - accessing the protected method is fine here, since it is an instance of the same class
                 tasks = []
                 for context in obj[constants.FORKED_CONTEXTS_PARAM]:
@@ -534,7 +534,7 @@ class FSMContext(dict):
         context[constants.CONTINUATION_PARAM] = nextToken
 
         try:
-            # pylint: disable-msg=W0212
+            # pylint: disable=W0212
             # - accessing the protected method is fine here, since it is an instance of the same class
             transition = self.startingState.getTransition(self.startingEvent)
             countdown = self.currentState.continuationCountdown
@@ -940,7 +940,7 @@ class FSMContext(dict):
             context.update(replaceData)
         return context
 
-# pylint: disable-msg=C0103
+# pylint: disable=C0103
 def _queueTasks(Queue, queueName, tasks, transactional=False):
     """
     Add a list of Tasks to the supplied Queue/queueName
@@ -975,11 +975,11 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
             tombstonedTask = e
 
     if taskAlreadyExists:
-        # pylint: disable-msg=E0702
+        # pylint: disable=E0702
         raise taskAlreadyExists
 
     if tombstonedTask:
-        # pylint: disable-msg=E0702
+        # pylint: disable=E0702
         raise tombstonedTask
 
 def startStateMachine(machineName, contexts, taskName=None, method='POST', countdown=0,

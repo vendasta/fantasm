@@ -150,7 +150,7 @@ _fsm = None
 def getCurrentFSM():
     """ Returns the current FSM singleton. """
     # W0603: 32:currentConfiguration: Using the global statement
-    global _fsm # pylint: disable-msg=W0603
+    global _fsm # pylint: disable=W0603
 
     # always reload the FSM for dev_appserver to grab recent dev changes
     if _fsm and not constants.DEV_APPSERVER:
@@ -176,11 +176,11 @@ class FSMHandler(webapp.RequestHandler):
     def initialize(self, request, response):
         """Initializes this request handler with the given Request and Response."""
         super(FSMHandler, self).initialize(request, response)
-        # pylint: disable-msg=W0201
+        # pylint: disable=W0201
         # - this is the preferred location to initialize the handler in the webapp framework
         self.fsm = None
 
-    def handle_exception(self, exception, debug_mode): # pylint: disable-msg=C0103
+    def handle_exception(self, exception, debug_mode): # pylint: disable=C0103
         """ Delegates logging to the FSMContext logger """
         self.error(500)
         logger = logging
@@ -280,7 +280,7 @@ class FSMHandler(webapp.RequestHandler):
             obj[MESSAGES_PARAM] = []
             fsm.Queue = NoOpQueue # don't queue anything else
 
-        # pylint: disable-msg=W0201
+        # pylint: disable=W0201
         # - initialized outside of ctor is ok in this case
         self.fsm = fsm # used for logging in handle_exception
 

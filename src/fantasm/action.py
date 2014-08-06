@@ -141,7 +141,7 @@ class DatastoreContinuationFSMAction(ContinuationFSMAction):
         raise NotImplementedError()
 
     # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
-    def getBatchSize(self, context, obj): # pylint: disable-msg=W0613
+    def getBatchSize(self, context, obj): # pylint: disable=W0613
         """ Returns a batch size, default 1. Override for different values. """
         return 1
 
@@ -195,17 +195,17 @@ class NDBDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
         raise NotImplementedError()
 
     # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
-    def getKeysOnly(self, context, obj): # pylint: disable-msg=W0613
+    def getKeysOnly(self, context, obj): # pylint: disable=W0613
         """ Returns if the query should returns keys_only. Default False. """
         return False
 
     # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
-    def getDeadline(self, context, obj): # pylint: disable-msg=W0613
+    def getDeadline(self, context, obj): # pylint: disable=W0613
         """ Returns the RPC deadline. Default 5 seconds."""
         return 5
 
     # W0613: 78:DatastoreContinuationFSMAction.getBatchSize: Unused argument 'obj'
-    def getReadPolicy(self, context, obj): # pylint: disable-msg=W0613
+    def getReadPolicy(self, context, obj): # pylint: disable=W0613
         """ Returns the RPC deadline. Default 5 seconds."""
         return 0    # Strong Consistency
 
@@ -216,7 +216,7 @@ class ListContinuationFSMAction(ContinuationFSMAction):
         """ Returns a list of items to continue over. THIS LIST CANNOT CHANGE BETWEEN CALLS!!!"""
         raise NotImplementedError()
 
-    def getBatchSize(self, context, obj): # pylint: disable-msg=W0613
+    def getBatchSize(self, context, obj): # pylint: disable=W0613
         """ Returns a batch size, default 1. Override for different values. """
         return 1
 

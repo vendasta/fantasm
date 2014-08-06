@@ -8,7 +8,7 @@ from fantasm_tests.helpers import getLoggingDouble
 
 from minimock import restore
 
-# pylint: disable-msg=C0111, W0212
+# pylint: disable=C0111, W0212
 # - docstrings not reqd in unit tests
 # - accessing protected config members a lot in these tests
 

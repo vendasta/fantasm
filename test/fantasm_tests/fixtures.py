@@ -9,14 +9,14 @@ import google.appengine.api.memcache.memcache_stub as memcache_stub
 import google.appengine.api.capabilities.capability_stub as capability_stub
 from fantasm import constants
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 # - docstrings not reqd in unit tests
 
 os.environ['APPLICATION_ID'] = 'fantasm'
 os.environ['HTTP_HOST'] = 'fantasm'
 
 class AppEngineTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         super(AppEngineTestCase, self).setUp()
 
@@ -29,32 +29,32 @@ class AppEngineTestCase(unittest.TestCase):
 
         self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path='./test/')
         apiproxy_stub_map.apiproxy.RegisterStub('taskqueue', self.__taskqueue)
-        
+
         # optimization for slow sdk update
         tq = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
-        
+
         tq.GetTasks('default')
-        # pylint: disable-msg=W0212
+        # pylint: disable=W0212
         # - workaround to prevent GetTasks from re-parsing queue.yaml on every call
         for value in (tq._queues or {}).values():
             value._queue_yaml_parser = None
-        
+
         self.__urlfetch = urlfetch_stub.URLFetchServiceStub()
         apiproxy_stub_map.apiproxy.RegisterStub('urlfetch', self.__urlfetch)
-        
+
         self.__memcache = memcache_stub.MemcacheServiceStub()
         apiproxy_stub_map.apiproxy.RegisterStub('memcache', self.__memcache)
-        
-        self.__datastore = datastore_file_stub.DatastoreFileStub('fantasm', '/dev/null', '/dev/null', 
+
+        self.__datastore = datastore_file_stub.DatastoreFileStub('fantasm', '/dev/null', '/dev/null',
                                                                  require_indexes=True)
         apiproxy_stub_map.apiproxy.RegisterStub('datastore_v3', self.__datastore)
-        
+
         self.__capabilities = capability_stub.CapabilityServiceStub()
         apiproxy_stub_map.apiproxy.RegisterStub('capability_service', self.__capabilities)
-        
+
         constants.DATASTORE_ASYNCRONOUS_INDEX_WRITE_WAIT_TIME = 0.0
         constants.DEFAULT_LOG_QUEUE_NAME = constants.DEFAULT_QUEUE_NAME
-        
+
     def tearDown(self):
         super(AppEngineTestCase, self).tearDown()
 

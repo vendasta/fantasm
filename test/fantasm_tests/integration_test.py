@@ -2,9 +2,9 @@
 import logging
 import datetime
 
-import random # pylint: disable-msg=W0611
+import random # pylint: disable=W0611
 from fantasm.lock import ReadWriteLock
-from fantasm import config # pylint: disable-msg=W0611
+from fantasm import config # pylint: disable=W0611
 from fantasm.fsm import FSM
 from fantasm.models import _FantasmFanIn, _FantasmInstance, _FantasmLog
 from fantasm_tests.helpers import runQueuedTasks
@@ -20,7 +20,7 @@ from minimock import mock, restore
 from google.appengine.api import datastore_types
 from google.appengine.ext.ndb import key as ndb_key
 
-# pylint: disable-msg=C0111, W0212, W0612, W0613, C0301
+# pylint: disable=C0111, W0212, W0612, W0613, C0301
 # - docstrings not reqd in unit tests
 # - unit tests need access to protected members
 # - lots of unused args in unit tests
@@ -724,7 +724,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
                           'state-fan-in--next-event': {'action': 0}},
                          getCounts(self.machineConfig))
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
-        # pylint: disable-msg=C0301
+        # pylint: disable=C0301
         # - long lines are much clearer in htis case
         self.assertEqual([{u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '3', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
                           {u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '2', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
@@ -829,7 +829,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):
                           'state-continuation--next-event': {'action': 0},
                           'state-fan-in--next-event': {'action': 0}},
                  getCounts(self.machineConfig))
-        # pylint: disable-msg=C0301
+        # pylint: disable=C0301
         self.assertEqual([{u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]},
                           {u'__crs__': 2, u'__crc__': 6, '__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]},
                           {u'__crs__': 2, u'__crc__': 8, '__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]},
@@ -985,14 +985,14 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
                           'state-continuation--next-event': {'action': 0},
                           'state-fan-in--next-event': {'action': 0}},
                  getCounts(self.machineConfig))
-        # pylint: disable-msg=C0301
+        # pylint: disable=C0301
         self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'."], self.loggingDouble.messages['critical'])
-        # pylint: disable-msg=C0301
+        # pylint: disable=C0301
         self.assertEqual([{u'__crs__': 2, u'__crc__': 4, u'__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]},
                           {u'__crs__': 2, u'__crc__': 6, u'__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]},
                           {u'__crs__': 2, u'__crc__': 8, u'__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]},

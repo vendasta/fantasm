@@ -44,7 +44,7 @@ class Transition(object):
 
     # W0613:144:Transition.execute: Unused argument 'obj'
     # args are present for a future(?) transition action
-    def execute(self, context, obj): # pylint: disable-msg=W0613
+    def execute(self, context, obj): # pylint: disable=W0613
         """ Moves the machine to the next state.
 
         @param context: an FSMContext instance

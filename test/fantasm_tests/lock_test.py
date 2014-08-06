@@ -1,9 +1,9 @@
 """ Tests for fantasm.log """
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 
 import random
-import time # pylint: disable-msg=W0611
+import time # pylint: disable=W0611
 
 from fantasm_tests.fixtures import AppEngineTestCase
 from fantasm.lock import ReadWriteLock, RunOnceSemaphore
@@ -19,7 +19,7 @@ from google.appengine.api import memcache
 from minimock import mock, restore
 
 class ReadWriteLockTest(AppEngineTestCase):
-    
+
     def setUp(self):
         super(ReadWriteLockTest, self).setUp()
         self.loggingDouble = getLoggingDouble()
@@ -31,14 +31,14 @@ class ReadWriteLockTest(AppEngineTestCase):
         ReadWriteLock._BUSY_WAIT_ITERS = ReadWriteLock.BUSY_WAIT_ITERS
         ReadWriteLock.BUSY_WAIT_ITERS = 2
         random.seed(0) # last step
-        
+
     def tearDown(self):
         restore()
-        # pylint: disable-msg=W0212
+        # pylint: disable=W0212
         ReadWriteLock.BUSY_WAIT_ITER_SECS = ReadWriteLock._BUSY_WAIT_ITER_SECS
         ReadWriteLock.BUSY_WAIT_ITERS = ReadWriteLock._BUSY_WAIT_ITERS
         super(ReadWriteLockTest, self).tearDown()
-        
+
     def test_indexKey(self):
         lock = ReadWriteLock('foo', self.context)
         self.assertEqual('index-foo', lock.indexKey())
@@ -46,32 +46,32 @@ class ReadWriteLockTest(AppEngineTestCase):
     def test_lockKey(self):
         lock = ReadWriteLock('foo', self.context)
         self.assertEqual('foo-lock-999', lock.lockKey(999))
-        
+
     def test_currentIndex(self):
         lock = ReadWriteLock('foo', self.context)
         self.assertEqual(3626764237, lock.currentIndex())
         self.assertEqual(3626764237, lock.currentIndex())
-        
+
     def test_currentIndex_index_changed(self):
         lock = ReadWriteLock('foo', self.context)
         self.assertEqual(3626764237, lock.currentIndex())
         memcache.incr(lock.indexKey())
         self.assertEqual(3626764238, lock.currentIndex())
-        
+
     def test_currentIndex_index_expired(self):
         lock = ReadWriteLock('foo', self.context)
         self.assertEqual(3626764237, lock.currentIndex())
         random.seed(1)
         memcache.delete(lock.indexKey())
         self.assertEqual(577090035, lock.currentIndex())
-        
+
     def test_acquireWriteLock(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
         self.assertEqual(65537, memcache.get(lock.lockKey(index)))
-        
+
     def test_acquireWriteLock_failure(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
@@ -81,7 +81,7 @@ class ReadWriteLockTest(AppEngineTestCase):
         lock.acquireReadLock(index)
         self.assertEqual(32769, memcache.get(lock.lockKey(index)))
         self.assertRaises(FanInWriteLockFailureRuntimeError, lock.acquireWriteLock, index)
-        
+
     def test_releaseWriteLock(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
@@ -90,7 +90,7 @@ class ReadWriteLockTest(AppEngineTestCase):
         self.assertEqual(65537, memcache.get(lock.lockKey(index)))
         lock.releaseWriteLock(index)
         self.assertEqual(65536, memcache.get(lock.lockKey(index)))
-        
+
     def test_acquireReadLock_before_acquireWriteLock(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
@@ -99,7 +99,7 @@ class ReadWriteLockTest(AppEngineTestCase):
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         self.assertEqual([], self.loggingDouble.messages['debug'])
         self.assertEqual([], self.loggingDouble.messages['critical'])
-        
+
     def test_acquireReadLock_gave_up(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
@@ -109,11 +109,11 @@ class ReadWriteLockTest(AppEngineTestCase):
         lock.acquireReadLock(index)
         self.assertEqual(32769, memcache.get(lock.lockKey(index)))
         self.assertEqual(["Tried to acquire read lock 'foo-lock-3626764237' 1 times...",
-                          "Tried to acquire read lock 'foo-lock-3626764237' 2 times..."], 
+                          "Tried to acquire read lock 'foo-lock-3626764237' 2 times..."],
                           self.loggingDouble.messages['debug'])
-        self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'foo-lock-3626764237'."], 
+        self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'foo-lock-3626764237'."],
                          self.loggingDouble.messages['critical'])
-        
+
     def test_acquireReadLock(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
@@ -126,36 +126,36 @@ class ReadWriteLockTest(AppEngineTestCase):
         self.assertEqual(32768, memcache.get(lock.lockKey(index)))
         self.assertEqual([], self.loggingDouble.messages['debug'])
         self.assertEqual([], self.loggingDouble.messages['critical'])
-        
+
     def test_acquireReadLock_one_wait_iter(self):
         lock = ReadWriteLock('foo', self.context)
         index = lock.currentIndex()
         self.assertEqual(None, memcache.get(lock.lockKey(index)))
         lock.acquireWriteLock(index)
         self.assertEqual(65537, memcache.get(lock.lockKey(index)))
-        def sleepAndRelease(seconds): # pylint: disable-msg=W0613
+        def sleepAndRelease(seconds): # pylint: disable=W0613
             lock.releaseWriteLock(index)
         mock('time.sleep', returns_func=sleepAndRelease, tracker=None)
         lock.acquireReadLock(index)
         self.assertEqual(32768, memcache.get(lock.lockKey(index)))
-        self.assertEqual(["Tried to acquire read lock 'foo-lock-3626764237' 1 times..."], 
+        self.assertEqual(["Tried to acquire read lock 'foo-lock-3626764237' 1 times..."],
                          self.loggingDouble.messages['debug'])
-        self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'foo-lock-3626764237'."], 
+        self.assertEqual(["Gave up waiting for all fan-in work items with read lock 'foo-lock-3626764237'."],
                          self.loggingDouble.messages['critical'])
 
 class RunOnceSemaphoreTest(AppEngineTestCase):
-    
+
     TRANSACTIONAL = True
-    
+
     def setUp(self):
         super(RunOnceSemaphoreTest, self).setUp()
         self.loggingDouble = getLoggingDouble()
         random.seed(0) # last step
-        
+
     def tearDown(self):
         restore()
         super(RunOnceSemaphoreTest, self).tearDown()
-        
+
     def test_writeRunOnceSemaphore(self):
         sem = RunOnceSemaphore('foo', None)
         self.assertEqual(None, memcache.get('foo'))
@@ -166,7 +166,7 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         self.assertEqual('payload', memcache.get('foo'))
         self.assertEqual(1, _FantasmTaskSemaphore.all(namespace='').count())
         self.assertEqual('payload', _FantasmTaskSemaphore.all(namespace='').get().payload)
-        
+
     def test_writeRunOnceSemaphore_second_time_False(self):
         sem = RunOnceSemaphore('foo', None)
         self.assertEqual(None, memcache.get('foo'))
@@ -256,7 +256,7 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
         payload = sem.readRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
         self.assertEqual('payload', payload)
-        
+
     def test_readRunOnceSemaphore_memcache_expired(self):
         sem = RunOnceSemaphore('foo', None)
         sem.writeRunOnceSemaphore('payload', transactional=self.TRANSACTIONAL)
@@ -282,7 +282,7 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
         self.assertTrue(self.loggingDouble.messages['critical'][0]\
                         .startswith("Run-once semaphore memcache payload read error."))
 
-        
+
 class RunOnceSemaphoreTest_NOT_TRANSACTIONAL(AppEngineTestCase):
-    
+
     TRANSACTIONAL = False

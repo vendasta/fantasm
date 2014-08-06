@@ -33,7 +33,7 @@ def _log(taskName,
          instanceName,
          machineName, stateName, actionName, transitionName,
          level, namespace, tags, message, stack, time,
-         *args, **kwargs): # pylint: disable-msg=W0613
+         *args, **kwargs): # pylint: disable=W0613
     """ Creates a _FantasmLog that can be used for debugging
 
     @param instanceName:
@@ -269,7 +269,7 @@ class Logger( object ):
         """
         self._log(logging.CRITICAL, message, *args, **kwargs)
 
-    # pylint: disable-msg=W0613
+    # pylint: disable=W0613
     # - kwargs is overridden in this case, and never used
     def exception(self, message, *args, **kwargs):
         """ Logs the message + stack dump to the normal logging module and also queues a Task to create an

@@ -9,7 +9,7 @@ from fantasm.constants import CONTINUATION_RESULT_KEY
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 from fantasm.exceptions import HaltMachineError
 
-# pylint: disable-msg=C0111, W0613
+# pylint: disable=C0111, W0613
 # - docstrings not reqd in unit tests
 # - these actions do not use arguments
 
@@ -20,7 +20,7 @@ class Custom(object):
         return repr(self.impl)
 
 class CustomImpl(Custom):
-    def __init__(self, a=None, b=None): # pylint: disable-msg=W0231
+    def __init__(self, a=None, b=None): # pylint: disable=W0231
         self.a = a
         self.b = b
     def __repr__(self):

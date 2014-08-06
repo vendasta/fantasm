@@ -6,7 +6,7 @@ from fantasm.constants import FORK_PARAM
 from fantasm.constants import CONTINUATION_RESULT_KEY
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 
-# pylint: disable-msg=C0111, W0613
+# pylint: disable=C0111, W0613
 # - docstrings not reqd in unit tests
 # - these actions do not use arguments
 
@@ -26,12 +26,12 @@ class CountExecuteCalls(object):
     @property
     def event(self):
         return 'next-event'
-        
+
 class CountExecuteCallsFinal(CountExecuteCalls):
     @property
     def event(self):
         return None
-    
+
 class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def __init__(self):
         super(TestDatastoreContinuationFSMAction, self).__init__()
@@ -90,18 +90,18 @@ class TestContinuationAndForkFSMAction(NDBDatastoreContinuationFSMAction):
         if self.fails:
             self.fails -= 1
             raise Exception()
-        
+
         # FIXME: this pattern is a bit awkward, or is it?
         # FIXME: how can we drive this into yaml?
         # FIXME: maybe just another provided base class like DatastoreContinuationFSMAction?
-        
+
         # fork a machine to deal with all but one of the continuation dataset
         for result in obj[CONTINUATION_RESULTS_KEY][1:]:
             context.fork(data={'key': result.key})
-            
+
         # and deal with the leftover data item
         context['key'] = obj[CONTINUATION_RESULT_KEY].key
         context[FORK_PARAM] = -1
-        
+
         # this event will be dispatched to this machine an all the forked contexts
         return 'next-event'

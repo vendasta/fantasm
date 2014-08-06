@@ -22,12 +22,12 @@ from google.appengine.ext import db
 from fantasm.action import DatastoreContinuationFSMAction
 # W0611: 23: Unused import _FantasmLog
 # we're importing these here so that db has a chance to see them before we query them
-from fantasm.models import _FantasmInstance, _FantasmLog, _FantasmTaskSemaphore # pylint: disable-msg=W0611
+from fantasm.models import _FantasmInstance, _FantasmLog, _FantasmTaskSemaphore # pylint: disable=W0611
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 
 # W0613: Unused argument 'obj'
 # implementing interfaces
-# pylint: disable-msg=W0613
+# pylint: disable=W0613
 
 class InitalizeScrubber(object):
     """ Use current time to set up task names. """
@@ -36,17 +36,17 @@ class InitalizeScrubber(object):
         age = context.pop('age', 90)
         context['before'] = datetime.datetime.utcnow() - datetime.timedelta(days=age)
         return 'next'
-        
+
 class EnumerateFantasmModels(object):
     """ Kick off a continuation for each model. """
-    
+
     FANTASM_MODELS = (
-        ('_FantasmInstance', 'createdTime'), 
-        ('_FantasmLog', 'time'), 
+        ('_FantasmInstance', 'createdTime'),
+        ('_FantasmLog', 'time'),
         ('_FantasmTaskSemaphore', 'createdTime'),
         ('_FantasmFanIn', 'createdTime')
     )
-    
+
     def continuation(self, context, obj, token=None):
         """ Continue over each model. """
         if not token:
@@ -61,7 +61,7 @@ class EnumerateFantasmModels(object):
                     obj['dateattr'] = self.FANTASM_MODELS[i][1]
                     return self.FANTASM_MODELS[i+1][0] if i < len(self.FANTASM_MODELS)-1 else None
         return None # this occurs if a token passed in is not found in list - shouldn't happen
-        
+
     def execute(self, context, obj):
         """ Pass control to next state. """
         if not 'model' in obj or not 'dateattr' in obj:
@@ -69,10 +69,10 @@ class EnumerateFantasmModels(object):
         context['model'] = obj['model']
         context['dateattr'] = obj['dateattr']
         return 'next'
-        
+
 class DeleteOldEntities(DatastoreContinuationFSMAction):
     """ Deletes entities of a given model older than a given date. """
-    
+
     def getQuery(self, context, obj):
         """ Query for all entities before a given datetime. """
         model = context['model']
@@ -81,11 +81,11 @@ class DeleteOldEntities(DatastoreContinuationFSMAction):
         modelClass = db.class_for_kind(model)
         query = modelClass.all(keys_only=True, namespace='').filter('%s <' % dateattr, before)
         return query
-        
+
     def getBatchSize(self, context, obj):
         """ Batch size. """
         return 100
-        
+
     def execute(self, context, obj):
         """ Delete the rows. """
         if obj[CONTINUATION_RESULTS_KEY]:

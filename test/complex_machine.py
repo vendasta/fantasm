@@ -8,12 +8,12 @@ from fantasm.action import FSMAction, DatastoreContinuationFSMAction
 from fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext import db
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 # - docstring not reqd
 
 class TestModel(db.Model):
     prop1 = db.StringProperty()
-    
+
 class ResultsModel(db.Model):
     createdTime = db.DateTimeProperty(auto_now_add=True)
     total = db.IntegerProperty()
@@ -51,7 +51,7 @@ class EntryAction3(FSMAction):
 class EntryAction4(FSMAction):
     def execute(self, context, obj):
         pass
-        
+
 class EntryAction5(FSMAction):
     def execute(self, context, obj):
         pass
@@ -59,7 +59,7 @@ class EntryAction5(FSMAction):
 class ExitAction1(FSMAction):
     def execute(self, context, obj):
         pass
-        
+
 class ExitAction2(FSMAction):
     def execute(self, context, obj):
         pass
@@ -67,11 +67,11 @@ class ExitAction2(FSMAction):
 class ExitAction3(FSMAction):
     def execute(self, context, obj):
         pass
-        
+
 class ExitAction4(FSMAction):
     def execute(self, context, obj):
         pass
-        
+
 class ExitAction5(FSMAction):
     def execute(self, context, obj):
         pass
@@ -83,7 +83,7 @@ class DoAction1(FSMAction):
 class DoAction2(FSMAction):
     def execute(self, context, obj):
         return 'event2'
-    
+
 class DoAction3(FSMAction):
     def execute(self, context, obj):
         keys = []
@@ -92,8 +92,8 @@ class DoAction3(FSMAction):
         def txn():
             results = ResultsModel.get_by_key_name(context.instanceName)
             if not results:
-                results = ResultsModel(key_name=context.instanceName, 
-                                       total=0, 
+                results = ResultsModel(key_name=context.instanceName,
+                                       total=0,
                                        data=pickle.dumps([]),
                                        version=os.environ['CURRENT_VERSION_ID'].split('.')[0])
             results.total += len(keys)
@@ -101,12 +101,12 @@ class DoAction3(FSMAction):
         if keys:
             db.run_in_transaction(txn)
         return 'event3'
-    
+
 class DoAction4(FSMAction):
     def execute(self, context, obj):
         return 'event4'
-        
+
 class FinalAction5(FSMAction):
     def execute(self, context, obj):
         pass
-    
+

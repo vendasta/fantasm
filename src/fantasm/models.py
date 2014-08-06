@@ -46,10 +46,10 @@ def decode(dct):
     return dct
 
 # W0232: 30:Encoder: Class has no __init__ method
-class Encoder(json.JSONEncoder): # pylint: disable-msg=W0232
+class Encoder(json.JSONEncoder): # pylint: disable=W0232
     """ A JSONEncoder that handles db.Key """
     # E0202: 36:Encoder.default: An attribute inherited from JSONEncoder hide this method
-    def default(self, obj): # pylint: disable-msg=E0202
+    def default(self, obj): # pylint: disable=E0202
         """ see json.JSONEncoder.default """
         if isinstance(obj, set):
             return {'__set__': True, 'key': list(obj)}

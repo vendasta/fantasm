@@ -3,7 +3,7 @@
 import random
 from fantasm.action import FSMAction
 
-# pylint: disable-msg=C0111
+# pylint: disable=C0111
 # - docstring not reqd
 
 class EntryAction1(FSMAction):
@@ -25,7 +25,7 @@ class EntryAction3(FSMAction):
 class ExitAction1(FSMAction):
     def execute(self, context, obj):
         context.logger.info('ExitAction1.execute()')
-        
+
 class ExitAction2(FSMAction):
     def execute(self, context, obj):
         context.logger.info('ExitAction2.execute()')
@@ -35,7 +35,7 @@ class ExitAction2(FSMAction):
 class ExitAction3(FSMAction):
     def execute(self, context, obj):
         context.logger.info('ExitAction3.execute()')
-        
+
 class DoAction1(FSMAction):
     def execute(self, context, obj):
         context.logger.info('DoAction1.execute()')
@@ -47,7 +47,7 @@ class DoAction2(FSMAction):
         context.logger.info('DoAction2.execute()')
         context.logger.info(context['unicode'])
         return 'event2'
-    
+
 class DoAction3(FSMAction):
     def execute(self, context, obj):
         context.logger.info('DoAction3.execute()')

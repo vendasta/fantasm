@@ -9,14 +9,14 @@ from complex_machine import TestModel
 import email_batch
 import backup
 
-# pylint: disable-msg=C0111, C0103
+# pylint: disable=C0111, C0103
 # - docstring not reqd
 # - application in lower case is acceptable
 
 class HomePage(webapp.RequestHandler):
-    
+
     def get(self):
-        
+
         self.response.out.write("""
 <html>
 <head><title>Fantasm example</title></head>
@@ -41,9 +41,9 @@ This machine fans out multiple machine instances. Each instance grabs a page of 
 and stores them in datastore. This machine has only a single state (that is a "continuation" state).
 </p>
 <p>Click <a href="/fantasm/graphviz/UrlFanoutExample/">/fantasm/graphviz/UrlFanoutExample/</a> to view a GraphViz diagram of the machine.</p>
-<p>Click <a href="/fantasm/fsm/UrlFanoutExample/">/fantasm/fsm/UrlFanoutExample/</a> 
+<p>Click <a href="/fantasm/fsm/UrlFanoutExample/">/fantasm/fsm/UrlFanoutExample/</a>
    to kick a continuation workflow off.</p>
-   
+
 <h2>3. Fan-out / Fan-in Example</h2>
 <p>
 This machine fans-out a new instance to send an email to each in a list of subscribers. The instances are then
@@ -85,22 +85,22 @@ well as the corresponding backup entities in the corresponding datastore namespa
 </body>
 </html>
 """)
-        
+
 class MakeAModel(webapp.RequestHandler):
-    
+
     def get(self):
         TestModel(prop1=str(uuid.uuid4())).put()
-        
+
 class Make100Models(webapp.RequestHandler):
-    
+
     def get(self):
         models = []
-        for i in range(100): # pylint: disable-msg=W0612
+        for i in range(100): # pylint: disable=W0612
             models.append(TestModel(prop1=str(uuid.uuid4())))
         db.put(models)
-        
+
 class Start100ComplexMachine(webapp.RequestHandler):
-    
+
     def get(self):
         import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100)
@@ -119,22 +119,22 @@ def checkSecurity(name, request):
     if securityToken.token != token:
         return False
     return True
-    
+
 class Start100ComplexMachineCountdown(webapp.RequestHandler):
-    
+
     def get(self):
         import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
-        
+
 class IntegrationTest(webapp.RequestHandler):
 
     def get(self):
-        
+
         # security check
         if not checkSecurity('integration-test', self.request):
             self.response.set_status(401)
             return
-            
+
         import fantasm
         for _ in range(10):
             fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
@@ -153,14 +153,14 @@ class NDBIntegrationTest(webapp.RequestHandler):
             fantasm.fsm.startStateMachine('NDBComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
 
 class IntegrationTestResults(webapp.RequestHandler):
-    
+
     def get(self):
-        
+
         # security check
         if not checkSecurity('integration-test-results', self.request):
             self.response.set_status(401)
             return
-        
+
         #
         # Work in progress
         #
@@ -175,7 +175,7 @@ class IntegrationTestResults(webapp.RequestHandler):
         return
 
 application = webapp.WSGIApplication([
-    ('/', HomePage), 
+    ('/', HomePage),
     ('/MakeAModel/', MakeAModel),
     ('/Make100Models/', Make100Models),
     ('/Start100ComplexMachine/', Start100ComplexMachine),

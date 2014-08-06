@@ -15,12 +15,12 @@ from fantasm.fsm import FSM
 from fantasm.handlers import FSMLogHandler
 from fantasm.handlers import FSMHandler
 from fantasm.handlers import FSMFanInCleanupHandler
-from fantasm.log import Logger # pylint: disable-msg=W0611
+from fantasm.log import Logger # pylint: disable=W0611
                                # - used by minimock
 from google.appengine.ext import webapp
 from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
 
-# pylint: disable-msg=C0111, C0103, W0613, W0612
+# pylint: disable=C0111, C0103, W0613, W0612
 # - docstrings not reqd in unit tests
 # - mock interfaces need to inherit args with '_' in them
 
@@ -134,7 +134,7 @@ def getLoggingDouble():
 
 def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, speedup=True, maxRetries=10):
     """ Ability to run Tasks from unit/integration tests """
-    # pylint: disable-msg=W0212
+    # pylint: disable=W0212
     #         allow access to protected member _IsValidQueue
     tq = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
     if assertTasks:
