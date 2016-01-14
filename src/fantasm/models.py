@@ -45,6 +45,7 @@ def decode(dct):
         return datetime.datetime(**dct['datetime'])
     return dct
 
+
 # W0232: 30:Encoder: Class has no __init__ method
 class Encoder(json.JSONEncoder): # pylint: disable=W0232
     """ A JSONEncoder that handles db.Key """
@@ -61,6 +62,8 @@ class Encoder(json.JSONEncoder): # pylint: disable=W0232
             return {'__ndb.Key__': True, 'key': str(obj.urlsafe())}
         if isinstance(obj, ndb.Model):
             return {'__ndb.Model__': True, 'key': str(obj.key.urlsafe())}  # turns into a ndb.Key across serialization
+        if isinstance(obj, ndb.model._BaseValue):
+            return obj.b_val
         if isinstance(obj, datetime.datetime) and \
            obj.tzinfo is None: # only UTC datetime objects are supported
             return {'__datetime.datetime__': True, 'datetime': {'year': obj.year,
