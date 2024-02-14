@@ -66,11 +66,11 @@ state_machines:
 class SimpleModel( db.Model ):
     pass
 
-class SimpleFinalAction( object ):
+class SimpleFinalAction:
     def execute(self, context, obj):
         SimpleModel().put()
 
-class SimpleAction( object ):
+class SimpleAction:
     def execute(self, context, obj):
         SimpleModel().put()
         return 'ok'
@@ -84,7 +84,7 @@ class ContinuationAction( DatastoreContinuationFSMAction ):
             time.sleep(random.uniform(0.0, 1.0))
             return 'ok'
 
-class FanInAction( object ):
+class FanInAction:
     def execute(self, contexts, obj):
         keys = []
         for ctx in contexts:
@@ -107,12 +107,12 @@ class TaskDoubleExecutionTest( AppEngineTestCase ):
     the framework successfully handle this.
     """
     def setUp(self):
-        super(TaskDoubleExecutionTest, self).setUp()
+        super().setUp()
         setUpByString(self, SIMPLE_MACHINE, machineName='SimpleMachine')
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
 
     def tearDown(self):
-        super(TaskDoubleExecutionTest, self).tearDown()
+        super().tearDown()
         restore()
 
     def test(self):
@@ -135,7 +135,7 @@ class FanInTxnException( AppEngineTestCase ):
     the framework successfully handle this.
     """
     def setUp(self):
-        super(FanInTxnException, self).setUp()
+        super().setUp()
         setUpByString(self, FAN_IN_MACHINE, machineName='FanInMachine')
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
         for i in range(20):
@@ -144,7 +144,7 @@ class FanInTxnException( AppEngineTestCase ):
         memcache.set('raise', True)
 
     def tearDown(self):
-        super(FanInTxnException, self).tearDown()
+        super().tearDown()
         restore()
 
     def test(self):
@@ -157,7 +157,7 @@ class FanInTxnException( AppEngineTestCase ):
 class FanInMergeJoinDispatchTest( AppEngineTestCase ):
 
     def setUp(self):
-        super(FanInMergeJoinDispatchTest, self).setUp()
+        super().setUp()
         setUpByString(self, FAN_IN_MACHINE, machineName='FanInMachine', instanceName='foo')
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
         for i in range(20):
@@ -193,7 +193,7 @@ class FanInMergeJoinDispatchTest( AppEngineTestCase ):
 
     def tearDown(self):
         restore()
-        super(FanInMergeJoinDispatchTest, self).tearDown()
+        super().tearDown()
 
     def test_run_twice(self):
         self.setUpContext()
@@ -209,7 +209,7 @@ class FanInMergeJoinDispatchTest( AppEngineTestCase ):
 class FanInQueueDispatchTest( AppEngineTestCase ):
 
     def setUp(self):
-        super(FanInQueueDispatchTest, self).setUp()
+        super().setUp()
         setUpByString(self, FAN_IN_MACHINE, machineName='FanInMachine', instanceName='foo')
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
         for i in range(20):
@@ -228,7 +228,7 @@ class FanInQueueDispatchTest( AppEngineTestCase ):
 
     def tearDown(self):
         restore()
-        super(FanInQueueDispatchTest, self).tearDown()
+        super().tearDown()
 
     def test_run_twice(self):
         self.setUpContext()

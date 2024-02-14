@@ -17,14 +17,9 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
+import json
 import os
 import re
-import sys
-
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
 
 # these parameters are not stored in the FSMContext, but are used to drive the fantasm task/event dispatching mechanism
 STATE_PARAM = '__st__'

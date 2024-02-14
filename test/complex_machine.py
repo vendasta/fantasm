@@ -4,8 +4,8 @@ import random
 import time
 import os
 import pickle
-from fantasm.action import FSMAction, DatastoreContinuationFSMAction
-from fantasm.constants import CONTINUATION_RESULTS_KEY
+from .fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from .fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext import db
 
 # pylint: disable=C0111
@@ -35,7 +35,7 @@ class MyDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
 class EntryAction1(FSMAction):
     def execute(self, context, obj):
         context['foo'] = 'bar'
-        context['unicode'] = u'\xe8'
+        context['unicode'] = '\xe8'
         if 'failure' in context  and random.random() < 0.25:
             raise Exception('failure')
 

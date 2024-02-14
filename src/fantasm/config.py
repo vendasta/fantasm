@@ -16,22 +16,17 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from __future__ import with_statement
 
-import os
-import yaml
+
+import json
 import logging
-import sys
-
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
-import datetime
+import os
 import pickle
 import threading
-from fantasm import exceptions, constants, utils
+
+import yaml
+
+from fantasm import constants, exceptions, utils
 
 TASK_ATTRIBUTES = (
     (constants.TASK_RETRY_LIMIT_ATTRIBUTE, 'taskRetryLimit', constants.DEFAULT_TASK_RETRY_LIMIT,
@@ -87,6 +82,12 @@ def _findYaml(yamlNames=constants.YAML_NAMES):
         if parent == directory:
             break
         directory = parent
+    pwd = os.environ.get('PWD')
+    if pwd and pwd != directory:
+        for yamlName in yamlNames:
+            yamlPath = os.path.join(pwd, yamlName)
+            if os.path.exists(yamlPath):
+                return yamlPath
     return None
 
 def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
@@ -98,10 +99,10 @@ def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabiliti
 
     try:
         yamlFile = open(filename)
-    except IOError:
+    except OSError:
         raise exceptions.YamlFileNotFoundError(filename)
     try:
-        configDict = yaml.load(yamlFile.read())
+        configDict = yaml.safe_load(yamlFile.read())
     finally:
         yamlFile.close()
 
@@ -110,7 +111,7 @@ def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabiliti
                          rootUrl=rootUrl,
                          enableCapabilitiesCheck=enableCapabilitiesCheck)
 
-class Configuration(object):
+class Configuration:
     """ An overall configuration that corresponds to a fantasm.yaml file. """
 
     def __init__(self, configDict, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
@@ -175,7 +176,7 @@ class Configuration(object):
 
     def __addMachinesFromImportedConfig(self, importedCofig):
         """ Adds new machines from an imported configuration. """
-        for machineName, machine in importedCofig.machines.items():
+        for machineName, machine in list(importedCofig.machines.items()):
             if machineName in self.machines:
                 raise exceptions.MachineNameNotUniqueError(machineName)
             self.machines[machineName] = machine
@@ -227,12 +228,12 @@ def _resolveClass(className, namespace):
     shortTypes = {
         # basestring types
         'str': str,
-        'unicode': unicode,
+        'unicode': str,
 
         # numeric types
         'int': int,
         'float': float,
-        'long': long,
+        'long': int,
 
         # bool('False') does not work as expected, so this helper function facilitates the conversions
         'bool': utils.boolConverter,
@@ -262,7 +263,7 @@ def _resolveClass(className, namespace):
     if '.' in className:
         fullyQualifiedClass = className
     elif namespace:
-        fullyQualifiedClass = '%s.%s' % (namespace, className)
+        fullyQualifiedClass = '{}.{}'.format(namespace, className)
     else:
         fullyQualifiedClass = className
 
@@ -271,7 +272,7 @@ def _resolveClass(className, namespace):
 
     try:
         module = __import__(moduleName, globals(), locals(), [className])
-    except ImportError, e:
+    except ImportError as e:
         raise exceptions.UnknownModuleError(moduleName, e)
 
     try:
@@ -280,7 +281,7 @@ def _resolveClass(className, namespace):
     except AttributeError:
         raise exceptions.UnknownClassError(moduleName, className)
 
-def _resolveObject(objectName, namespace, expectedType=basestring):
+def _resolveObject(objectName, namespace, expectedType=str):
     """ Given a string name/path of a object, locates and returns the value of the object.
 
     @param objectName: ie. MODULE_LEVEL_CONSTANT, ActionName.CLASS_LEVEL_CONSTANT
@@ -308,7 +309,7 @@ def _resolveObject(objectName, namespace, expectedType=basestring):
 
     return resolvedObject
 
-class _MachineConfig(object):
+class _MachineConfig:
     """ Configuration of a machine. """
 
     def __init__(self, initDict, rootUrl=None):
@@ -325,7 +326,7 @@ class _MachineConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in initDict.iterkeys():
+        for attribute in initDict.keys():
             if attribute not in constants.VALID_MACHINE_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:
@@ -378,7 +379,7 @@ class _MachineConfig(object):
         # context types
         self.contextTypes = {}
         contextTypes = initDict.get(constants.MACHINE_CONTEXT_TYPES_ATTRIBUTE, {})
-        for contextName, contextType in contextTypes.iteritems():
+        for contextName, contextType in contextTypes.items():
             try:
                 # attempt to import the value of the event
                 contextKey = _resolveObject(contextName, self.namespace)
@@ -426,9 +427,9 @@ class _MachineConfig(object):
     @property
     def url(self):
         """ Returns the url for this machine. """
-        return '%sfsm/%s/' % (self.rootUrl, self.name)
+        return '{}fsm/{}/'.format(self.rootUrl, self.name)
 
-class _StateConfig(object):
+class _StateConfig:
     """ Configuration of a state. """
 
     # R0912:268:_StateConfig.__init__: Too many branches (22/20)
@@ -446,7 +447,7 @@ class _StateConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in stateDict.iterkeys():
+        for attribute in stateDict.keys():
             if attribute not in constants.VALID_STATE_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:
@@ -525,7 +526,7 @@ class _StateConfig(object):
         else:
             self.exit = None
 
-class _TransitionConfig(object):
+class _TransitionConfig:
     """ Configuration of a transition. """
 
     # R0912:326:_TransitionConfig.__init__: Too many branches (22/20)
@@ -537,7 +538,7 @@ class _TransitionConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in transDict.iterkeys():
+        for attribute in transDict.keys():
             if attribute not in constants.VALID_TRANS_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:
@@ -557,7 +558,7 @@ class _TransitionConfig(object):
             raise exceptions.InvalidTransitionEventNameError(self.machineName, fromStateName, self.event)
 
         # transition name
-        self.name = '%s--%s' % (fromStateName, self.event)
+        self.name = '{}--{}'.format(fromStateName, self.event)
         if not self.name:
             raise exceptions.TransitionNameRequiredError(self.machineName)
         if not constants.NAME_RE.match(self.name):

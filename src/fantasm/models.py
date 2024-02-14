@@ -17,16 +17,11 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
-from google.appengine.ext import db, ndb
-from google.appengine.api import datastore_types
-
 import datetime
-import sys
+import json
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
+from google.appengine.api import datastore_types
+from google.appengine.ext import db, ndb
 
 
 def decode(dct):
@@ -83,7 +78,7 @@ class JSONProperty(db.Property):
 
     def get_value_for_datastore(self, modelInstance):
         """ see Property.get_value_for_datastore """
-        value = super(JSONProperty, self).get_value_for_datastore(modelInstance)
+        value = super().get_value_for_datastore(modelInstance)
         return db.Text(self._deflate(value))
 
     def validate(self, value):
@@ -98,7 +93,7 @@ class JSONProperty(db.Property):
         """ decodes string -> dict """
         if value is None:
             return {}
-        if isinstance(value, unicode) or isinstance(value, str):
+        if isinstance(value, str) or isinstance(value, str):
             return json.loads(value, object_hook=decode)
         return value
 

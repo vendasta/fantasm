@@ -1,47 +1,46 @@
 """ Tests for fantasm.fsm """
-import logging
+import datetime
+import json
+import pickle
+import random  # pylint: disable=W0611
 import time
 import unittest
-import urllib
-import datetime
-import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
-import random # pylint: disable=W0611
-import pickle
-from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable=W0611
-from google.appengine.api import memcache # pylint: disable=W0611
-from google.appengine.ext import db
-from google.appengine.ext.ndb import model as ndb_model, key as ndb_key
-from fantasm import config
-from fantasm.handlers import TemporaryStateObject
-from fantasm.fsm import FSMContext, FSM, startStateMachine
-from fantasm.transition import Transition
-from fantasm.exceptions import UnknownMachineError, UnknownStateError, UnknownEventError, \
-                               FanInWriteLockFailureRuntimeError, \
-                               YamlFileCircularImportError
-from fantasm.state import State
-from fantasm.models import _FantasmFanIn
-from fantasm.constants import STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, STEPS_PARAM, MACHINE_STATES_ATTRIBUTE, \
-                              CONTINUATION_PARAM, INDEX_PARAM, GEN_PARAM, FORKED_CONTEXTS_PARAM, \
-                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY, \
-                              HTTP_REQUEST_HEADER_QUEUENAME
+from fantasm_tests.actions import (CountExecuteCalls,
+                                   CountExecuteCallsWithFork,
+                                   RaiseExceptionAction,
+                                   RaiseExceptionContinuationAction)
 from fantasm_tests.fixtures import AppEngineTestCase
-from fantasm_tests.actions import RaiseExceptionAction, RaiseExceptionContinuationAction
-from fantasm_tests.helpers import TaskQueueDouble, getLoggingDouble
-from fantasm_tests.helpers import ConfigurationMock
-from fantasm_tests.helpers import getFSMFactoryByFilename
-from fantasm_tests.helpers import getMachineNameByFilename
-from fantasm_tests.helpers import setUpByFilename
-from fantasm_tests.helpers import getCounts
-from fantasm_tests.actions import CountExecuteCalls
-from fantasm_tests.actions import CountExecuteCallsWithFork
-
+from fantasm_tests.helpers import (ConfigurationMock, TaskQueueDouble,
+                                   getCounts, getFSMFactoryByFilename,
+                                   getLoggingDouble, getMachineNameByFilename,
+                                   setUpByFilename)
+from google.appengine.api import memcache  # pylint: disable=W0611
+from google.appengine.api.taskqueue.taskqueue import (  # pylint: disable=W0611
+    Queue, Task)
+from google.appengine.ext import db
+from google.appengine.ext.ndb import key as ndb_key
+from google.appengine.ext.ndb import model as ndb_model
 from minimock import mock, restore
+
+from fantasm import config
+from fantasm.constants import (CONTINUATION_PARAM, CONTINUATION_RESULTS_KEY,
+                               EVENT_PARAM, FORK_PARAM, FORKED_CONTEXTS_PARAM,
+                               GEN_PARAM, HTTP_REQUEST_HEADER_QUEUENAME,
+                               INDEX_PARAM, INSTANCE_NAME_PARAM,
+                               MACHINE_STATES_ATTRIBUTE, RETRY_COUNT_PARAM,
+                               STATE_PARAM, STEPS_PARAM, TASK_NAME_PARAM)
+from fantasm.exceptions import (FanInWriteLockFailureRuntimeError,
+                                UnknownEventError, UnknownMachineError,
+                                UnknownStateError, YamlFileCircularImportError)
+from fantasm.fsm import FSM, FSMContext, startStateMachine
+from fantasm.handlers import TemporaryStateObject
+from fantasm.models import _FantasmFanIn
+from fantasm.state import State
+from fantasm.transition import Transition
 
 # pylint: disable=C0111, W0212, W0612, W0613
 # - docstrings not reqd in unit tests
@@ -85,7 +84,7 @@ class FSMTests(unittest.TestCase):
     def test_transitionRetryPolicyOverridesMachineLevelPolicy(self):
         setUpByFilename(self, 'test-TaskQueueFSMTests.yaml')
         transInitialToNormal = self.initialState._eventToTransition['next-event']
-        self.assertNotEquals(self.machineConfig.taskRetryLimit, transInitialToNormal.retryOptions.task_retry_limit)
+        self.assertNotEqual(self.machineConfig.taskRetryLimit, transInitialToNormal.retryOptions.task_retry_limit)
 
     def test_createFSMInstance_no_initial_data(self):
         setUpByFilename(self, 'test-TaskQueueFSMTests.yaml')
@@ -100,7 +99,7 @@ class FSMTests(unittest.TestCase):
 class FSMContextTests(unittest.TestCase):
 
     def setUp(self):
-        super(FSMContextTests, self).setUp()
+        super().setUp()
         filename = 'test-FSMContextTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -112,34 +111,34 @@ class FSMContextTests(unittest.TestCase):
         self.context.dispatch(FSM.PSEUDO_INIT, self.obj)
 
     def tearDown(self):
-        super(FSMContextTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getContextWithoutSpecialEntries(self):
         context = self.context.clone()
-        for key in context.keys():
+        for key in list(context.keys()):
             if key.startswith('__') and key.endswith('__'):
                 context.pop(key)
         return context
 
     def test_contextValueSet(self):
         self.context['foo'] = 'bar'
-        self.assertEquals(self.context.get('foo'), 'bar')
+        self.assertEqual(self.context.get('foo'), 'bar')
 
     def test_contextSetQueue(self):
         queue = 'some-queue'
         self.context.setQueue(queue)
-        self.assertEquals(self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME], queue)
+        self.assertEqual(self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME], queue)
 
     def test_contextValuePop(self):
         self.context['foo'] = 'bar'
-        self.assertEquals(self.context.pop('foo'), 'bar')
-        self.assertEquals(self.context.pop('foo', None), None)
+        self.assertEqual(self.context.pop('foo'), 'bar')
+        self.assertEqual(self.context.pop('foo', None), None)
 
     def test_contextValueOverridden(self):
         self.context['foo'] = 'bar'
         self.context['foo'] = 'bar2'
-        self.assertEquals(self.context.get('foo'), 'bar2')
+        self.assertEqual(self.context.get('foo'), 'bar2')
 
     def test_contextKeyMissingReturnsNone(self):
         self.assertEqual(None, self.context.get('unknown-key'))
@@ -152,12 +151,12 @@ class FSMContextTests(unittest.TestCase):
         state = State('foo', None, CountExecuteCalls(), None)
         context2 = FSMContext({state.name : state}, state, queueName='q')
         instanceName2 = context2.instanceName
-        self.assertNotEquals(instanceName1, instanceName2)
+        self.assertNotEqual(instanceName1, instanceName2)
 
     def test_datetimeParsedFromInstaneName(self):
         instanceName = self.context.instanceName
         sdate = datetime.datetime.strptime(instanceName.rsplit('-')[-2], '%Y%m%d%H%M%S')
-        self.assertEquals(self.context.getInstanceStartTime(), sdate)
+        self.assertEqual(self.context.getInstanceStartTime(), sdate)
 
     def test_clone(self):
         self.context['foo'] = 'bar'
@@ -190,17 +189,17 @@ class FSMContextTests(unittest.TestCase):
     def test_fork(self):
         self.context.fork()
         self.assertTrue(FORKED_CONTEXTS_PARAM in self.obj)
-        self.assertEquals(len(self.obj[FORKED_CONTEXTS_PARAM]), 1)
-        self.assertEquals(self.obj[FORKED_CONTEXTS_PARAM][0][FORK_PARAM], 0)
+        self.assertEqual(len(self.obj[FORKED_CONTEXTS_PARAM]), 1)
+        self.assertEqual(self.obj[FORKED_CONTEXTS_PARAM][0][FORK_PARAM], 0)
         self.context.fork()
-        self.assertEquals(len(self.obj[FORKED_CONTEXTS_PARAM]), 2)
-        self.assertEquals(self.obj[FORKED_CONTEXTS_PARAM][0][FORK_PARAM], 0)
-        self.assertEquals(self.obj[FORKED_CONTEXTS_PARAM][1][FORK_PARAM], 1)
+        self.assertEqual(len(self.obj[FORKED_CONTEXTS_PARAM]), 2)
+        self.assertEqual(self.obj[FORKED_CONTEXTS_PARAM][0][FORK_PARAM], 0)
+        self.assertEqual(self.obj[FORKED_CONTEXTS_PARAM][1][FORK_PARAM], 1)
 
 class FSMContextMergeJoinTests(AppEngineTestCase):
 
     def setUp(self):
-        super(FSMContextMergeJoinTests, self).setUp()
+        super().setUp()
         self.state = State('foo', None, CountExecuteCalls(), None)
         self.state2 = State('foo2', None, CountExecuteCallsWithFork(), None)
         self.state.addTransition(Transition('t1', self.state2, queueName='q'), 'event')
@@ -224,7 +223,7 @@ class FSMContextMergeJoinTests(AppEngineTestCase):
         self.assertEqual(1, _FantasmFanIn.all(namespace='').count())
 
     def test_mergeJoinDispatch_1234_contexts(self):
-        for i in xrange(1234):
+        for i in range(1234):
             _FantasmFanIn(workIndex='instanceName--foo--event--foo2--step-0-2654435761').put()
         self.assertEqual(1000, _FantasmFanIn.all(namespace='').count()) # can't get them all with .count()
         contexts = self.context.mergeJoinDispatch('event', {RETRY_COUNT_PARAM: 0})
@@ -236,7 +235,7 @@ class FSMContextMergeJoinTests(AppEngineTestCase):
 class TaskQueueFSMTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMTests, self).setUp()
+        super().setUp()
         self.maxDiff = None
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
@@ -250,18 +249,18 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
 
     def tearDown(self):
-        super(TaskQueueFSMTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def assertTaskUrlHasStateAndEvent(self, task, expectedState, expectedEvent):
         # '/fantasm/fsm/TaskQueueFSMTests/?__st__=state-normal&__ev__=next-event&arg1=val1&arg2=val2'
-        stateParams = '%s=%s' % (STATE_PARAM, expectedState)
-        eventParams = '%s=%s' % (EVENT_PARAM, expectedEvent)
+        stateParams = '{}={}'.format(STATE_PARAM, expectedState)
+        eventParams = '{}={}'.format(EVENT_PARAM, expectedEvent)
         self.assertTrue(stateParams in task.url)
         self.assertTrue(eventParams in task.url)
 
     def assertTaskUrlHasInstanceName(self, task, instanceName):
-        instanceParams = '%s=%s' % (INSTANCE_NAME_PARAM, instanceName)
+        instanceParams = '{}={}'.format(INSTANCE_NAME_PARAM, instanceName)
         self.assertTrue(instanceParams in task.url)
 
     def test_initialialize_counts(self):
@@ -279,11 +278,11 @@ class TaskQueueFSMTests(AppEngineTestCase):
         mock(name='Queue.add', returns_func=mockQueue.add, tracker=None)
 
         event = self.context.initialize()
-        self.assertEquals(len(mockQueue.tasks), 1)
+        self.assertEqual(len(mockQueue.tasks), 1)
 
         self.context.dispatch(event, {})
 
-        self.assertEquals(len(mockQueue.tasks), 2)
+        self.assertEqual(len(mockQueue.tasks), 2)
         (task, transactional) = mockQueue.tasks[1]
 
         # state-initial is the state we're transitioning FROM
@@ -306,7 +305,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.context.currentState = self.stateInitial
         self.context.dispatch('next-event', {})
 
-        self.assertEquals(len(mockQueue.tasks), 1)
+        self.assertEqual(len(mockQueue.tasks), 1)
         (task, transactional) = mockQueue.tasks[0]
         # state-normal is the state we're transitioning FROM
         self.assertTaskUrlHasStateAndEvent(task, 'state-normal', 'next-event')
@@ -339,7 +338,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.context.currentState = self.stateNormal
         self.context.dispatch('next-event', {})
 
-        self.assertEquals(len(mockQueue.tasks), 0)
+        self.assertEqual(len(mockQueue.tasks), 0)
 
     def test_unknownEventLogsCriticalEvent(self):
         loggingDouble = getLoggingDouble()
@@ -348,7 +347,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.assertRaises(UnknownEventError, self.context.dispatch, 'bad-event', {})
         # The "bad-event" message is logged twice: once when first looking it up (which raises exception),
         # then again when handling the exception (which uses the event to find the transition to find the retry policy)
-        self.assertEquals(loggingDouble.count['critical'], 2)
+        self.assertEqual(loggingDouble.count['critical'], 2)
 
     def test_nonFinalStateEmittingNoEventLogsCriticalEvent(self):
 
@@ -359,7 +358,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         loggingDouble = getLoggingDouble()
         self.context.currentState = self.stateInitial
         self.context.dispatch('next-event', {})
-        self.assertEquals(loggingDouble.count['critical'], 1)
+        self.assertEqual(loggingDouble.count['critical'], 1)
 
     def test_instanceNameIsPropagated(self):
         mockQueue = TaskQueueDouble()
@@ -368,7 +367,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         event = self.context.initialize()
         self.context.dispatch(event, {})
 
-        self.assertEquals(len(mockQueue.tasks), 2)
+        self.assertEqual(len(mockQueue.tasks), 2)
         (task, transactional) = mockQueue.tasks[0]
         self.assertTaskUrlHasInstanceName(task, self.context.instanceName)
 
@@ -397,7 +396,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.context.currentState = self.stateInitial
         self.context.dispatch('next-event', {})
 
-        self.assertEquals(mockQueue.name, 'fantasm-queue')
+        self.assertEqual(mockQueue.name, 'fantasm-queue')
 
     def test_taskTargetSpecifiedAtTransitionLevel(self):
         mockQueue = TaskQueueDouble()
@@ -411,7 +410,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.context.currentState = self.stateInitial
         self.context.dispatch('next-event', {})
 
-        self.assertEquals(mockQueue.tasks[0][0].target, 'correct-target')
+        self.assertEqual(mockQueue.tasks[0][0].target, 'correct-target')
 
     def test_setQueueCanAlterTheDispatchQueue(self):
         mockQueue = TaskQueueDouble()
@@ -422,7 +421,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         alternateQueue = 'some-other-queue'
         self.context.setQueue(alternateQueue)
         self.context.dispatch('next-event', {})
-        self.assertEquals(mockQueue.name, alternateQueue)
+        self.assertEqual(mockQueue.name, alternateQueue)
 
     def test_headerCanAlterTheDispatchQueue(self):
         mockQueue = TaskQueueDouble()
@@ -433,7 +432,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         alternateQueue = 'some-other-queue'
         self.context.headers[HTTP_REQUEST_HEADER_QUEUENAME] = alternateQueue
         self.context.dispatch('next-event', {})
-        self.assertEquals(mockQueue.name, alternateQueue)
+        self.assertEqual(mockQueue.name, alternateQueue)
 
     def test_setQueueCanAlterTheDispatchQueueEvenHeadersArePresent(self):
         mockQueue = TaskQueueDouble()
@@ -445,7 +444,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
         alternateQueue = 'some-other-queue'
         self.context.setQueue(alternateQueue)
         self.context.dispatch('next-event', {})
-        self.assertEquals(mockQueue.name, alternateQueue)
+        self.assertEqual(mockQueue.name, alternateQueue)
 
     # These tests are not raising as expected. The mock object is not being called. TODO sort this out
     # def test_nextEventNotStringRaisesException(self):
@@ -471,7 +470,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
 class TaskQueueFSMRandomCountdownTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMRandomCountdownTests, self).setUp()
+        super().setUp()
         self.maxDiff = None
         filename = 'test-TaskQueueFSMRandomCountdownTests.yaml'
         setUpByFilename(self, filename)
@@ -485,7 +484,7 @@ class TaskQueueFSMRandomCountdownTests(AppEngineTestCase):
         self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
 
     def tearDown(self):
-        super(TaskQueueFSMRandomCountdownTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_normalStateDispatchUsesRandomCountdown(self):
@@ -516,7 +515,7 @@ _UTC = _UTCTimeZone()
 class TaskQueueFSMRetryTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMRetryTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMRetryTests.yaml'
         machineName = getMachineNameByFilename(filename)
         self.factory = getFSMFactoryByFilename(filename)
@@ -531,7 +530,7 @@ class TaskQueueFSMRetryTests(AppEngineTestCase):
         self.mockQueue.purge() # clear the initialization task
 
     def tearDown(self):
-        super(TaskQueueFSMRetryTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_taskRetryLimitAddedToQueuedTask(self):
@@ -539,45 +538,45 @@ class TaskQueueFSMRetryTests(AppEngineTestCase):
             return 'ok1'
         mock(name='CountExecuteCalls.execute', returns_func=execute, tracker=None)
         self.context.dispatch(self.initEvent, TemporaryStateObject())
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         task = self.mockQueue.tasks[0][0]
-        self.assertEquals(task.retry_options.task_retry_limit, 1)
+        self.assertEqual(task.retry_options.task_retry_limit, 1)
 
     def test_minBackoffSecondsAddedToQueuedTask(self):
         def execute(context, obj):
             return 'ok2'
         mock(name='CountExecuteCalls.execute', returns_func=execute, tracker=None)
         self.context.dispatch(self.initEvent, TemporaryStateObject())
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         task = self.mockQueue.tasks[0][0]
-        self.assertEquals(task.retry_options.min_backoff_seconds, 2)
+        self.assertEqual(task.retry_options.min_backoff_seconds, 2)
 
     def test_maxBackoffSecondsAddedToQueuedTask(self):
         def execute(context, obj):
             return 'ok3'
         mock(name='CountExecuteCalls.execute', returns_func=execute, tracker=None)
         self.context.dispatch(self.initEvent, TemporaryStateObject())
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         task = self.mockQueue.tasks[0][0]
-        self.assertEquals(task.retry_options.max_backoff_seconds, 3)
+        self.assertEqual(task.retry_options.max_backoff_seconds, 3)
 
     def test_taskAgeLimitAddedToQueuedTask(self):
         def execute(context, obj):
             return 'ok4'
         mock(name='CountExecuteCalls.execute', returns_func=execute, tracker=None)
         self.context.dispatch(self.initEvent, TemporaryStateObject())
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         task = self.mockQueue.tasks[0][0]
-        self.assertEquals(task.retry_options.task_age_limit, 4)
+        self.assertEqual(task.retry_options.task_age_limit, 4)
 
     def test_maxDoublingsAddedToQueuedTask(self):
         def execute(context, obj):
             return 'ok5'
         mock(name='CountExecuteCalls.execute', returns_func=execute, tracker=None)
         self.context.dispatch(self.initEvent, TemporaryStateObject())
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         task = self.mockQueue.tasks[0][0]
-        self.assertEquals(task.retry_options.max_doublings, 5)
+        self.assertEqual(task.retry_options.max_doublings, 5)
 
 class TestModel(db.Model):
     prop1 = db.StringProperty()
@@ -588,7 +587,7 @@ class DatastoreFSMContinuationBaseTests(AppEngineTestCase):
     MACHINE_NAME = None
 
     def setUp(self):
-        super(DatastoreFSMContinuationBaseTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
@@ -599,7 +598,7 @@ class DatastoreFSMContinuationBaseTests(AppEngineTestCase):
             self.modelKeys.append(modelKey)
 
     def tearDown(self):
-        super(DatastoreFSMContinuationBaseTests, self).tearDown()
+        super().tearDown()
         restore()
 
 class DatastoreFSMContinuationWithContinuationCountdownTests(DatastoreFSMContinuationBaseTests):
@@ -682,7 +681,7 @@ class DatastoreFSMContinuationTests(DatastoreFSMContinuationBaseTests):
         # and check that the expected cursor is in the continuation task
         query.with_cursor(cursor) # unexpected - i would have though the previous fetch() would leave the cursor
         query.fetch(2)
-        self.assertTrue(urllib.quote(query.cursor()) in self.mockQueue.tasks[-2][0].url)
+        self.assertTrue(urllib.parse.quote(query.cursor()) in self.mockQueue.tasks[-2][0].url)
 
         event = self.context.dispatch(event, TemporaryStateObject())
         self.assertEqual('state-final', self.context.currentState.name)
@@ -859,7 +858,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
     MACHINE_NAME = 'NDBDatastoreFSMContinuationTests'
 
     def setUp(self):
-        super(NDBDatastoreFSMContinuationTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
@@ -870,7 +869,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
             self.modelKeys.append(modelKey)
 
     def tearDown(self):
-        super(NDBDatastoreFSMContinuationTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_NDBDatastoreFSMContinuation_smoke_test(self):
@@ -918,7 +917,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
 
         # and check that the expected cursor is in the continuation task
         _, cursor, _ = query.fetch_page(2, start_cursor=cursor)
-        self.assertTrue(urllib.quote(cursor.to_websafe_string()) in self.mockQueue.tasks[-2][0].url)
+        self.assertTrue(urllib.parse.quote(cursor.to_websafe_string()) in self.mockQueue.tasks[-2][0].url)
 
         event = self.context.dispatch(event, TemporaryStateObject())
         self.assertEqual('state-final', self.context.currentState.name)
@@ -982,7 +981,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
 class ContextTypesCoercionTests(unittest.TestCase):
 
     def setUp(self):
-        super(ContextTypesCoercionTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, 'test-TypeCoercionTests.yaml')
 
     def test_incomingItemsArePlacedIntoContextAsCorrectDatatype(self):
@@ -995,7 +994,7 @@ class ContextTypesCoercionTests(unittest.TestCase):
         self.context.putTypedValue('ndb_key_key', nkey.urlsafe())
         self.context.putTypedValue('ndb_model_key', nkey.urlsafe())
         self.context.putTypedValue('ndb_context_key', nkey.urlsafe())
-        self.assertEquals(self.context['counter'], 123)
+        self.assertEqual(self.context['counter'], 123)
         self.assertTrue(isinstance(self.context['batch-key'], db.Key))
         self.assertEqual({'a': 'a'}, self.context['data'])
         self.assertEqual(dt, self.context['start-date'])
@@ -1005,18 +1004,18 @@ class ContextTypesCoercionTests(unittest.TestCase):
 
     def test_internalParametersArePlacedIntoContextAsCorrectDatatype(self):
         self.context.putTypedValue(STEPS_PARAM, '123')
-        self.assertEquals(self.context[STEPS_PARAM], 123)
+        self.assertEqual(self.context[STEPS_PARAM], 123)
 
         self.context.putTypedValue(GEN_PARAM, '{"123": 123}')
-        self.assertEquals(self.context[GEN_PARAM], {'123': 123})
+        self.assertEqual(self.context[GEN_PARAM], {'123': 123})
 
         self.context.putTypedValue(INDEX_PARAM, '123')
-        self.assertEquals(self.context[INDEX_PARAM], 123)
+        self.assertEqual(self.context[INDEX_PARAM], 123)
 
 class ContextYamlImportTests(unittest.TestCase):
 
     def setUp(self):
-        super(ContextYamlImportTests, self).setUp()
+        super().setUp()
 
     def test_imports_only(self):
         setUpByFilename(self, 'test-YamlImportOnly.yaml', machineName='TypeCoercionTests')
@@ -1031,7 +1030,7 @@ class ContextYamlImportTests(unittest.TestCase):
 
     def test_import_does_not_change_global_config_root_url(self):
         setUpByFilename(self, 'test-YamlImport.yaml', machineName='Foo')
-        self.assertEquals('/another-root/', self.currentConfig.rootUrl)
+        self.assertEqual('/another-root/', self.currentConfig.rootUrl)
 
     def test_import_does_not_change_global_config_enable_capabilities_check(self):
         setUpByFilename(self, 'test-YamlImport.yaml', machineName='Foo')
@@ -1044,7 +1043,7 @@ class ContextYamlImportTests(unittest.TestCase):
 class SpawnTests(unittest.TestCase):
 
     def setUp(self):
-        super(SpawnTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -1059,7 +1058,7 @@ class SpawnTests(unittest.TestCase):
         self.mockQueue.purge()
 
     def tearDown(self):
-        super(SpawnTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getTask(self, num):
@@ -1068,15 +1067,15 @@ class SpawnTests(unittest.TestCase):
 
     def test_spawnWithNoContextDoesNotQueueAnything(self):
         self.context.spawn(self.machineName, None, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 0)
+        self.assertEqual(len(self.mockQueue.tasks), 0)
 
     def test_spawnWithOneContextQueuesOne(self):
         self.context.spawn(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
 
     def test_spawnWithTwoContextsQueuesTwo(self):
         self.context.spawn(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 2)
+        self.assertEqual(len(self.mockQueue.tasks), 2)
 
     def test_spawnUsesCorrectUrl(self):
         self.context.spawn(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
@@ -1097,15 +1096,15 @@ class SpawnTests(unittest.TestCase):
 
     def test_spawnIsIdempotent(self):
         self.context.spawn(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         self.context.spawn(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
 
 class StartStateMachineTests(unittest.TestCase):
     """ Tests for startStateMachine """
 
     def setUp(self):
-        super(StartStateMachineTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -1113,7 +1112,7 @@ class StartStateMachineTests(unittest.TestCase):
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
 
     def tearDown(self):
-        super(StartStateMachineTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getTask(self, num):
@@ -1122,16 +1121,16 @@ class StartStateMachineTests(unittest.TestCase):
 
     def test_taskEnqueuedToStartSingleMachine(self):
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
 
     def test_tasksEnqueuedToStartMultipleMachines(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}, {'c': '3'}], _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 3)
+        self.assertEqual(len(self.mockQueue.tasks), 3)
 
     def test_enqueuedTaskPointsAtCorrectTarget(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}, {'c': '3'}], _currentConfig=self.currentConfig)
         task = self.getTask(1)
-        self.assertEquals('backend1', task.target)
+        self.assertEqual('backend1', task.target)
 
     def test_contextsAddedToTasks(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig,
@@ -1141,11 +1140,11 @@ class StartStateMachineTests(unittest.TestCase):
 
     def test_correctMethodUsedToEnqueueTask(self):
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig, method='GET')
-        self.assertEquals(self.getTask(0).method, 'GET')
+        self.assertEqual(self.getTask(0).method, 'GET')
 
     def test_correctUrlInTask(self):
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig, method='POST')
-        self.assertEquals(self.getTask(0).url, '/fantasm/fsm/%s/%s/%s/%s/' % (self.machineName,
+        self.assertEqual(self.getTask(0).url, '/fantasm/fsm/{}/{}/{}/{}/'.format(self.machineName,
                                                                               FSM.PSEUDO_INIT,
                                                                               FSM.PSEUDO_INIT,
                                                                               self.initialState.name))
@@ -1170,24 +1169,24 @@ class StartStateMachineTests(unittest.TestCase):
 
     def test_uniqueTaskNameGeneratedForMultipleContextsWhenTaskNameNotProvided(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
-        self.assertNotEquals(self.getTask(0).name, self.getTask(1).name)
+        self.assertNotEqual(self.getTask(0).name, self.getTask(1).name)
 
     def test_startStateMachineIsIdempotent(self):
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig, taskName='foo')
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig, taskName='foo')
-        self.assertEquals(len(self.mockQueue.tasks), 1)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
 
     def test_tasksQueuedForStartStateMachineWithTaskName(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig,
                           taskName='foo')
-        self.assertEquals(len(self.mockQueue.tasks), 2)
-        self.assertNotEquals(self.getTask(0).name, self.getTask(1).name)
+        self.assertEqual(len(self.mockQueue.tasks), 2)
+        self.assertNotEqual(self.getTask(0).name, self.getTask(1).name)
 
     def test_tasksQueuedForStartStateMachineWithNoTaskName(self):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 2)
-        self.assertNotEquals(self.getTask(0).name, self.getTask(1).name)
+        self.assertEqual(len(self.mockQueue.tasks), 2)
+        self.assertNotEqual(self.getTask(0).name, self.getTask(1).name)
 
     def test_raiseIfTaskExists_True(self):
         ld = getLoggingDouble()
@@ -1195,7 +1194,8 @@ class StartStateMachineTests(unittest.TestCase):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], taskName='a', _currentConfig=self.currentConfig)
         self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.'],
                          ld.messages['info'])
-        from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
+        from google.appengine.api.taskqueue.taskqueue import \
+            TaskAlreadyExistsError
         self.assertRaises(TaskAlreadyExistsError, startStateMachine, self.machineName, [{'a': '1'}, {'b': '2'}],
                           taskName='a', _currentConfig=self.currentConfig, raiseIfTaskExists=True)
         self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.',
@@ -1213,13 +1213,13 @@ class StartStateMachineTests(unittest.TestCase):
             self.fail('exception should be raised.')
         except Exception:
             pass # this is expected
-        self.assertEquals(len(self.mockQueue.tasks), 0) # nothing should be queued
+        self.assertEqual(len(self.mockQueue.tasks), 0) # nothing should be queued
 
     def test_queuedInitializationTaskContainsAlternateQueueHeader(self):
         alternateQueue = 'some-queue'
         startStateMachine(self.machineName, {'a': '1'}, queueName=alternateQueue, _currentConfig=self.currentConfig)
-        self.assertEquals(len(self.mockQueue.tasks), 1)
-        self.assertEquals(self.getTask(0).headers[HTTP_REQUEST_HEADER_QUEUENAME], alternateQueue)
+        self.assertEqual(len(self.mockQueue.tasks), 1)
+        self.assertEqual(self.getTask(0).headers[HTTP_REQUEST_HEADER_QUEUENAME], alternateQueue)
 
 
 class HaltMachineErrorTest(AppEngineTestCase):
@@ -1228,14 +1228,14 @@ class HaltMachineErrorTest(AppEngineTestCase):
     MACHINE_NAME = None
 
     def setUp(self):
-        super(HaltMachineErrorTest, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
         self.loggingDouble = getLoggingDouble()
 
     def tearDown(self):
-        super(HaltMachineErrorTest, self).tearDown()
+        super().tearDown()
         restore()
 
 class HaltMachineErrorEntryTests(HaltMachineErrorTest):
@@ -1291,8 +1291,8 @@ class HaltMachineErrorActionTests(HaltMachineErrorTest):
     def test_message_logged_at_appropriate_level(self):
         event = self.context.initialize()
         event = self.context.dispatch(event, TemporaryStateObject())
-        self.assertEquals(self.loggingDouble.count['debug'], 1)
-        self.assertEquals(self.loggingDouble.messages['debug'][0], 'instrumented exception')
+        self.assertEqual(self.loggingDouble.count['debug'], 1)
+        self.assertEqual(self.loggingDouble.messages['debug'][0], 'instrumented exception')
 
 class HaltMachineErrorContinuationTests(HaltMachineErrorTest):
     """ Tests for raising HaltMachineError in state's continuation. """
@@ -1313,8 +1313,8 @@ class HaltMachineErrorActionNoMessageEmittedTests(HaltMachineErrorTest):
     def test_message_logged_at_appropriate_level(self):
         event = self.context.initialize()
         event = self.context.dispatch(event, TemporaryStateObject())
-        self.assertEquals(self.loggingDouble.count['debug'], 0)
-        self.assertEquals(self.loggingDouble.count['info'], 0)
-        self.assertEquals(self.loggingDouble.count['warning'], 0)
-        self.assertEquals(self.loggingDouble.count['error'], 0)
-        self.assertEquals(self.loggingDouble.count['critical'], 0)
+        self.assertEqual(self.loggingDouble.count['debug'], 0)
+        self.assertEqual(self.loggingDouble.count['info'], 0)
+        self.assertEqual(self.loggingDouble.count['warning'], 0)
+        self.assertEqual(self.loggingDouble.count['error'], 0)
+        self.assertEqual(self.loggingDouble.count['critical'], 0)

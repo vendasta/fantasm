@@ -21,7 +21,7 @@ system.
 
 TODO: User code to resolve source blobs (via source email links) to the target blobs.
 """
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from fantasm.action import DatastoreContinuationFSMAction
 from fantasm.action import FSMAction
@@ -75,7 +75,7 @@ class Send( DatastoreContinuationFSMAction ):
             
             # trigger a pull state machine on the target app
             response = urlfetch.fetch(startPullUrl, 
-                                      payload=urllib.urlencode({SOURCE_BLOB_KEY_PARAM: str(sourceBlobInfo.key()),
+                                      payload=urllib.parse.urlencode({SOURCE_BLOB_KEY_PARAM: str(sourceBlobInfo.key()),
                                                                 SOURCE_BLOB_FILENAME_PARAM: sourceBlobInfo.filename,
                                                                 SOURCE_BLOB_CONTENT_TYPE_PARAM: sourceBlobInfo.content_type,
                                                                 SOURCE_HOST_PARAM: sourceHost,

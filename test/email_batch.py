@@ -3,8 +3,8 @@ import logging
 from datetime import datetime
 from google.appengine.ext import db
 from google.appengine.ext import webapp
-from fantasm.action import DatastoreContinuationFSMAction
-from fantasm.constants import CONTINUATION_RESULT_KEY
+from .fantasm.action import DatastoreContinuationFSMAction
+from .fantasm.constants import CONTINUATION_RESULT_KEY
 
 # pylint: disable=C0111, W0613, C0103
 # - docstring not reqd
@@ -13,7 +13,7 @@ from fantasm.constants import CONTINUATION_RESULT_KEY
 VALIDATION_COUNTDOWN = 4*60*60
 BATCH_SUCCESS_RATE = 0.95
 
-class StartBatch(object):
+class StartBatch:
 
     def execute(self, context, obj):
 
@@ -50,7 +50,7 @@ class SendEmail(DatastoreContinuationFSMAction):
 
         return 'next'
 
-class UpdateCounter(object):
+class UpdateCounter:
 
     def execute(self, contexts, obj): # contexts (plural) because this is a fan_in
 
@@ -66,7 +66,7 @@ class UpdateCounter(object):
 
         db.run_in_transaction(txn)
 
-class ValidateBatch(object):
+class ValidateBatch:
 
     def execute(self, context, obj):
 

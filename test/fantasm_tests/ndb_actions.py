@@ -13,7 +13,7 @@ from fantasm.constants import CONTINUATION_RESULTS_KEY
 class NDBTestModel(ndb_model.Model):
     prop1 = ndb_model.StringProperty()
 
-class CountExecuteCalls(object):
+class CountExecuteCalls:
     def __init__(self):
         self.count = 0
         self.fails = 0
@@ -34,7 +34,7 @@ class CountExecuteCallsFinal(CountExecuteCalls):
 
 class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
     def __init__(self):
-        super(TestDatastoreContinuationFSMAction, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
         self.fails = 0
@@ -48,7 +48,7 @@ class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
         self.ccount += 1
         if self.ccount == self.cfailat:
             raise Exception()
-        return super(TestDatastoreContinuationFSMAction, self).continuation(context, obj, token=token)
+        return super().continuation(context, obj, token=token)
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
@@ -64,7 +64,7 @@ class TestDatastoreContinuationFSMAction(NDBDatastoreContinuationFSMAction):
 
 class TestContinuationAndForkFSMAction(NDBDatastoreContinuationFSMAction):
     def __init__(self):
-        super(TestContinuationAndForkFSMAction, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
         self.fails = 0
@@ -78,7 +78,7 @@ class TestContinuationAndForkFSMAction(NDBDatastoreContinuationFSMAction):
         self.ccount += 1
         if self.ccount == self.cfailat:
             raise Exception()
-        return super(TestContinuationAndForkFSMAction, self).continuation(context, obj, token=token)
+        return super().continuation(context, obj, token=token)
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None

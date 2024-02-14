@@ -1,19 +1,14 @@
 """ Url fanout actions """
-import sys
+import json
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
-from google.appengine.ext import db
 from google.appengine.api import urlfetch
+from google.appengine.ext import db
 
 # pylint: disable=C0111, W0613
 # - docstring not reqd
 # - some unused arguments
 
-class TwitterSearch(object):
+class TwitterSearch:
     """ Performs a Twitter search """
 
     def continuation(self, context, obj, token=None):

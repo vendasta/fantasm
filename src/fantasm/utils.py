@@ -65,18 +65,18 @@ def outputStateConfig(stateConfig, colorMap=None):
     colorMap = colorMap or {}
     actions = []
     if stateConfig.entry:
-        actions.append('entry/ %(entry)s' % {'entry': outputAction(stateConfig.entry)})
+        actions.append('entry/ {entry}'.format(entry=outputAction(stateConfig.entry)))
     if stateConfig.action:
-        actions.append('do/ %(do)s' % {'do': outputAction(stateConfig.action)})
+        actions.append('do/ {do}'.format(do=outputAction(stateConfig.action)))
     if stateConfig.exit:
-        actions.append('exit/ %(exit)s' % {'exit': outputAction(stateConfig.exit)})
-    label = '%(stateName)s|%(actions)s' % {'stateName': stateConfig.name, 'actions': '\\l'.join(actions)}
+        actions.append('exit/ {exit}'.format(exit=outputAction(stateConfig.exit)))
+    label = '{stateName}|{actions}'.format(stateName=stateConfig.name, actions='\\l'.join(actions))
     if stateConfig.continuation:
         label += '|continuation = True'
     if stateConfig.fanInPeriod != constants.NO_FAN_IN:
         label += '|fan in period = %(fanin)ds' % {'fanin': stateConfig.fanInPeriod}
     if stateConfig.fanInGroup:
-        label += '|fan in group = %(faningroup)s' % {'faningroup': stateConfig.fanInGroup}
+        label += '|fan in group = {faningroup}'.format(faningroup=stateConfig.fanInGroup)
     shape = 'Mrecord'
     if colorMap.get(stateConfig.name):
         return '"%(stateName)s" [style=filled,fillcolor="%(fillcolor)s",shape=%(shape)s,label="{%(label)s}"];' % \
@@ -99,22 +99,22 @@ def outputMachineConfig(machineConfig, colorMap=None, skipStateNames=None):
     skipStateNames = skipStateNames or ()
     lines = []
     lines.append('digraph G {')
-    lines.append('label="%(machineName)s"' % {'machineName': machineConfig.name})
+    lines.append('label="{machineName}"'.format(machineName=machineConfig.name))
     lines.append('labelloc="t"')
     lines.append('"__start__" [label="start",shape=circle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
     lines.append('"__end__" [label="end",shape=doublecircle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
-    for stateConfig in machineConfig.states.values():
+    for stateConfig in list(machineConfig.states.values()):
         if stateConfig.name in skipStateNames:
             continue
         lines.append(outputStateConfig(stateConfig, colorMap=colorMap))
         if stateConfig.initial:
-            lines.append('"__start__" -> "%(stateName)s"' % {'stateName': stateConfig.name})
+            lines.append('"__start__" -> "{stateName}"'.format(stateName=stateConfig.name))
         if stateConfig.final:
-            lines.append('"%(stateName)s" -> "__end__"' % {'stateName': stateConfig.name})
-    for transitionConfig in machineConfig.transitions.values():
+            lines.append('"{stateName}" -> "__end__"'.format(stateName=stateConfig.name))
+    for transitionConfig in list(machineConfig.transitions.values()):
         if transitionConfig.fromState.name in skipStateNames or \
            transitionConfig.toState.name in skipStateNames:
             continue
         lines.append(outputTransitionConfig(transitionConfig))
     lines.append('}')
-    return '\n'.join(lines) 
+    return '\n'.join(lines)

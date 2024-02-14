@@ -18,7 +18,7 @@ os.environ['HTTP_HOST'] = 'fantasm'
 class AppEngineTestCase(unittest.TestCase):
 
     def setUp(self):
-        super(AppEngineTestCase, self).setUp()
+        super().setUp()
 
         # save the apiproxy
         self.__origApiproxy = apiproxy_stub_map.apiproxy
@@ -36,7 +36,7 @@ class AppEngineTestCase(unittest.TestCase):
         tq.GetTasks('default')
         # pylint: disable=W0212
         # - workaround to prevent GetTasks from re-parsing queue.yaml on every call
-        for value in (tq._queues or {}).values():
+        for value in list((tq._queues or {}).values()):
             value._queue_yaml_parser = None
 
         self.__urlfetch = urlfetch_stub.URLFetchServiceStub()
@@ -56,7 +56,7 @@ class AppEngineTestCase(unittest.TestCase):
         constants.DEFAULT_LOG_QUEUE_NAME = constants.DEFAULT_QUEUE_NAME
 
     def tearDown(self):
-        super(AppEngineTestCase, self).tearDown()
+        super().tearDown()
 
         # restore the apiproxy
         apiproxy_stub_map.apiproxy = self.__origApiproxy

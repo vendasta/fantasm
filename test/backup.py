@@ -7,8 +7,8 @@ from google.appengine.ext import db
 from google.appengine.ext import blobstore
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
-from fantasm.action import FSMAction, DatastoreContinuationFSMAction
-from fantasm.constants import CONTINUATION_RESULT_KEY
+from .fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from .fantasm.constants import CONTINUATION_RESULT_KEY
 
 FULL_BACKUP_ON_DAY_OF_WEEK = 2 # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ...
 DELETE_BACKUPS_OLDER_THAN_DAYS = 90 # set to -1 to disable
@@ -46,9 +46,9 @@ BACKUP_CONFIG = (
     (Company,                         'modifiedDate',     10),
     # add more models here
 )
-BACKUP_CLASS = dict( (m[0].__name__, m[0]) for m in BACKUP_CONFIG )
-BACKUP_INCREMENTAL_PROPERTY = dict( (m[0].__name__, m[1]) for m in BACKUP_CONFIG )
-BACKUP_BATCH_SIZE = dict( (m[0].__name__, m[2]) for m in BACKUP_CONFIG )
+BACKUP_CLASS = { m[0].__name__: m[0] for m in BACKUP_CONFIG }
+BACKUP_INCREMENTAL_PROPERTY = { m[0].__name__: m[1] for m in BACKUP_CONFIG }
+BACKUP_BATCH_SIZE = { m[0].__name__: m[2] for m in BACKUP_CONFIG }
 BACKUP_MODELS = sorted(BACKUP_CLASS.keys())
 
 
@@ -99,7 +99,7 @@ class EnumerateBackupModels(FSMAction):
         
         def tx():
             """ Gets the backup meta information for this model, creating if necessary. """
-            keyName = '%s:%s' % (backupId, model)
+            keyName = '{}:{}'.format(backupId, model)
             entry = _Backup.get_by_key_name(keyName)
             
             if not entry:
@@ -155,7 +155,7 @@ class BackupEntity(DatastoreContinuationFSMAction):
 
             # copy over the property values
             kwargs = {}
-            for prop in originalEntity.properties().values():
+            for prop in list(originalEntity.properties().values()):
                 if isinstance(prop, (db.ReferenceProperty, blobstore.BlobReferenceProperty)):
                     # avoid the dereference/auto-lookup
                     datastoreValue = prop.get_value_for_datastore(originalEntity)

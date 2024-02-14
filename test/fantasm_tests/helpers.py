@@ -27,7 +27,7 @@ from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
 os.environ['APPLICATION_ID'] = 'fantasm'
 APP_ID = os.environ['APPLICATION_ID']
 
-class TaskDouble(object):
+class TaskDouble:
     """ TaskDouble is a mock for google.appengine.api.taskqueue.Task """
     def __init__(self, url, params=None, name=None, transactional=False, method='POST', countdown=0):
         """ Initialize MockTask """
@@ -42,12 +42,12 @@ class TaskDouble(object):
         """Adds this Task to a queue. See Queue.add."""
         return TaskQueueDouble(queue_name).add(self, transactional=transactional)
 
-class TaskQueueDouble(object):
+class TaskQueueDouble:
     """ TaskQueueDouble is a mock for google.appengine.api.lab.taskqueue.Queue """
 
     def __init__(self, name='default'):
         """ Initialize TaskQueueDouble object """
-        self.tasknames = set([])
+        self.tasknames = set()
         self.tasks = []
         self.name = name
 
@@ -73,7 +73,7 @@ class TaskQueueDouble(object):
         """ purge all tasks in queue """
         self.tasks = []
 
-class LoggingDouble(object):
+class LoggingDouble:
 
     def __init__(self):
         self.count = defaultdict(int)
@@ -81,10 +81,10 @@ class LoggingDouble(object):
 
     def _log(self, level, message, *args, **kwargs):
         self.count[level] += 1
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             try:
                 message = str(message)
-            except Exception, e:
+            except Exception as e:
                 message = 'logging error'
                 args = ()
         try:
@@ -159,7 +159,7 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
                 if retries.get(task['name'], 0) > maxRetries:
                     continue
 
-            if task.has_key('eta'):
+            if 'eta' in task:
 
                 UTC_OFFSET_TIMEDELTA = datetime.datetime.utcnow() - datetime.datetime.now()
                 now = datetime.datetime.utcfromtimestamp(time.time())
@@ -219,10 +219,10 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
 
     return runList
 
-class ConfigurationMock(object):
+class ConfigurationMock:
     """ A mock object that looks like a config._Configuration instance """
     def __init__(self, machines):
-        self.machines = dict([(m.name, m) for m in machines])
+        self.machines = {m.name: m for m in machines}
 
 def getFSMFactoryByFilename(filename):
     """ Returns an FSM instance
@@ -277,7 +277,7 @@ def setUpByString(obj, yaml, machineName=None, instanceName=None):
     setUpByFilename(obj, f.name, machineName=machineName, instanceName=instanceName)
     f.close()
 
-class ZeroCountMock(object):
+class ZeroCountMock:
     count = 0
     fcount = 0
     ccount = 0
@@ -291,7 +291,7 @@ def getCounts(machineConfig):
     NOTE: relies on the config._StateConfig and FSMState instances sharing the FSMActions
     """
     counts = {}
-    for stateName, state in machineConfig.states.items():
+    for stateName, state in list(machineConfig.states.items()):
         if state.continuation:
             counts[state.name] = {'entry': (state.entry or ZeroCountMock).count,
                                   'continuation': (state.action or ZeroCountMock).ccount,
@@ -311,8 +311,8 @@ def getCounts(machineConfig):
                                   'action': (state.action or ZeroCountMock).count,
                                   'exit': (state.exit or ZeroCountMock).count}
 
-    for transition in machineConfig.transitions.values():
-        counts['%s--%s' % (transition.fromState.name, transition.event)] = {
+    for transition in list(machineConfig.transitions.values()):
+        counts['{}--{}'.format(transition.fromState.name, transition.event)] = {
             'action': (transition.action or ZeroCountMock).count
         }
 
@@ -349,16 +349,16 @@ def overrideTaskRetryLimit(machineConfig, overrides):
     @param machineConfig: a config._MachineConfig instance
     @param overrides: a dict of {'transitionName' : task_retry_limit} to override
     """
-    for (transitionName, taskRetryLimit) in overrides.items():
+    for (transitionName, taskRetryLimit) in list(overrides.items()):
         transition = machineConfig.transitions[transitionName]
         transition.taskRetryLimit = taskRetryLimit
 
 def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
                   path=None, cookies=None, host=None, port=None):
     """ Builds a request suitable for view.initialize(). """
-    from urllib import urlencode
-    from Cookie import BaseCookie
-    from StringIO import StringIO
+    from urllib.parse import urlencode
+    from http.cookies import BaseCookie
+    from io import StringIO
 
     if not get_args:
         get_args = {}

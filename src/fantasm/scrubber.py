@@ -29,7 +29,7 @@ from fantasm.constants import CONTINUATION_RESULTS_KEY
 # implementing interfaces
 # pylint: disable=W0613
 
-class InitalizeScrubber(object):
+class InitalizeScrubber:
     """ Use current time to set up task names. """
     def execute(self, context, obj):
         """ Computes the before date and adds to context. """
@@ -37,7 +37,7 @@ class InitalizeScrubber(object):
         context['before'] = datetime.datetime.utcnow() - datetime.timedelta(days=age)
         return 'next'
 
-class EnumerateFantasmModels(object):
+class EnumerateFantasmModels:
     """ Kick off a continuation for each model. """
 
     FANTASM_MODELS = (

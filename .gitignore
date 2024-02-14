@@ -1,1 +1,4 @@
 *.pyc
+venv
+*.egg-info
+fantasm-*.tar.gz

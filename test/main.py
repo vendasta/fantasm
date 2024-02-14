@@ -5,9 +5,9 @@ import logging
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import webapp
 from google.appengine.ext import db
-from complex_machine import TestModel
-import email_batch
-import backup
+from .complex_machine import TestModel
+from . import email_batch
+from . import backup
 
 # pylint: disable=C0111, C0103
 # - docstring not reqd
@@ -102,7 +102,7 @@ class Make100Models(webapp.RequestHandler):
 class Start100ComplexMachine(webapp.RequestHandler):
 
     def get(self):
-        import fantasm
+        from . import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100)
 
 class SecurityToken(db.Model):
@@ -123,7 +123,7 @@ def checkSecurity(name, request):
 class Start100ComplexMachineCountdown(webapp.RequestHandler):
 
     def get(self):
-        import fantasm
+        from . import fantasm
         fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
 
 class IntegrationTest(webapp.RequestHandler):
@@ -135,7 +135,7 @@ class IntegrationTest(webapp.RequestHandler):
             self.response.set_status(401)
             return
 
-        import fantasm
+        from . import fantasm
         for _ in range(10):
             fantasm.fsm.startStateMachine('ComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
 
@@ -148,7 +148,7 @@ class NDBIntegrationTest(webapp.RequestHandler):
             self.response.set_status(401)
             return
 
-        import fantasm
+        from . import fantasm
         for _ in range(10):
             fantasm.fsm.startStateMachine('NDBComplexMachine', [{}] * 100, countdown=[i*300 for i in range(100)])
 

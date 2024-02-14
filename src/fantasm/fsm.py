@@ -30,33 +30,32 @@ The Fan-out / Fan-in implementation is modeled after the presentation:
     http://code.google.com/events/io/2010/sessions/high-throughput-data-pipelines-appengine.html
 """
 
-import datetime
-import random
 import copy
-import time
-import sys
-
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
+import datetime
+import json
 import pickle
-from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsError, TombstonedTaskError, \
-                                                     TaskRetryOptions
+import random
+import time
+
+from google.appengine.api.taskqueue.taskqueue import (Task,
+                                                      TaskAlreadyExistsError,
+                                                      TaskRetryOptions,
+                                                      TombstonedTaskError)
 from google.appengine.ext import db
-from fantasm import constants, config
+
+from fantasm import config, constants, models
+from fantasm.exceptions import (TRANSIENT_ERRORS, HaltMachineError,
+                                UnknownEventError, UnknownMachineError,
+                                UnknownStateError)
+from fantasm.lock import ReadWriteLock, RunOnceSemaphore
 from fantasm.log import Logger
+from fantasm.models import _FantasmFanIn, _FantasmInstance
 from fantasm.state import State
 from fantasm.transition import Transition
-from fantasm.exceptions import UnknownEventError, UnknownStateError, UnknownMachineError, TRANSIENT_ERRORS, \
-                               HaltMachineError
-from fantasm.models import _FantasmFanIn, _FantasmInstance
-from fantasm import models
 from fantasm.utils import knuthHash
-from fantasm.lock import ReadWriteLock, RunOnceSemaphore
 
-class FSM(object):
+
+class FSM:
     """ An FSMContext creation factory. This is primarily responsible for translating machine
     configuration information (config.currentConfiguration()) into singleton States and Transitions as per [1]
     """
@@ -104,7 +103,7 @@ class FSM(object):
         self.config = currentConfig or config.currentConfiguration()
         self.machines = {}
         self.pseudoInits, self.pseudoFinals = {}, {}
-        for machineConfig in self.config.machines.values():
+        for machineConfig in list(self.config.machines.values()):
             self.machines[machineConfig.name] = {constants.MACHINE_STATES_ATTRIBUTE: {},
                                                  constants.MACHINE_TRANSITIONS_ATTRIBUTE: {}}
             machine = self.machines[machineConfig.name]
@@ -119,7 +118,7 @@ class FSM(object):
             self.pseudoFinals[machineConfig.name] = pseudoFinal
             self.machines[machineConfig.name][constants.MACHINE_STATES_ATTRIBUTE][FSM.PSEUDO_FINAL] = pseudoFinal
 
-            for stateConfig in machineConfig.states.values():
+            for stateConfig in list(machineConfig.states.values()):
                 state = self._getState(machineConfig, stateConfig)
 
                 # add the transition from pseudo-init to initialState
@@ -138,7 +137,7 @@ class FSM(object):
 
                 machine[constants.MACHINE_STATES_ATTRIBUTE][stateConfig.name] = state
 
-            for transitionConfig in machineConfig.transitions.values():
+            for transitionConfig in list(machineConfig.transitions.values()):
                 source = machine[constants.MACHINE_STATES_ATTRIBUTE][transitionConfig.fromState.name]
                 transition = self._getTransition(machineConfig, transitionConfig)
                 machine[constants.MACHINE_TRANSITIONS_ATTRIBUTE][transitionConfig.name] = transition
@@ -279,7 +278,7 @@ class FSMContext(dict):
         """
         assert queueName
 
-        super(FSMContext, self).__init__(data or {})
+        super().__init__(data or {})
         self.initialState = initialState
         self.currentState = currentState
         self.currentAction = None
@@ -317,7 +316,7 @@ class FSMContext(dict):
         dateStr = utcnow.strftime(self.INSTANCE_NAME_DTFORMAT)
         randomStr = ''.join(random.sample(constants.CHARS_FOR_RANDOM, 6))
         # note this construction is important for getInstanceStartTime()
-        return '%s-%s-%s' % (self.machineName, dateStr, randomStr)
+        return '{}-{}-{}'.format(self.machineName, dateStr, randomStr)
 
     def getInstanceStartTime(self):
         """ Returns the UTC datetime when the instance was started.
@@ -500,11 +499,11 @@ class FSMContext(dict):
                     self[constants.STEPS_PARAM] = int(self.get(constants.STEPS_PARAM, '0')) + 1
                     self.queueDispatch(FSM.PSEUDO_FINAL)
 
-        except HaltMachineError, e:
+        except HaltMachineError as e:
             if e.level is not None and e.message:
                 self.logger.log(e.level, e.message)
             return None # stop the machine
-        except Exception, e:
+        except Exception as e:
             level = self.logger.error
             if e.__class__ in TRANSIENT_ERRORS:
                 level = self.logger.warn
@@ -756,7 +755,7 @@ class FSMContext(dict):
             """ A list that supports .logger.info(), .logger.warning() etc.for fan-in actions """
             def __init__(self, context, contexts, guarded=False):
                 """ setup a self.logger for fan-in actions """
-                super(FSMContextList, self).__init__(contexts)
+                super().__init__(contexts)
                 self.logger = Logger(context)
                 self.instanceName = context.instanceName
                 self.guarded = guarded
@@ -835,7 +834,7 @@ class FSMContext(dict):
         @return: a url that can be used to build a taskqueue.Task instance to .dispatch(event)
         """
         assert state and event
-        return self.url + '%s/%s/%s/' % (state.name,
+        return self.url + '{}/{}/{}/'.format(state.name,
                                          event,
                                          state.getTransition(event).target.name)
 
@@ -850,7 +849,7 @@ class FSMContext(dict):
         params = {constants.STATE_PARAM: state.name,
                   constants.EVENT_PARAM: event,
                   constants.INSTANCE_NAME_PARAM: self.instanceName}
-        for key, value in self.items():
+        for key, value in list(self.items()):
             if key not in constants.NON_CONTEXT_PARAMS:
                 if self.contextTypes.get(key) is json.loads:
                     value = json.dumps(value, cls=models.Encoder)
@@ -865,13 +864,13 @@ class FSMContext(dict):
                 valueIsNotBasestring = False
                 if isinstance(value, (list, tuple)):
                     for v in value:
-                        if not isinstance(v, basestring):
+                        if not isinstance(v, str):
                             valueIsNotBasestring = True
-                elif not isinstance(value, basestring):
+                elif not isinstance(value, str):
                     valueIsNotBasestring = True
 
                 if valueIsNotBasestring:
-                    if key not in self.contextTypes.keys():
+                    if key not in list(self.contextTypes.keys()):
                         self.logger.warning("Attempting to put an object in the FSMContext without specifying an "
                                             "entry for key '%s' in 'context_types' in the yaml for machineName '%s'. "
                                             "There will likely be conversion issues (ie. booleans turned into "
@@ -894,8 +893,8 @@ class FSMContext(dict):
         parts.append(instanceName or self.instanceName)
 
         if self.get(constants.GEN_PARAM):
-            for (step, gen) in self[constants.GEN_PARAM].items():
-                parts.append('continuation-%s-%s' % (step, gen))
+            for (step, gen) in list(self[constants.GEN_PARAM].items()):
+                parts.append('continuation-{}-{}'.format(step, gen))
         if self.get(constants.FORK_PARAM):
             parts.append('fork-' + str(self[constants.FORK_PARAM]))
         # post-fan-in we need to store the workIndex in the task name to avoid duplicates, since
@@ -959,7 +958,7 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
 
     # queue the Tasks in groups of MAX_TASKS_PER_ADD
     i = 0
-    for i in xrange(len(tasks)):
+    for i in range(len(tasks)):
         someTasks = tasks[i * MAX_TASKS_PER_ADD : (i+1) * MAX_TASKS_PER_ADD]
         if not someTasks:
             break
@@ -968,10 +967,10 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
         try:
             Queue(name=queueName).add(someTasks, transactional=transactional)
 
-        except TaskAlreadyExistsError, e:
+        except TaskAlreadyExistsError as e:
             taskAlreadyExists = e
 
-        except TombstonedTaskError, e:
+        except TombstonedTaskError as e:
             tombstonedTask = e
 
     if taskAlreadyExists:

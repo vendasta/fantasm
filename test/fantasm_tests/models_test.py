@@ -14,7 +14,7 @@ class TestModel(db.Model):
 class FastasmFanInTest(AppEngineTestCase):
 
     def setUp(self):
-        super(FastasmFanInTest, self).setUp()
+        super().setUp()
         self.testModel = TestModel()
         self.testModel.put()
 

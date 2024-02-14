@@ -54,7 +54,7 @@ def suite():
                     continue
                     
                 # Import the test file and find all TestClass clases inside it.
-                module_name = '%s.%s' % (module, filename[:-3])
+                module_name = '{}.{}'.format(module, filename[:-3])
                 # logging.critical('adding %s' % module_name)
                 # test_suite.addTest(unittest.TestLoader().loadTestsFromName(module_name))
                 test_module = __import__(module_name, {}, {}, filename[:-3])
@@ -68,7 +68,6 @@ def suite():
 
 if __name__ == "__main__":
 
-    sys.path.insert(0, os.path.join(os.environ['APPENGINEDIR'], 'lib', 'simplejson'))
     os.environ['SERVER_SOFTWARE'] = 'Development/unittest' # to ensure correct reloading of config/FSM
 
     import sys

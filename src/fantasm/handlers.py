@@ -17,32 +17,33 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
-import time
+import json
 import logging
 import sys
+import time
 import traceback
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
+from google.appengine.ext import db, deferred, webapp
 
-from google.appengine.ext import deferred, webapp, db
 try:
     from google.appengine.api.capabilities import CapabilitySet
 except ImportError:
     CapabilitySet = None
 from google.appengine.ext import ndb
+
 from fantasm import config, constants
+from fantasm.constants import (EVENT_PARAM, HTTP_REQUEST_HEADER_PREFIX,
+                               IMMEDIATE_MODE_PARAM, INSTANCE_NAME_PARAM,
+                               MESSAGES_PARAM, NON_CONTEXT_PARAMS,
+                               RETRY_COUNT_PARAM, STARTED_AT_PARAM,
+                               STATE_PARAM, TASK_NAME_PARAM)
+from fantasm.exceptions import (TRANSIENT_ERRORS, FSMRuntimeError,
+                                RequiredServicesUnavailableRuntimeError,
+                                UnknownMachineError)
 from fantasm.fsm import FSM
-from fantasm.utils import NoOpQueue
-from fantasm.constants import NON_CONTEXT_PARAMS, STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, TASK_NAME_PARAM, \
-                              RETRY_COUNT_PARAM, STARTED_AT_PARAM, IMMEDIATE_MODE_PARAM, MESSAGES_PARAM, \
-                              HTTP_REQUEST_HEADER_PREFIX
-from fantasm.exceptions import UnknownMachineError, RequiredServicesUnavailableRuntimeError, FSMRuntimeError, \
-                               TRANSIENT_ERRORS
-from fantasm.models import Encoder, _FantasmFanIn
 from fantasm.lock import RunOnceSemaphore
+from fantasm.models import Encoder, _FantasmFanIn
+from fantasm.utils import NoOpQueue
 
 REQUIRED_SERVICES = ('memcache', 'datastore_v3', 'taskqueue')
 
@@ -128,19 +129,19 @@ class FSMGraphvizHandler(webapp.RequestHandler):
 <head></head>
 <body onload="javascript:document.forms.chartform.submit();">
 <form id='chartform' action='http://chart.apis.google.com/chart' method='POST'>
-  <input type="hidden" name="cht" value="gv:%(cht)s"  />
-  <input type="hidden" name="chs" value="%(chs)s"  />
-  <input type="hidden" name="chl" value='%(chl)s'  />
-  <input type="hidden" name="chd" value="%(chd)s"  />
-  <input type="hidden" name="chof" value="%(chof)s"  />
-  <input type="submit" value="Generate GraphViz .%(chof)s" />
+  <input type="hidden" name="cht" value="gv:{cht}"  />
+  <input type="hidden" name="chs" value="{chs}"  />
+  <input type="hidden" name="chl" value='{chl}'  />
+  <input type="hidden" name="chd" value="{chd}"  />
+  <input type="hidden" name="chof" value="{chof}"  />
+  <input type="submit" value="Generate GraphViz .{chof}" />
 </form>
 </body>
-""" % {'cht': cht,
-       'chs': chs,
-       'chl': chl,
-       'chd': chd,
-       'chof': chof})
+""".format(cht=cht,
+       chs=chs,
+       chl=chl,
+       chd=chd,
+       chof=chof))
 
         else:
             self.response.out.write(content)
@@ -175,7 +176,7 @@ class FSMHandler(webapp.RequestHandler):
 
     def initialize(self, request, response):
         """Initializes this request handler with the given Request and Response."""
-        super(FSMHandler, self).initialize(request, response)
+        super().initialize(request, response)
         # pylint: disable=W0201
         # - this is the preferred location to initialize the handler in the webapp framework
         self.fsm = None
@@ -219,14 +220,14 @@ class FSMHandler(webapp.RequestHandler):
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
-        lowerCaseHeaders = dict([(key.lower(), value) for key, value in self.request.headers.items()])
+        lowerCaseHeaders = {key.lower(): value for key, value in list(self.request.headers.items())}
 
         taskName = lowerCaseHeaders.get('x-appengine-taskname')
         retryCount = int(lowerCaseHeaders.get('x-appengine-taskretrycount', 0))
 
         # pull out X-Fantasm-* headers
         headers = None
-        for key, value in self.request.headers.items():
+        for key, value in list(self.request.headers.items()):
             if key.startswith(HTTP_REQUEST_HEADER_PREFIX):
                 headers = headers or {}
                 if ',' in value:
@@ -264,7 +265,7 @@ class FSMHandler(webapp.RequestHandler):
         # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
         # a datastore transaction as a semaphore to determine if we should actually execute this or not.
         if taskName and fsm.useRunOnceSemaphore:
-            semaphoreKey = '%s--%s' % (taskName, retryCount)
+            semaphoreKey = '{}--{}'.format(taskName, retryCount)
             semaphore = RunOnceSemaphore(semaphoreKey, None)
             if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
                 # we can simply return here, this is a duplicate fired task
@@ -274,7 +275,7 @@ class FSMHandler(webapp.RequestHandler):
 
         # in "immediate mode" we try to execute as much as possible in the current request
         # for the time being, this does not include things like fork/spawn/contuniuations/fan-in
-        immediateMode = IMMEDIATE_MODE_PARAM in requestData.keys()
+        immediateMode = IMMEDIATE_MODE_PARAM in list(requestData.keys())
         if immediateMode:
             obj[IMMEDIATE_MODE_PARAM] = immediateMode
             obj[MESSAGES_PARAM] = []
@@ -285,7 +286,7 @@ class FSMHandler(webapp.RequestHandler):
         self.fsm = fsm # used for logging in handle_exception
 
         # pull all the data off the url and stuff into the context
-        for key, value in requestData.items():
+        for key, value in list(requestData.items()):
             if key in NON_CONTEXT_PARAMS:
                 continue # these are special, don't put them in the data
 
@@ -299,7 +300,7 @@ class FSMHandler(webapp.RequestHandler):
                 key = key[:-2]
                 value = [value]
 
-            if key in fsm.contextTypes.keys():
+            if key in list(fsm.contextTypes.keys()):
                 fsm.putTypedValue(key, value)
             else:
                 fsm[key] = value

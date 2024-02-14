@@ -54,8 +54,8 @@ class StartMigrationHandler(webapp.RequestHandler):
     def get(self):
         """ see RequestHandler.get() """
         version = os.environ['CURRENT_VERSION_ID'].split('.')[0]
-        sourceHost = '%s.FIXME_SOURCE.appspot.com' % (version,)
-        targetHost = '%s.FIXME_TARGET.appspot.com' % (version,)
+        sourceHost = '{}.FIXME_SOURCE.appspot.com'.format(version)
+        targetHost = '{}.FIXME_TARGET.appspot.com'.format(version)
         content = CONTENT % {SOURCE_HOST_PARAM: sourceHost,
                              TARGET_HOST_PARAM: targetHost,
                              TASK_NAME_PARAM: DEFAULT_TASK_NAME,
@@ -64,8 +64,8 @@ class StartMigrationHandler(webapp.RequestHandler):
     
     def post(self):
         """ see RequestHandler.post() """
-        assert SOURCE_HOST_PARAM in self.request.POST.keys()
-        assert TARGET_HOST_PARAM in self.request.POST.keys()
+        assert SOURCE_HOST_PARAM in list(self.request.POST.keys())
+        assert TARGET_HOST_PARAM in list(self.request.POST.keys())
         
         # using one-time taskName ensure we don't start the migration twice
         taskName = self.request.POST.get(TASK_NAME_PARAM, DEFAULT_TASK_NAME)
