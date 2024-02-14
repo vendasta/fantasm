@@ -902,7 +902,7 @@ class TestNamespacedEventsAndContextTypes(unittest.TestCase):
         yamlFile = io.StringIO()
         yamlFile.write(yamlString)
         yamlFile.seek(0)
-        configDict = yaml.load(yamlFile.read())
+        configDict = yaml.safe_load(yamlFile.read())
         configuration = config.Configuration(configDict)
         return configuration
 
@@ -1089,7 +1089,7 @@ class TestStatesWithAndWithoutDoActions(unittest.TestCase):
         yamlFile = io.StringIO()
         yamlFile.write(yamlString)
         yamlFile.seek(0)
-        configDict = yaml.load(yamlFile.read())
+        configDict = yaml.safe_load(yamlFile.read())
         configuration = config.Configuration(configDict)
         self.assertTrue(configuration)
 

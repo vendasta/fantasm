@@ -9,4 +9,7 @@ setup(
         "appengine-python-standard==1.1.5",
         "PyYAML==6.0.1",
     ],
+    package_data={
+        'fantasm': ['scrubber.yaml'],
+    },
 )

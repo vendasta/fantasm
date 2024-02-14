@@ -18,12 +18,10 @@ Copyright 2010 VendAsta Technologies Inc.
 """
 
 
-import datetime
 import json
 import logging
 import os
 import pickle
-import sys
 import threading
 
 import yaml
@@ -84,6 +82,12 @@ def _findYaml(yamlNames=constants.YAML_NAMES):
         if parent == directory:
             break
         directory = parent
+    pwd = os.environ.get('PWD')
+    if pwd and pwd != directory:
+        for yamlName in yamlNames:
+            yamlPath = os.path.join(pwd, yamlName)
+            if os.path.exists(yamlPath):
+                return yamlPath
     return None
 
 def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
@@ -98,7 +102,7 @@ def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabiliti
     except OSError:
         raise exceptions.YamlFileNotFoundError(filename)
     try:
-        configDict = yaml.load(yamlFile.read())
+        configDict = yaml.safe_load(yamlFile.read())
     finally:
         yamlFile.close()
 
