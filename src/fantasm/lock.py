@@ -125,7 +125,7 @@ class ReadWriteLock( object ):
         memcache.decr(lockKey, 2**15, namespace=None)
 
         # busy wait for writers
-        for i in xrange(ReadWriteLock.BUSY_WAIT_ITERS):
+        for i in range(ReadWriteLock.BUSY_WAIT_ITERS):
             counter = memcache.get(lockKey, namespace=None)
             # counter is None --> ejected from memcache, or no writers
             # int(counter) <= 2**15 --> writers have all called memcache.decr

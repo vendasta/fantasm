@@ -47,7 +47,7 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
 
     def test_nameParsed(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.name, self.machineName)
+        self.assertEqual(fsm.name, self.machineName)
 
     def test_nameRequired(self):
         self.assertRaises(exceptions.MachineNameRequiredError, config._MachineConfig, {})
@@ -66,51 +66,51 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
         useRunOnceSemaphore = not constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE
         self.machineDict[constants.MACHINE_USE_RUN_ONCE_SEMAPHORE_ATTRIBUTE] = useRunOnceSemaphore
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(useRunOnceSemaphore, fsm.useRunOnceSemaphore)
+        self.assertEqual(useRunOnceSemaphore, fsm.useRunOnceSemaphore)
 
     def test_use_datastore_semaphore_hasDefaultValue(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE, fsm.useRunOnceSemaphore)
+        self.assertEqual(constants.DEFAULT_USE_RUN_ONCE_SEMAPHORE, fsm.useRunOnceSemaphore)
 
     def test_queueParsed(self):
         queueName = 'SomeQueue'
         self.machineDict[constants.QUEUE_NAME_ATTRIBUTE] = queueName
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.queueName, queueName)
+        self.assertEqual(fsm.queueName, queueName)
 
     def test_queueHasDefaultValue(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.queueName, constants.DEFAULT_QUEUE_NAME)
+        self.assertEqual(fsm.queueName, constants.DEFAULT_QUEUE_NAME)
 
     def test_countdownParsed(self):
         countdown = 100
         self.machineDict[constants.COUNTDOWN_ATTRIBUTE] = countdown
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.countdown, countdown)
+        self.assertEqual(fsm.countdown, countdown)
 
     def test_countdownHasDefaultValue(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.countdown, constants.DEFAULT_COUNTDOWN)
+        self.assertEqual(fsm.countdown, constants.DEFAULT_COUNTDOWN)
 
     def test_targetParsed(self):
         target = 'some-target'
         self.machineDict[constants.TARGET_ATTRIBUTE] = target
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.target, target)
+        self.assertEqual(fsm.target, target)
 
     def test_targetHasDefaultValue(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.target, constants.DEFAULT_TARGET)
+        self.assertEqual(fsm.target, constants.DEFAULT_TARGET)
 
     def test_noNamespaceYieldNoneAttribute(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.namespace, None)
+        self.assertEqual(fsm.namespace, None)
 
     def test_namespaceParsed(self):
         namespace = 'MyNamespace'
         self.machineDict[constants.NAMESPACE_ATTRIBUTE] = namespace
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.namespace, namespace)
+        self.assertEqual(fsm.namespace, namespace)
 
     def test_maxRetriesInvalidRaisesException(self):
         self.machineDict[constants.MAX_RETRIES_ATTRIBUTE] = 'abc'
@@ -119,18 +119,18 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
     def test_maxRetriesParsed(self):
         self.machineDict[constants.MAX_RETRIES_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxRetries, 3)
+        self.assertEqual(fsm.maxRetries, 3)
 
     def test_maxRetriesDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxRetries, constants.DEFAULT_TASK_RETRY_LIMIT)
+        self.assertEqual(fsm.maxRetries, constants.DEFAULT_TASK_RETRY_LIMIT)
 
     def test_maxRetriesIssuesDeprecationWarning(self):
         loggingDouble = getLoggingDouble()
         self.machineDict[constants.MAX_RETRIES_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
         self.assertTrue(fsm)
-        self.assertEquals(loggingDouble.count['warning'], 1)
+        self.assertEqual(loggingDouble.count['warning'], 1)
 
     def test_taskRetryLimitInvalidRaisesException(self):
         self.machineDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = 'abc'
@@ -139,11 +139,11 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
     def test_taskRetryLimitParsed(self):
         self.machineDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.taskRetryLimit, 3)
+        self.assertEqual(fsm.taskRetryLimit, 3)
 
     def test_taskRetryLimitDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.taskRetryLimit, constants.DEFAULT_TASK_RETRY_LIMIT)
+        self.assertEqual(fsm.taskRetryLimit, constants.DEFAULT_TASK_RETRY_LIMIT)
 
     def test_maxRetriesAndTaskRetryLimitRaisesConfigurationError(self):
         self.machineDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = '3'
@@ -155,22 +155,22 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
         """ taskRetryLimit and maxRetries should be set to the same value. """
         self.machineDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxRetries, 3)
+        self.assertEqual(fsm.maxRetries, 3)
 
     def test_settingMaxRetriesSetsTaskRetryLimit(self):
         """ maxRetries and taskRetryLimit should be set to the same value. """
         self.machineDict[constants.MAX_RETRIES_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.taskRetryLimit, 3)
+        self.assertEqual(fsm.taskRetryLimit, 3)
 
     def test_minBackoffSecondsParsed(self):
         self.machineDict[constants.MIN_BACKOFF_SECONDS_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.minBackoffSeconds, 3)
+        self.assertEqual(fsm.minBackoffSeconds, 3)
 
     def test_minBackoffSecondsDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.minBackoffSeconds, constants.DEFAULT_MIN_BACKOFF_SECONDS)
+        self.assertEqual(fsm.minBackoffSeconds, constants.DEFAULT_MIN_BACKOFF_SECONDS)
 
     def test_minBackoffSecondsInvalidRaisesException(self):
         self.machineDict[constants.MIN_BACKOFF_SECONDS_ATTRIBUTE] = 'abc'
@@ -179,11 +179,11 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
     def test_maxBackoffSecondsParsed(self):
         self.machineDict[constants.MAX_BACKOFF_SECONDS_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxBackoffSeconds, 3)
+        self.assertEqual(fsm.maxBackoffSeconds, 3)
 
     def test_maxBackoffSecondsDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxBackoffSeconds, constants.DEFAULT_MAX_BACKOFF_SECONDS)
+        self.assertEqual(fsm.maxBackoffSeconds, constants.DEFAULT_MAX_BACKOFF_SECONDS)
 
     def test_maxBackoffSecondsInvalidRaisesException(self):
         self.machineDict[constants.MAX_BACKOFF_SECONDS_ATTRIBUTE] = 'abc'
@@ -192,11 +192,11 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
     def test_taskAgeLimitParsed(self):
         self.machineDict[constants.TASK_AGE_LIMIT_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.taskAgeLimit, 3)
+        self.assertEqual(fsm.taskAgeLimit, 3)
 
     def test_taskAgeLimitDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.taskAgeLimit, constants.DEFAULT_TASK_AGE_LIMIT)
+        self.assertEqual(fsm.taskAgeLimit, constants.DEFAULT_TASK_AGE_LIMIT)
 
     def test_taskAgeLimitInvalidRaisesException(self):
         self.machineDict[constants.TASK_AGE_LIMIT_ATTRIBUTE] = 'abc'
@@ -205,11 +205,11 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
     def test_maxDoublingsParsed(self):
         self.machineDict[constants.MAX_DOUBLINGS_ATTRIBUTE] = '3'
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxDoublings, 3)
+        self.assertEqual(fsm.maxDoublings, 3)
 
     def test_maxDoublingsDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.maxDoublings, constants.DEFAULT_MAX_DOUBLINGS)
+        self.assertEqual(fsm.maxDoublings, constants.DEFAULT_MAX_DOUBLINGS)
 
     def test_maxDoublingsInvalidRaisesException(self):
         self.machineDict[constants.MAX_DOUBLINGS_ATTRIBUTE] = 'abc'
@@ -221,14 +221,14 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
 
     def test_contextTypesDefault(self):
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(fsm.contextTypes, {})
+        self.assertEqual(fsm.contextTypes, {})
 
     def test_contextTypesParsed(self):
         self.machineDict[constants.MACHINE_CONTEXT_TYPES_ATTRIBUTE] = {
             'counter': 'types.IntType'
         }
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(1, len(fsm.contextTypes))
+        self.assertEqual(1, len(fsm.contextTypes))
         self.assertTrue('counter' in fsm.contextTypes)
 
     def test_contextTypesValueResolved(self):
@@ -237,8 +237,8 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
             'batch-key': 'google.appengine.ext.db.Key'
         }
         fsm = config._MachineConfig(self.machineDict)
-        self.assertEquals(int, fsm.contextTypes['counter'])
-        self.assertEquals(db.Key, fsm.contextTypes['batch-key'])
+        self.assertEqual(int, fsm.contextTypes['counter'])
+        self.assertEqual(db.Key, fsm.contextTypes['batch-key'])
 
     def test_contextTypesBadValueRaisesException(self):
         self.machineDict[constants.NAMESPACE_ATTRIBUTE] = 'namespace'
@@ -263,7 +263,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
 
     def test_nameParsed(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.name, self.stateDict[constants.STATE_NAME_ATTRIBUTE])
+        self.assertEqual(state.name, self.stateDict[constants.STATE_NAME_ATTRIBUTE])
 
     def test_nameRequired(self):
         self.stateDict.pop(constants.STATE_NAME_ATTRIBUTE)
@@ -287,88 +287,88 @@ class TestStateDictionaryProcessing(unittest.TestCase):
 
     def test_initialDefaultsToFalse(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.initial, False)
+        self.assertEqual(state.initial, False)
 
     def test_initialParsed(self):
         self.stateDict[constants.STATE_INITIAL_ATTRIBUTE] = True
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.initial, True)
+        self.assertEqual(state.initial, True)
 
     def test_finalDefaultsToFalse(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.final, False)
+        self.assertEqual(state.final, False)
 
     def test_finalParsed(self):
         self.stateDict[constants.STATE_FINAL_ATTRIBUTE] = True
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.final, True)
+        self.assertEqual(state.final, True)
 
     def test_continuationDefaultsToFalse(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.continuation, False)
+        self.assertEqual(state.continuation, False)
 
     def test_continuationParsed(self):
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockActionWithContinuation'
         self.stateDict[constants.STATE_CONTINUATION_ATTRIBUTE] = True
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.continuation, True)
+        self.assertEqual(state.continuation, True)
 
     def test_entryResolvedUsingDefaultNamespace(self):
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'MockEntry'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.config_test.MockEntry, state.entry.__class__)
+        self.assertEqual(fantasm_tests.config_test.MockEntry, state.entry.__class__)
 
     def test_exitResolvedUsingDefaultNamespace(self):
         self.stateDict[constants.STATE_EXIT_ATTRIBUTE] = 'MockExit'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.config_test.MockExit, state.exit.__class__)
+        self.assertEqual(fantasm_tests.config_test.MockExit, state.exit.__class__)
 
     def test_actionResolvedUsingDefaultNamespace(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.config_test.MockAction, state.action.__class__)
+        self.assertEqual(fantasm_tests.config_test.MockAction, state.action.__class__)
 
     def test_entryResolvedUsingFullyQualified(self):
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'fantasm_tests.MockEntry2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockEntry2, state.entry.__class__)
+        self.assertEqual(fantasm_tests.MockEntry2, state.entry.__class__)
 
     def test_exitResolvedUsingFullyQualified(self):
         self.stateDict[constants.STATE_EXIT_ATTRIBUTE] = 'fantasm_tests.MockExit2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockExit2, state.exit.__class__)
+        self.assertEqual(fantasm_tests.MockExit2, state.exit.__class__)
 
     def test_actionResolvedUsingFullyQualified(self):
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'fantasm_tests.MockAction2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockAction2, state.action.__class__)
+        self.assertEqual(fantasm_tests.MockAction2, state.action.__class__)
 
     def test_entryResolvedUsingStateOverride(self):
         self.stateDict[constants.NAMESPACE_ATTRIBUTE] = 'fantasm_tests'
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'MockEntry2'
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockAction2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockEntry2, state.entry.__class__)
+        self.assertEqual(fantasm_tests.MockEntry2, state.entry.__class__)
 
     def test_exitResolvedUsingStateOverride(self):
         self.stateDict[constants.NAMESPACE_ATTRIBUTE] = 'fantasm_tests'
         self.stateDict[constants.STATE_EXIT_ATTRIBUTE] = 'MockExit2'
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockAction2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockExit2, state.exit.__class__)
+        self.assertEqual(fantasm_tests.MockExit2, state.exit.__class__)
 
     def test_actionResolvedUsingStateOverride(self):
         self.stateDict[constants.NAMESPACE_ATTRIBUTE] = 'fantasm_tests'
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockAction2'
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(fantasm_tests.MockAction2, state.action.__class__)
+        self.assertEqual(fantasm_tests.MockAction2, state.action.__class__)
 
     def test_noEntryYieldsNoneEntry(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.entry, None)
+        self.assertEqual(state.entry, None)
 
     def test_noExitYieldsNoneExit(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.exit, None)
+        self.assertEqual(state.exit, None)
 
     def test_unresolvedEntryYieldsException(self):
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'VeryBadClass'
@@ -399,7 +399,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
         self.stateDict[constants.STATE_CONTINUATION_ATTRIBUTE] = False
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockActionWithContinuation'
         self.fsm.addState(self.stateDict)
-        self.assertEquals(loggingDouble.count['warning'], 1)
+        self.assertEqual(loggingDouble.count['warning'], 1)
 
     def test_actionSpecifiedButNoExecuteMethodRaisesException(self):
         self.stateDict[constants.STATE_ACTION_ATTRIBUTE] = 'MockActionNoExecute'
@@ -415,7 +415,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
 
     def test_faninDefaultToNoFanIn(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.fanInPeriod, constants.NO_FAN_IN)
+        self.assertEqual(state.fanInPeriod, constants.NO_FAN_IN)
 
     def test_faninMustBeAnInteger(self):
         self.stateDict[constants.STATE_FAN_IN_ATTRIBUTE] = 'abc'
@@ -428,7 +428,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
     def test_faninParsed(self):
         self.stateDict[constants.STATE_FAN_IN_ATTRIBUTE] = 10
         state = self.fsm.addState(self.stateDict)
-        self.assertEquals(state.fanInPeriod, 10)
+        self.assertEqual(state.fanInPeriod, 10)
 
     def test_faninCombinedWithContinuationRaisesException(self):
         self.stateDict[constants.STATE_FAN_IN_ATTRIBUTE] = 10
@@ -451,11 +451,11 @@ class TestMachineUrlConstruction(unittest.TestCase):
 
     def test_urlIncludesHostName(self):
         fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine'})
-        self.assertEquals(fsm.url, '%sfsm/MyMachine/' % constants.DEFAULT_ROOT_URL)
+        self.assertEqual(fsm.url, '%sfsm/MyMachine/' % constants.DEFAULT_ROOT_URL)
 
     def test_rootUrlOverridesDefault(self):
         fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine'}, rootUrl='/myfsm')
-        self.assertEquals(fsm.url, '/myfsm/fsm/MyMachine/')
+        self.assertEqual(fsm.url, '/myfsm/fsm/MyMachine/')
 
 class TestTransitionDictionaryProcessing(unittest.TestCase):
 
@@ -480,7 +480,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
 
     def test_nameGenerated(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.name, 'GoodState--MyEvent')
+        self.assertEqual(transition.name, 'GoodState--MyEvent')
 
     def test_eventRequired(self):
         self.transDict.pop(constants.TRANS_EVENT_ATTRIBUTE)
@@ -498,7 +498,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
 
     def test_eventParsed(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.event, self.transDict[constants.TRANS_EVENT_ATTRIBUTE])
+        self.assertEqual(transition.event, self.transDict[constants.TRANS_EVENT_ATTRIBUTE])
 
     def test_toRequired(self):
         self.transDict.pop(constants.TRANS_TO_ATTRIBUTE)
@@ -510,27 +510,27 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
 
     def test_toParsed(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.toState, self.goodState)
+        self.assertEqual(transition.toState, self.goodState)
 
     def test_noActionYieldsNoneAttribute(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.action, None)
+        self.assertEqual(transition.action, None)
 
     def test_actionResolvedUsingDefaultNamespace(self):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'MockAction'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(fantasm_tests.config_test.MockAction, transition.action.__class__)
+        self.assertEqual(fantasm_tests.config_test.MockAction, transition.action.__class__)
 
     def test_actionResolvedUsingFullyQualified(self):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'fantasm_tests.MockAction2'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(fantasm_tests.MockAction2, transition.action.__class__)
+        self.assertEqual(fantasm_tests.MockAction2, transition.action.__class__)
 
     def test_actionResolvedUsingStateOverride(self):
         self.transDict[constants.NAMESPACE_ATTRIBUTE] = 'fantasm_tests'
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'MockAction2'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(fantasm_tests.MockAction2, transition.action.__class__)
+        self.assertEqual(fantasm_tests.MockAction2, transition.action.__class__)
 
     def test_unresolvedActionYieldsException(self):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'VeryBadClass'
@@ -548,36 +548,36 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
 
     def test_maxRetriesInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxRetries, 100)
+        self.assertEqual(transition.maxRetries, 100)
 
     def test_queueNameInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.queueName, 'somequeue')
+        self.assertEqual(transition.queueName, 'somequeue')
 
     def test_queueNameOverridesMachineQueueName(self):
         self.transDict[constants.QUEUE_NAME_ATTRIBUTE] = 'someotherqueue'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.queueName, 'someotherqueue')
+        self.assertEqual(transition.queueName, 'someotherqueue')
 
     def test_targetInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.target, 'some-target')
+        self.assertEqual(transition.target, 'some-target')
 
     def test_targetOverridesMachineQueueName(self):
         self.transDict[constants.TARGET_ATTRIBUTE] = 'some-other-target'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.target, 'some-other-target')
+        self.assertEqual(transition.target, 'some-other-target')
 
     def test_maxRetriesOverridesMachineRetryPolicy(self):
         self.transDict[constants.MAX_RETRIES_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxRetries, 99)
+        self.assertEqual(transition.maxRetries, 99)
 
     def test_maxRetriesEmitsDeprecationWarning(self):
         loggingDouble = getLoggingDouble()
         self.transDict[constants.MAX_RETRIES_ATTRIBUTE] = '3'
         self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(loggingDouble.count['warning'], 1)
+        self.assertEqual(loggingDouble.count['warning'], 1)
 
     def test_maxRetriesAndTaskRetryLimitCannotBothBeSpecified(self):
         self.transDict[constants.MAX_RETRIES_ATTRIBUTE] = 99
@@ -588,57 +588,57 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
     def test_settingMaxRetriesSetsTaskRetryLimit(self):
         self.transDict[constants.MAX_RETRIES_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.taskRetryLimit, 99)
+        self.assertEqual(transition.taskRetryLimit, 99)
 
     def test_settingTaskRetryLimitSetsMaxRetries(self):
         self.transDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxRetries, 99)
+        self.assertEqual(transition.maxRetries, 99)
 
     def test_taskRetryLimitInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.taskRetryLimit, 100)
+        self.assertEqual(transition.taskRetryLimit, 100)
 
     def test_taskRetryLimitOverridesMachineTaskRetryLimit(self):
         self.transDict[constants.TASK_RETRY_LIMIT_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.taskRetryLimit, 99)
+        self.assertEqual(transition.taskRetryLimit, 99)
 
     def test_minBackoffSecondsInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.minBackoffSeconds, 101)
+        self.assertEqual(transition.minBackoffSeconds, 101)
 
     def test_minBackoffSecondsOverridesMachineTaskRetryLimit(self):
         self.transDict[constants.MIN_BACKOFF_SECONDS_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.minBackoffSeconds, 99)
+        self.assertEqual(transition.minBackoffSeconds, 99)
 
     def test_maxBackoffSecondsInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxBackoffSeconds, 102)
+        self.assertEqual(transition.maxBackoffSeconds, 102)
 
     def test_maxBackoffSecondsOverridesMachineTaskRetryLimit(self):
         self.transDict[constants.MAX_BACKOFF_SECONDS_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxBackoffSeconds, 99)
+        self.assertEqual(transition.maxBackoffSeconds, 99)
 
     def test_taskAgeLimitInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.taskAgeLimit, 103)
+        self.assertEqual(transition.taskAgeLimit, 103)
 
     def test_taskAgeLimitOverridesMachineTaskRetryLimit(self):
         self.transDict[constants.TASK_AGE_LIMIT_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.taskAgeLimit, 99)
+        self.assertEqual(transition.taskAgeLimit, 99)
 
     def test_maxDoublingsInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxDoublings, 104)
+        self.assertEqual(transition.maxDoublings, 104)
 
     def test_maxDoublingsOverridesMachineTaskRetryLimit(self):
         self.transDict[constants.MAX_DOUBLINGS_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.maxDoublings, 99)
+        self.assertEqual(transition.maxDoublings, 99)
 
     def test_transitionActionOnContinuationRaisesException(self):
         self.goodState.continuation = True
@@ -658,7 +658,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
         d = {'minimum': 30, 'maximum': 60}
         self.transDict[constants.COUNTDOWN_ATTRIBUTE] = d
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.countdown, (30, 60)) # converted to a tuple
+        self.assertEqual(transition.countdown, (30, 60)) # converted to a tuple
 
     def test_countdownMustHaveMinimumIfDictionary(self):
         d = {'maximum': 60}
@@ -698,16 +698,16 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
     def test_countdownParsed(self):
         self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 10
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.countdown, 10)
+        self.assertEqual(transition.countdown, 10)
 
     def test_countdownInheritedFromMachine(self):
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.countdown, 100)
+        self.assertEqual(transition.countdown, 100)
 
     def test_countdownOverridesMachineQueueName(self):
         self.transDict[constants.COUNTDOWN_ATTRIBUTE] = 99
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEquals(transition.countdown, 99)
+        self.assertEqual(transition.countdown, 99)
 
 class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
 
@@ -794,13 +794,13 @@ class TestConfigDictionaryProcessing(unittest.TestCase):
 
     def test_rootUrlPassedToMachines(self):
         configuration = config.Configuration(self.baseDict)
-        self.assertEquals(configuration.rootUrl, self.rootUrl)
+        self.assertEqual(configuration.rootUrl, self.rootUrl)
         self.assertTrue(configuration.machines[self.machineName].url.startswith(self.rootUrl))
 
     def test_rootUrlHasDefault(self):
         self.baseDict.pop(constants.ROOT_URL_ATTRIBUTE)
         configuration = config.Configuration(self.baseDict)
-        self.assertEquals(configuration.rootUrl, constants.DEFAULT_ROOT_URL)
+        self.assertEqual(configuration.rootUrl, constants.DEFAULT_ROOT_URL)
 
     def test_machinesMustHaveUniqueNames(self):
         self.baseDict[constants.STATE_MACHINES_ATTRIBUTE].append(
@@ -834,15 +834,15 @@ class TestConfigDictionaryProcessing(unittest.TestCase):
             }
         )
         configuration = config.Configuration(self.baseDict)
-        self.assertEquals(configuration.machines[self.machineName].name, self.machineName)
-        self.assertEquals(configuration.machines[otherMachineName].name, otherMachineName)
+        self.assertEqual(configuration.machines[self.machineName].name, self.machineName)
+        self.assertEqual(configuration.machines[otherMachineName].name, otherMachineName)
 
     def test_statesAddedToMachines(self):
         configuration = config.Configuration(self.baseDict)
         myMachine = configuration.machines[self.machineName]
-        self.assertEquals(len(myMachine.states), 2)
-        self.assertEquals(myMachine.states[self.initialStateName].name, self.initialStateName)
-        self.assertEquals(myMachine.states[self.finalStateName].name, self.finalStateName)
+        self.assertEqual(len(myMachine.states), 2)
+        self.assertEqual(myMachine.states[self.initialStateName].name, self.initialStateName)
+        self.assertEqual(myMachine.states[self.finalStateName].name, self.finalStateName)
 
     def test_machineWithNoInitialRaisesException(self):
         # this is hairy, but I'm going to clear the initial flag on the state
@@ -863,11 +863,11 @@ class TestConfigDictionaryProcessing(unittest.TestCase):
     def test_transitionsAddedToMachines(self):
         configuration = config.Configuration(self.baseDict)
         myMachine = configuration.machines[self.machineName]
-        self.assertEquals(len(myMachine.transitions), 2)
+        self.assertEqual(len(myMachine.transitions), 2)
         trans1Name = self.initialStateName + '--event1'
         trans2Name = self.initialStateName + '--event2'
-        self.assertEquals(myMachine.transitions[trans1Name].name, trans1Name)
-        self.assertEquals(myMachine.transitions[trans2Name].name, trans2Name)
+        self.assertEqual(myMachine.transitions[trans1Name].name, trans1Name)
+        self.assertEqual(myMachine.transitions[trans2Name].name, trans2Name)
 
     def test_stateMachineAttributeRequired(self):
         self.assertRaises(exceptions.StateMachinesAttributeRequiredError, config.Configuration, {})
@@ -898,8 +898,8 @@ class TestNamespacedEventsAndContextTypes(unittest.TestCase):
 
     def _test(self, yamlString):
         """ just tests that it can be built """
-        import StringIO, yaml
-        yamlFile = StringIO.StringIO()
+        import io, yaml
+        yamlFile = io.StringIO()
         yamlFile.write(yamlString)
         yamlFile.seek(0)
         configDict = yaml.load(yamlFile.read())
@@ -1038,7 +1038,7 @@ state_machines:
             configuration.machines['machineName'].transitions['state1--just-a-plain-old-string'].event
         )
         self.assertEqual(
-            {'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL-FSM-TESTS': int, 'abc': long},
+            {'NAMESPACED-CONTEXT-TYPE-CLASS-LEVEL-FSM-TESTS': int, 'abc': int},
             configuration.machines['machineName'].contextTypes
         )
 
@@ -1085,8 +1085,8 @@ class TestStatesWithAndWithoutDoActions(unittest.TestCase):
 
     def _test(self, yamlString):
         """ just tests that it can be built """
-        import StringIO, yaml
-        yamlFile = StringIO.StringIO()
+        import io, yaml
+        yamlFile = io.StringIO()
         yamlFile.write(yamlString)
         yamlFile.seek(0)
         configDict = yaml.load(yamlFile.read())

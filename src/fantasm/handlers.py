@@ -219,14 +219,14 @@ class FSMHandler(webapp.RequestHandler):
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
-        lowerCaseHeaders = dict([(key.lower(), value) for key, value in self.request.headers.items()])
+        lowerCaseHeaders = dict([(key.lower(), value) for key, value in list(self.request.headers.items())])
 
         taskName = lowerCaseHeaders.get('x-appengine-taskname')
         retryCount = int(lowerCaseHeaders.get('x-appengine-taskretrycount', 0))
 
         # pull out X-Fantasm-* headers
         headers = None
-        for key, value in self.request.headers.items():
+        for key, value in list(self.request.headers.items()):
             if key.startswith(HTTP_REQUEST_HEADER_PREFIX):
                 headers = headers or {}
                 if ',' in value:
@@ -274,7 +274,7 @@ class FSMHandler(webapp.RequestHandler):
 
         # in "immediate mode" we try to execute as much as possible in the current request
         # for the time being, this does not include things like fork/spawn/contuniuations/fan-in
-        immediateMode = IMMEDIATE_MODE_PARAM in requestData.keys()
+        immediateMode = IMMEDIATE_MODE_PARAM in list(requestData.keys())
         if immediateMode:
             obj[IMMEDIATE_MODE_PARAM] = immediateMode
             obj[MESSAGES_PARAM] = []
@@ -285,7 +285,7 @@ class FSMHandler(webapp.RequestHandler):
         self.fsm = fsm # used for logging in handle_exception
 
         # pull all the data off the url and stuff into the context
-        for key, value in requestData.items():
+        for key, value in list(requestData.items()):
             if key in NON_CONTEXT_PARAMS:
                 continue # these are special, don't put them in the data
 
@@ -299,7 +299,7 @@ class FSMHandler(webapp.RequestHandler):
                 key = key[:-2]
                 value = [value]
 
-            if key in fsm.contextTypes.keys():
+            if key in list(fsm.contextTypes.keys()):
                 fsm.putTypedValue(key, value)
             else:
                 fsm[key] = value

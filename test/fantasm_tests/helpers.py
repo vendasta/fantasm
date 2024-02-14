@@ -81,10 +81,10 @@ class LoggingDouble(object):
 
     def _log(self, level, message, *args, **kwargs):
         self.count[level] += 1
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             try:
                 message = str(message)
-            except Exception, e:
+            except Exception as e:
                 message = 'logging error'
                 args = ()
         try:
@@ -159,7 +159,7 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
                 if retries.get(task['name'], 0) > maxRetries:
                     continue
 
-            if task.has_key('eta'):
+            if 'eta' in task:
 
                 UTC_OFFSET_TIMEDELTA = datetime.datetime.utcnow() - datetime.datetime.now()
                 now = datetime.datetime.utcfromtimestamp(time.time())
@@ -291,7 +291,7 @@ def getCounts(machineConfig):
     NOTE: relies on the config._StateConfig and FSMState instances sharing the FSMActions
     """
     counts = {}
-    for stateName, state in machineConfig.states.items():
+    for stateName, state in list(machineConfig.states.items()):
         if state.continuation:
             counts[state.name] = {'entry': (state.entry or ZeroCountMock).count,
                                   'continuation': (state.action or ZeroCountMock).ccount,
@@ -311,7 +311,7 @@ def getCounts(machineConfig):
                                   'action': (state.action or ZeroCountMock).count,
                                   'exit': (state.exit or ZeroCountMock).count}
 
-    for transition in machineConfig.transitions.values():
+    for transition in list(machineConfig.transitions.values()):
         counts['%s--%s' % (transition.fromState.name, transition.event)] = {
             'action': (transition.action or ZeroCountMock).count
         }
@@ -349,16 +349,16 @@ def overrideTaskRetryLimit(machineConfig, overrides):
     @param machineConfig: a config._MachineConfig instance
     @param overrides: a dict of {'transitionName' : task_retry_limit} to override
     """
-    for (transitionName, taskRetryLimit) in overrides.items():
+    for (transitionName, taskRetryLimit) in list(overrides.items()):
         transition = machineConfig.transitions[transitionName]
         transition.taskRetryLimit = taskRetryLimit
 
 def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
                   path=None, cookies=None, host=None, port=None):
     """ Builds a request suitable for view.initialize(). """
-    from urllib import urlencode
-    from Cookie import BaseCookie
-    from StringIO import StringIO
+    from urllib.parse import urlencode
+    from http.cookies import BaseCookie
+    from io import StringIO
 
     if not get_args:
         get_args = {}

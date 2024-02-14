@@ -103,7 +103,7 @@ def outputMachineConfig(machineConfig, colorMap=None, skipStateNames=None):
     lines.append('labelloc="t"')
     lines.append('"__start__" [label="start",shape=circle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
     lines.append('"__end__" [label="end",shape=doublecircle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
-    for stateConfig in machineConfig.states.values():
+    for stateConfig in list(machineConfig.states.values()):
         if stateConfig.name in skipStateNames:
             continue
         lines.append(outputStateConfig(stateConfig, colorMap=colorMap))
@@ -111,7 +111,7 @@ def outputMachineConfig(machineConfig, colorMap=None, skipStateNames=None):
             lines.append('"__start__" -> "%(stateName)s"' % {'stateName': stateConfig.name})
         if stateConfig.final:
             lines.append('"%(stateName)s" -> "__end__"' % {'stateName': stateConfig.name})
-    for transitionConfig in machineConfig.transitions.values():
+    for transitionConfig in list(machineConfig.transitions.values()):
         if transitionConfig.fromState.name in skipStateNames or \
            transitionConfig.toState.name in skipStateNames:
             continue

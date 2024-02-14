@@ -170,13 +170,13 @@ class ParamsTests(RunTasksBaseTest):
         self.context['bool2'] = True
         self.context['str'] = 'abc'
         self.context['str_as_unicode'] = 'abc'
-        self.context['unicode'] = u'\xe8' # MUST be context_types
+        self.context['unicode'] = '\xe8' # MUST be context_types
         self.context['list_of_str'] = ['a', 'b', 'c']
         self.context['list_of_str_len_1'] = ['a']
         self.context['list_of_db_Key'] = [models[0].key(), models[1].key(), models[2].key()]
         self.context['list_of_db_Key_len_1'] = [models[0].key()]
         self.context['list_of_mixed'] = ['a', 1, 'b', 2]
-        self.context['list_of_unicode'] = [u'\xe8', u'\xe9'] # MUST be context_types
+        self.context['list_of_unicode'] = ['\xe8', '\xe9'] # MUST be context_types
         self.context['dict_int_keys'] = {1: 1, 2: 2} # BAD!!!! not defined in context_types
         self.context['dict_int_keys_defined_in_context_types'] = {1: 1, 2: 2}
         self.context['dict_str_keys'] = {'a': 1, 'b': 2} # BAD!!!! not defined in context_types
@@ -213,28 +213,28 @@ class ParamsTests(RunTasksBaseTest):
                            'list_of_custom': [CustomImpl(a="A", b="B"), CustomImpl(a="AA", b="BB")],
                            'list_of_custom_len_1': [CustomImpl(a="A", b="B")],
                            'db_Key': 'agdmYW50YXNtchALEglUZXN0TW9kZWwiATAM',
-                           'db_Key_defined_in_context_types': datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'),
+                           'db_Key_defined_in_context_types': datastore_types.Key.from_path('TestModel', '0', _app='fantasm'),
                            'char': 'a',
-                           'unicode': u'\xe8',
+                           'unicode': '\xe8',
                            'bool1': False,
                            'bool2': True,
                            'str': 'abc',
-                           'str_as_unicode': u'abc',
+                           'str_as_unicode': 'abc',
                            'list_of_str': ['a', 'b', 'c'],
                            'list_of_str_len_1': ['a'],
-                           'list_of_db_Key': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'),
-                                              datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm'),
-                                              datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm')],
-                           'list_of_db_Key_len_1': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm')],
-                           'list_of_unicode': [u'\xe8', u'\xe9'],
+                           'list_of_db_Key': [datastore_types.Key.from_path('TestModel', '0', _app='fantasm'),
+                                              datastore_types.Key.from_path('TestModel', '1', _app='fantasm'),
+                                              datastore_types.Key.from_path('TestModel', '2', _app='fantasm')],
+                           'list_of_db_Key_len_1': [datastore_types.Key.from_path('TestModel', '0', _app='fantasm')],
+                           'list_of_unicode': ['\xe8', '\xe9'],
                            'list_of_mixed': ['a', '1', 'b', '2'],
                            'dict_int_keys': '{"1": 1, "2": 2}',
                            'dict_int_keys_defined_in_context_types': {"1": 1, "2": 2},
                            'dict_str_keys': '{"a": 1, "b": 2}',
                            'dict_str_keys_defined_in_context_types': {"a": 1, "b": 2},
                            'dict_db_Key': '{"a": {"__db.Key__": true, "key": "agdmYW50YXNtchALEglUZXN0TW9kZWwiATEM"}}',
-                           'dict_db_Key_defined_in_context_types': {'a': datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')},
-                           'unicode2': u"  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ",
+                           'dict_db_Key_defined_in_context_types': {'a': datastore_types.Key.from_path('TestModel', '1', _app='fantasm')},
+                           'unicode2': "  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ",
                            '__step__': 1,
 
                            # NDB Key stuff
@@ -611,15 +611,15 @@ class RunTasksTests_DoubleContinuationTests(RunTasksBaseTest):
             ], DoubleContinuation1.CONTEXTS
         )
         self.assertEqual([
-            {'c2': 'a', u'c1': u'1', u'__step__': 2},
-            {'c2': 'a', u'c1': u'2', u'__ge__': {u'0': 1}, u'__step__': 2},
-            {'c2': 'b', u'c1': u'1', u'__ge__': {u'1': 1}, u'__step__': 2},
-            {'c2': 'a', u'c1': u'3', u'__ge__': {u'0': 2}, u'__step__': 2},
-            {'c2': 'b', u'c1': u'2', u'__ge__': {u'1': 1, u'0': 1}, u'__step__': 2},
-            {'c2': 'c', u'c1': u'1', u'__ge__': {u'1': 2}, u'__step__': 2},
-            {'c2': 'b', u'c1': u'3', u'__ge__': {u'1': 1, u'0': 2}, u'__step__': 2},
-            {'c2': 'c', u'c1': u'2', u'__ge__': {u'1': 2, u'0': 1}, u'__step__': 2},
-            {'c2': 'c', u'c1': u'3', u'__ge__': {u'1': 2, u'0': 2}, u'__step__': 2}
+            {'c2': 'a', 'c1': '1', '__step__': 2},
+            {'c2': 'a', 'c1': '2', '__ge__': {'0': 1}, '__step__': 2},
+            {'c2': 'b', 'c1': '1', '__ge__': {'1': 1}, '__step__': 2},
+            {'c2': 'a', 'c1': '3', '__ge__': {'0': 2}, '__step__': 2},
+            {'c2': 'b', 'c1': '2', '__ge__': {'1': 1, '0': 1}, '__step__': 2},
+            {'c2': 'c', 'c1': '1', '__ge__': {'1': 2}, '__step__': 2},
+            {'c2': 'b', 'c1': '3', '__ge__': {'1': 1, '0': 2}, '__step__': 2},
+            {'c2': 'c', 'c1': '2', '__ge__': {'1': 2, '0': 1}, '__step__': 2},
+            {'c2': 'c', 'c1': '3', '__ge__': {'1': 2, '0': 2}, '__step__': 2}
             ], DoubleContinuation2.CONTEXTS
         )
 
@@ -726,16 +726,16 @@ class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         # pylint: disable=C0301
         # - long lines are much clearer in htis case
-        self.assertEqual([{u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '3', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__count__': 2, u'key': datastore_types.Key.from_path(u'TestModel', '2', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 6, '__cc__': False, u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '5', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 6, '__cc__': False, u'__count__': 3, u'key': datastore_types.Key.from_path(u'TestModel', '4', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 8, '__cc__': False, u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '7', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 8, '__cc__': False, u'__count__': 4, u'key': datastore_types.Key.from_path(u'TestModel', '6', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 10, '__cc__': False, u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '9', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 10, '__cc__': False, u'__count__': 5, u'key': datastore_types.Key.from_path(u'TestModel', '8', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 2, '__cc__': False, u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel', '1', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1},
-                          {u'__crs__': 2, u'__crc__': 2, '__cc__': False, u'__count__': 1, u'key': datastore_types.Key.from_path(u'TestModel','0', _app=u'fantasm'), 'data': {'a': 'b'}, u'__step__': 1, u'__ix__': 1}], CountExecuteCallsFanIn.CONTEXTS)
+        self.assertEqual([{'__crs__': 2, '__crc__': 4, '__cc__': False, '__count__': 2, 'key': datastore_types.Key.from_path('TestModel', '3', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 4, '__cc__': False, '__count__': 2, 'key': datastore_types.Key.from_path('TestModel', '2', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 6, '__cc__': False, '__count__': 3, 'key': datastore_types.Key.from_path('TestModel', '5', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 6, '__cc__': False, '__count__': 3, 'key': datastore_types.Key.from_path('TestModel', '4', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 8, '__cc__': False, '__count__': 4, 'key': datastore_types.Key.from_path('TestModel', '7', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 8, '__cc__': False, '__count__': 4, 'key': datastore_types.Key.from_path('TestModel', '6', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 10, '__cc__': False, '__count__': 5, 'key': datastore_types.Key.from_path('TestModel', '9', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 10, '__cc__': False, '__count__': 5, 'key': datastore_types.Key.from_path('TestModel', '8', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 2, '__cc__': False, '__count__': 1, 'key': datastore_types.Key.from_path('TestModel', '1', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1},
+                          {'__crs__': 2, '__crc__': 2, '__cc__': False, '__count__': 1, 'key': datastore_types.Key.from_path('TestModel','0', _app='fantasm'), 'data': {'a': 'b'}, '__step__': 1, '__ix__': 1}], CountExecuteCallsFanIn.CONTEXTS)
 
 class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests_POST(
                                                             RunTasksTests_DatastoreFSMContinuationFanInAndForkTests):
@@ -830,11 +830,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):
                           'state-fan-in--next-event': {'action': 0}},
                  getCounts(self.machineConfig))
         # pylint: disable=C0301
-        self.assertEqual([{u'__crs__': 2, u'__crc__': 4, '__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 6, '__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 8, '__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 10, '__cc__': False, u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 2, '__cc__': False, u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
+        self.assertEqual([{'__crs__': 2, '__crc__': 4, '__cc__': False, '__ix__': 1, '__count__': 2, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '2', _app='fantasm'), datastore_types.Key.from_path('TestModel', '3', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 6, '__cc__': False, '__ix__': 1, '__count__': 3, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '4', _app='fantasm'), datastore_types.Key.from_path('TestModel', '5', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 8, '__cc__': False, '__ix__': 1, '__count__': 4, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '6', _app='fantasm'), datastore_types.Key.from_path('TestModel', '7', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 10, '__cc__': False, '__ix__': 1, '__count__': 5, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '8', _app='fantasm'), datastore_types.Key.from_path('TestModel', '9', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 2, '__cc__': False, '__ix__': 1, '__count__': 1, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '0', _app='fantasm'), datastore_types.Key.from_path('TestModel', '1', _app='fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
 
@@ -993,11 +993,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'.",
                           "Gave up waiting for all fan-in work items with read lock 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'."], self.loggingDouble.messages['critical'])
         # pylint: disable=C0301
-        self.assertEqual([{u'__crs__': 2, u'__crc__': 4, u'__cc__': False, u'__ix__': 1, u'__count__': 2, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'2', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'3', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 6, u'__cc__': False, u'__ix__': 1, u'__count__': 3, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'4', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'5', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 8, u'__cc__': False, u'__ix__': 1, u'__count__': 4, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'6', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'7', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 10, u'__cc__': False, u'__ix__': 1, u'__count__': 5, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'8', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'9', _app=u'fantasm')]},
-                          {u'__crs__': 2, u'__crc__': 2, u'__cc__': False, u'__ix__': 1, u'__count__': 1, u'__step__': 2, 'fan-me-in': [datastore_types.Key.from_path(u'TestModel', u'0', _app=u'fantasm'), datastore_types.Key.from_path(u'TestModel', u'1', _app=u'fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
+        self.assertEqual([{'__crs__': 2, '__crc__': 4, '__cc__': False, '__ix__': 1, '__count__': 2, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '2', _app='fantasm'), datastore_types.Key.from_path('TestModel', '3', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 6, '__cc__': False, '__ix__': 1, '__count__': 3, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '4', _app='fantasm'), datastore_types.Key.from_path('TestModel', '5', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 8, '__cc__': False, '__ix__': 1, '__count__': 4, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '6', _app='fantasm'), datastore_types.Key.from_path('TestModel', '7', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 10, '__cc__': False, '__ix__': 1, '__count__': 5, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '8', _app='fantasm'), datastore_types.Key.from_path('TestModel', '9', _app='fantasm')]},
+                          {'__crs__': 2, '__crc__': 2, '__cc__': False, '__ix__': 1, '__count__': 1, '__step__': 2, 'fan-me-in': [datastore_types.Key.from_path('TestModel', '0', _app='fantasm'), datastore_types.Key.from_path('TestModel', '1', _app='fantasm')]}], CountExecuteCallsFanIn.CONTEXTS)
         self.assertEqual(0, _FantasmFanIn.all(namespace='').count())
         self.assertEqual(10, ResultModel.get_by_key_name(self.context.instanceName).total)
 
@@ -1509,9 +1509,9 @@ class FinalStateCanEmitEventTests(RunTasksBaseTest):
         self.context.initialize() # queues the first task
         ran = runQueuedTasks(queueName=self.context.queueName)
         counts = getCounts(self.machineConfig)
-        self.assertEquals(1, counts['InitialState']['action'])
-        self.assertEquals(1, counts['OptionalFinalState']['action'])
-        self.assertEquals(1, counts['FinalState']['action'])
+        self.assertEqual(1, counts['InitialState']['action'])
+        self.assertEqual(1, counts['OptionalFinalState']['action'])
+        self.assertEqual(1, counts['FinalState']['action'])
 
 class SpawnMachinesTests(RunTasksBaseTest):
 
@@ -1528,7 +1528,7 @@ class SpawnMachinesTests(RunTasksBaseTest):
         self.assertTrue('instanceName--pseudo-init--pseudo-init--SpawnTests-InitialState--step-0--startStateMachine-0' in ran)
         self.assertTrue('instanceName--pseudo-init--pseudo-init--SpawnTests-InitialState--step-0--startStateMachine-1' in ran)
         self.assertTrue('instanceName--SpawnTests-InitialState--pseudo-final--pseudo-final--step-1' in ran)
-        self.assertEquals({'action': 1, 'entry': 1, 'exit': 1}, counts['SpawnTests-InitialState'])
+        self.assertEqual({'action': 1, 'entry': 1, 'exit': 1}, counts['SpawnTests-InitialState'])
 
         # FIXME: counts only considers one machine and needs to be extended
         # FIXME: spawned machines don't have an instrumented instanceName, so the tasks are difficult to compare

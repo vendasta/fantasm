@@ -68,7 +68,7 @@ class State(object):
         @param event: a string event that results in the associated Transition to execute
         """
         assert isinstance(transition, Transition)
-        assert isinstance(event, basestring)
+        assert isinstance(event, str)
 
         assert not (self.exitAction and transition.target.isContinuation) # TODO: revisit this with jcollins
         assert not (self.exitAction and transition.target.isFanIn) # TODO: revisit
@@ -106,7 +106,7 @@ class State(object):
                 context.currentState.exitAction.execute(context, obj)
             except HaltMachineError:
                 raise # let it bubble up quietly
-            except Exception, e:
+            except Exception as e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
                     level = context.logger.warn
@@ -136,7 +136,7 @@ class State(object):
                 context.currentState.entryAction.execute(contextOrContexts, obj)
             except HaltMachineError:
                 raise # let it bubble up quietly
-            except Exception, e:
+            except Exception as e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
                     level = context.logger.warn
@@ -153,7 +153,7 @@ class State(object):
                 context.pop(constants.CONTINUATION_PARAM, None) # pop this off because it is really long
             except HaltMachineError:
                 raise # let it bubble up quietly
-            except Exception, e:
+            except Exception as e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
                     level = context.logger.warn
@@ -172,7 +172,7 @@ class State(object):
                 nextEvent = context.currentState.doAction.execute(contextOrContexts, obj)
             except HaltMachineError:
                 raise # let it bubble up quietly
-            except Exception, e:
+            except Exception as e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
                     level = context.logger.warn

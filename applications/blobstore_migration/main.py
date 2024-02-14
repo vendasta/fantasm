@@ -64,8 +64,8 @@ class StartMigrationHandler(webapp.RequestHandler):
     
     def post(self):
         """ see RequestHandler.post() """
-        assert SOURCE_HOST_PARAM in self.request.POST.keys()
-        assert TARGET_HOST_PARAM in self.request.POST.keys()
+        assert SOURCE_HOST_PARAM in list(self.request.POST.keys())
+        assert TARGET_HOST_PARAM in list(self.request.POST.keys())
         
         # using one-time taskName ensure we don't start the migration twice
         taskName = self.request.POST.get(TASK_NAME_PARAM, DEFAULT_TASK_NAME)

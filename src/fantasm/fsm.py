@@ -104,7 +104,7 @@ class FSM(object):
         self.config = currentConfig or config.currentConfiguration()
         self.machines = {}
         self.pseudoInits, self.pseudoFinals = {}, {}
-        for machineConfig in self.config.machines.values():
+        for machineConfig in list(self.config.machines.values()):
             self.machines[machineConfig.name] = {constants.MACHINE_STATES_ATTRIBUTE: {},
                                                  constants.MACHINE_TRANSITIONS_ATTRIBUTE: {}}
             machine = self.machines[machineConfig.name]
@@ -119,7 +119,7 @@ class FSM(object):
             self.pseudoFinals[machineConfig.name] = pseudoFinal
             self.machines[machineConfig.name][constants.MACHINE_STATES_ATTRIBUTE][FSM.PSEUDO_FINAL] = pseudoFinal
 
-            for stateConfig in machineConfig.states.values():
+            for stateConfig in list(machineConfig.states.values()):
                 state = self._getState(machineConfig, stateConfig)
 
                 # add the transition from pseudo-init to initialState
@@ -138,7 +138,7 @@ class FSM(object):
 
                 machine[constants.MACHINE_STATES_ATTRIBUTE][stateConfig.name] = state
 
-            for transitionConfig in machineConfig.transitions.values():
+            for transitionConfig in list(machineConfig.transitions.values()):
                 source = machine[constants.MACHINE_STATES_ATTRIBUTE][transitionConfig.fromState.name]
                 transition = self._getTransition(machineConfig, transitionConfig)
                 machine[constants.MACHINE_TRANSITIONS_ATTRIBUTE][transitionConfig.name] = transition
@@ -500,11 +500,11 @@ class FSMContext(dict):
                     self[constants.STEPS_PARAM] = int(self.get(constants.STEPS_PARAM, '0')) + 1
                     self.queueDispatch(FSM.PSEUDO_FINAL)
 
-        except HaltMachineError, e:
+        except HaltMachineError as e:
             if e.level is not None and e.message:
                 self.logger.log(e.level, e.message)
             return None # stop the machine
-        except Exception, e:
+        except Exception as e:
             level = self.logger.error
             if e.__class__ in TRANSIENT_ERRORS:
                 level = self.logger.warn
@@ -850,7 +850,7 @@ class FSMContext(dict):
         params = {constants.STATE_PARAM: state.name,
                   constants.EVENT_PARAM: event,
                   constants.INSTANCE_NAME_PARAM: self.instanceName}
-        for key, value in self.items():
+        for key, value in list(self.items()):
             if key not in constants.NON_CONTEXT_PARAMS:
                 if self.contextTypes.get(key) is json.loads:
                     value = json.dumps(value, cls=models.Encoder)
@@ -865,13 +865,13 @@ class FSMContext(dict):
                 valueIsNotBasestring = False
                 if isinstance(value, (list, tuple)):
                     for v in value:
-                        if not isinstance(v, basestring):
+                        if not isinstance(v, str):
                             valueIsNotBasestring = True
-                elif not isinstance(value, basestring):
+                elif not isinstance(value, str):
                     valueIsNotBasestring = True
 
                 if valueIsNotBasestring:
-                    if key not in self.contextTypes.keys():
+                    if key not in list(self.contextTypes.keys()):
                         self.logger.warning("Attempting to put an object in the FSMContext without specifying an "
                                             "entry for key '%s' in 'context_types' in the yaml for machineName '%s'. "
                                             "There will likely be conversion issues (ie. booleans turned into "
@@ -894,7 +894,7 @@ class FSMContext(dict):
         parts.append(instanceName or self.instanceName)
 
         if self.get(constants.GEN_PARAM):
-            for (step, gen) in self[constants.GEN_PARAM].items():
+            for (step, gen) in list(self[constants.GEN_PARAM].items()):
                 parts.append('continuation-%s-%s' % (step, gen))
         if self.get(constants.FORK_PARAM):
             parts.append('fork-' + str(self[constants.FORK_PARAM]))
@@ -959,7 +959,7 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
 
     # queue the Tasks in groups of MAX_TASKS_PER_ADD
     i = 0
-    for i in xrange(len(tasks)):
+    for i in range(len(tasks)):
         someTasks = tasks[i * MAX_TASKS_PER_ADD : (i+1) * MAX_TASKS_PER_ADD]
         if not someTasks:
             break
@@ -968,10 +968,10 @@ def _queueTasks(Queue, queueName, tasks, transactional=False):
         try:
             Queue(name=queueName).add(someTasks, transactional=transactional)
 
-        except TaskAlreadyExistsError, e:
+        except TaskAlreadyExistsError as e:
             taskAlreadyExists = e
 
-        except TombstonedTaskError, e:
+        except TombstonedTaskError as e:
             tombstonedTask = e
 
     if taskAlreadyExists:

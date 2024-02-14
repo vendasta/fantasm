@@ -1,24 +1,24 @@
 """ Code for the csv report generation example. """
-from __future__ import with_statement
+
 
 import csv
 import pickle
 import logging
 
-from fantasm.action import FSMAction
-from fantasm.action import ContinuationFSMAction
-from fantasm.action import DatastoreContinuationFSMAction
-from fantasm.constants import CONTINUATION_RESULTS_KEY
-from fantasm.constants import CONTINUATION_RESULTS_COUNTER_PARAM
-from fantasm.constants import CONTINUATION_COMPLETE_PARAM
-from fantasm.constants import TASK_NAME_PARAM
-from fantasm.constants import STEPS_PARAM
-from fantasm.lock import RunOnceSemaphore
+from .fantasm.action import FSMAction
+from .fantasm.action import ContinuationFSMAction
+from .fantasm.action import DatastoreContinuationFSMAction
+from .fantasm.constants import CONTINUATION_RESULTS_KEY
+from .fantasm.constants import CONTINUATION_RESULTS_COUNTER_PARAM
+from .fantasm.constants import CONTINUATION_COMPLETE_PARAM
+from .fantasm.constants import TASK_NAME_PARAM
+from .fantasm.constants import STEPS_PARAM
+from .fantasm.lock import RunOnceSemaphore
 
 from google.appengine.ext import db
 from google.appengine.api import files
 
-from complex_machine import TestModel
+from .complex_machine import TestModel
 
 OK_EVENT = 'ok'
 
@@ -292,7 +292,7 @@ class ReadInputRecords( CsvContinuation ):
     
     def generateAggregatedCsvData(self, context, obj, entities):
         """ Return the sum of the prop1 field (guids cast to ints)"""
-        return sum([long(e.prop1.replace('-', ''), 16) for e in entities])
+        return sum([int(e.prop1.replace('-', ''), 16) for e in entities])
     
 class WriteIntermediateRecords( CsvFanIn ):
     

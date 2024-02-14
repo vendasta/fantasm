@@ -7,8 +7,8 @@ from google.appengine.ext import db
 from google.appengine.ext import blobstore
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
-from fantasm.action import FSMAction, DatastoreContinuationFSMAction
-from fantasm.constants import CONTINUATION_RESULT_KEY
+from .fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from .fantasm.constants import CONTINUATION_RESULT_KEY
 
 FULL_BACKUP_ON_DAY_OF_WEEK = 2 # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ...
 DELETE_BACKUPS_OLDER_THAN_DAYS = 90 # set to -1 to disable
@@ -155,7 +155,7 @@ class BackupEntity(DatastoreContinuationFSMAction):
 
             # copy over the property values
             kwargs = {}
-            for prop in originalEntity.properties().values():
+            for prop in list(originalEntity.properties().values()):
                 if isinstance(prop, (db.ReferenceProperty, blobstore.BlobReferenceProperty)):
                     # avoid the dereference/auto-lookup
                     datastoreValue = prop.get_value_for_datastore(originalEntity)

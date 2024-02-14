@@ -55,7 +55,7 @@ class Transition(object):
                 self.action.execute(context, obj)
             except HaltMachineError:
                 raise # let it bubble up quietly
-            except Exception, e:
+            except Exception as e:
                 level = context.logger.error
                 if e.__class__ in TRANSIENT_ERRORS:
                     level = context.logger.warn

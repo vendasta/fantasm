@@ -40,16 +40,16 @@ implementation is simple because most of the work is done by doctest.
 
 __all__ = ["mock", "restore", "Mock", "TraceTracker", "assert_same_trace"]
 
-import __builtin__
+import builtins
 import sys
 import inspect
 import doctest
 import re
 import textwrap
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 # A list of mocked objects. Each item is a tuple of (original object,
 # namespace dict, object name, and a list of object attributes).
@@ -147,7 +147,7 @@ def mock(name, nsdicts=None, mock_obj=None, **kw):
             # stack[1][0] is the frame object of the caller to this function
             globals_ = stack[1][0].f_globals
             locals_ = stack[1][0].f_locals
-            nsdicts = (locals_, globals_, __builtin__.__dict__)
+            nsdicts = (locals_, globals_, builtins.__dict__)
         finally:
             del(stack)
 
@@ -237,7 +237,7 @@ class Printer(AbstractTracker):
         if len(msg) > 80:
             msg = 'Called %s(\n    %s)' % (
                 func_name, ',\n    '.join(parts))
-        print >> self.file, msg
+        print(msg, file=self.file)
 
     def set(self, obj_name, attr, value): 
         """
@@ -245,7 +245,7 @@ class Printer(AbstractTracker):
         >>> z.a = 2
         Set z.a = 2
         """
-        print >> self.file, 'Set %s.%s = %r' % (obj_name, attr, value)
+        print('Set %s.%s = %r' % (obj_name, attr, value), file=self.file)
         
 class TraceTracker(Printer):
     """
@@ -376,7 +376,7 @@ def normalize_function_parameters(text):
         re.compile(r"(\S)\s+\)"): r"\1)",
         re.compile(r",\s*(\S)"): r", \1",
         }
-    for search_pattern, replace_pattern in normalize_map.items():
+    for search_pattern, replace_pattern in list(normalize_map.items()):
         normalized_text = re.sub(
             search_pattern, replace_pattern, normalized_text)
 
@@ -445,7 +445,7 @@ class Mock(object):
             return self.mock_returns
         elif self.mock_returns_iter is not None:
             try:
-                return self.mock_returns_iter.next()
+                return next(self.mock_returns_iter)
             except StopIteration:
                 raise Exception("No more mock return values are present.")
         elif self.mock_returns_func is not None:

@@ -20,7 +20,7 @@ Copyright 2010 VendAsta Technologies Inc.
 import logging
 import datetime
 import traceback
-import StringIO
+import io
 import random
 from google.appengine.ext import deferred, db
 from fantasm.models import _FantasmLog
@@ -131,14 +131,14 @@ class Logger( object ):
 
         stack = None
         if 'exc_info' in kwargs:
-            f = StringIO.StringIO()
+            f = io.StringIO()
             traceback.print_exc(25, f)
             stack = f.getvalue()
 
         # this _log method requires everything to be serializable, which is not the case for the logging
         # module. if message is not a basestring, then we simply cast it to a string to allow _something_
         # to be logged in the deferred task
-        if not isinstance(message, basestring):
+        if not isinstance(message, str):
             try:
                 message = str(message)
             except Exception:

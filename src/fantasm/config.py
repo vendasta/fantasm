@@ -16,7 +16,7 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from __future__ import with_statement
+
 
 import os
 import yaml
@@ -175,7 +175,7 @@ class Configuration(object):
 
     def __addMachinesFromImportedConfig(self, importedCofig):
         """ Adds new machines from an imported configuration. """
-        for machineName, machine in importedCofig.machines.items():
+        for machineName, machine in list(importedCofig.machines.items()):
             if machineName in self.machines:
                 raise exceptions.MachineNameNotUniqueError(machineName)
             self.machines[machineName] = machine
@@ -227,12 +227,12 @@ def _resolveClass(className, namespace):
     shortTypes = {
         # basestring types
         'str': str,
-        'unicode': unicode,
+        'unicode': str,
 
         # numeric types
         'int': int,
         'float': float,
-        'long': long,
+        'long': int,
 
         # bool('False') does not work as expected, so this helper function facilitates the conversions
         'bool': utils.boolConverter,
@@ -271,7 +271,7 @@ def _resolveClass(className, namespace):
 
     try:
         module = __import__(moduleName, globals(), locals(), [className])
-    except ImportError, e:
+    except ImportError as e:
         raise exceptions.UnknownModuleError(moduleName, e)
 
     try:
@@ -280,7 +280,7 @@ def _resolveClass(className, namespace):
     except AttributeError:
         raise exceptions.UnknownClassError(moduleName, className)
 
-def _resolveObject(objectName, namespace, expectedType=basestring):
+def _resolveObject(objectName, namespace, expectedType=str):
     """ Given a string name/path of a object, locates and returns the value of the object.
 
     @param objectName: ie. MODULE_LEVEL_CONSTANT, ActionName.CLASS_LEVEL_CONSTANT
@@ -325,7 +325,7 @@ class _MachineConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in initDict.iterkeys():
+        for attribute in initDict.keys():
             if attribute not in constants.VALID_MACHINE_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:
@@ -378,7 +378,7 @@ class _MachineConfig(object):
         # context types
         self.contextTypes = {}
         contextTypes = initDict.get(constants.MACHINE_CONTEXT_TYPES_ATTRIBUTE, {})
-        for contextName, contextType in contextTypes.iteritems():
+        for contextName, contextType in contextTypes.items():
             try:
                 # attempt to import the value of the event
                 contextKey = _resolveObject(contextName, self.namespace)
@@ -446,7 +446,7 @@ class _StateConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in stateDict.iterkeys():
+        for attribute in stateDict.keys():
             if attribute not in constants.VALID_STATE_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:
@@ -537,7 +537,7 @@ class _TransitionConfig(object):
 
         # check for bad attributes
         badAttributes = set()
-        for attribute in transDict.iterkeys():
+        for attribute in transDict.keys():
             if attribute not in constants.VALID_TRANS_ATTRIBUTES:
                 badAttributes.add(attribute)
         if badAttributes:

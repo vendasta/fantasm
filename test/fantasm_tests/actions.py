@@ -217,7 +217,7 @@ class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
 
 class TestDatastoreContinuationFSMActionFanInGroupFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
-        if obj.has_key(CONTINUATION_RESULTS_KEY) and obj[CONTINUATION_RESULTS_KEY]:
+        if CONTINUATION_RESULTS_KEY in obj and obj[CONTINUATION_RESULTS_KEY]:
             context['fan-in-group'] = obj[CONTINUATION_RESULTS_KEY][0].key().id_or_name()
         return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)
 

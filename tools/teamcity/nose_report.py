@@ -20,7 +20,7 @@ class TeamcityReport(TeamcityTestResult):
     def getCtxName(self, ctx):
         if type(ctx) is types.ModuleType:
             return ctx.__name__
-        elif type(ctx) in (types.TypeType, types.ClassType):
+        elif type(ctx) in (type, type):
             return ctx.__module__ + '.' + ctx.__name__
         else:
             return str(ctx)

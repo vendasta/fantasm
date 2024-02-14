@@ -98,7 +98,7 @@ class JSONProperty(db.Property):
         """ decodes string -> dict """
         if value is None:
             return {}
-        if isinstance(value, unicode) or isinstance(value, str):
+        if isinstance(value, str) or isinstance(value, str):
             return json.loads(value, object_hook=decode)
         return value
 

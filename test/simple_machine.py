@@ -1,7 +1,7 @@
 """ Simple machine actions """
 
 import random
-from fantasm.action import FSMAction
+from .fantasm.action import FSMAction
 
 # pylint: disable=C0111
 # - docstring not reqd
@@ -39,7 +39,7 @@ class ExitAction3(FSMAction):
 class DoAction1(FSMAction):
     def execute(self, context, obj):
         context.logger.info('DoAction1.execute()')
-        context['unicode'] = u'\xe8'
+        context['unicode'] = '\xe8'
         return 'event1'
 
 class DoAction2(FSMAction):
