@@ -21,7 +21,7 @@ from minimock import mock, restore
 class ReadWriteLockTest(AppEngineTestCase):
 
     def setUp(self):
-        super(ReadWriteLockTest, self).setUp()
+        super().setUp()
         self.loggingDouble = getLoggingDouble()
         self.state = State('name', None, None, None)
         self.context = FSMContext(self.state, queueName='default')
@@ -37,7 +37,7 @@ class ReadWriteLockTest(AppEngineTestCase):
         # pylint: disable=W0212
         ReadWriteLock.BUSY_WAIT_ITER_SECS = ReadWriteLock._BUSY_WAIT_ITER_SECS
         ReadWriteLock.BUSY_WAIT_ITERS = ReadWriteLock._BUSY_WAIT_ITERS
-        super(ReadWriteLockTest, self).tearDown()
+        super().tearDown()
 
     def test_indexKey(self):
         lock = ReadWriteLock('foo', self.context)
@@ -148,13 +148,13 @@ class RunOnceSemaphoreTest(AppEngineTestCase):
     TRANSACTIONAL = True
 
     def setUp(self):
-        super(RunOnceSemaphoreTest, self).setUp()
+        super().setUp()
         self.loggingDouble = getLoggingDouble()
         random.seed(0) # last step
 
     def tearDown(self):
         restore()
-        super(RunOnceSemaphoreTest, self).tearDown()
+        super().tearDown()
 
     def test_writeRunOnceSemaphore(self):
         sem = RunOnceSemaphore('foo', None)

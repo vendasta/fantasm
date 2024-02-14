@@ -212,7 +212,7 @@ def assert_same_trace(tracker, want):
     """
     assert tracker.check(want), tracker.diff(want)
     
-class AbstractTracker(object):
+class AbstractTracker:
     def __init__(self, *args, **kw):
         raise NotImplementedError
 
@@ -233,9 +233,9 @@ class Printer(AbstractTracker):
         parts = [repr(a) for a in args]
         parts.extend(
             '%s=%r' % (items) for items in sorted(kw.items()))
-        msg = 'Called %s(%s)' % (func_name, ', '.join(parts))
+        msg = 'Called {}({})'.format(func_name, ', '.join(parts))
         if len(msg) > 80:
-            msg = 'Called %s(\n    %s)' % (
+            msg = 'Called {}(\n    {})'.format(
                 func_name, ',\n    '.join(parts))
         print(msg, file=self.file)
 
@@ -245,7 +245,7 @@ class Printer(AbstractTracker):
         >>> z.a = 2
         Set z.a = 2
         """
-        print('Set %s.%s = %r' % (obj_name, attr, value), file=self.file)
+        print('Set {}.{} = {!r}'.format(obj_name, attr, value), file=self.file)
         
 class TraceTracker(Printer):
     """
@@ -256,7 +256,7 @@ class TraceTracker(Printer):
     """
     def __init__(self, *args, **kw):
         self.out = StringIO()
-        super(TraceTracker, self).__init__(self.out, *args, **kw)
+        super().__init__(self.out, *args, **kw)
         self.checker = MinimockOutputChecker()
         self.options =  doctest.ELLIPSIS
         self.options |= doctest.NORMALIZE_INDENTATION
@@ -389,7 +389,7 @@ doctest.NORMALIZE_FUNCTION_PARAMETERS = (
     doctest.register_optionflag('NORMALIZE_FUNCTION_PARAMETERS'))
 
 
-class MinimockOutputChecker(doctest.OutputChecker, object):
+class MinimockOutputChecker(doctest.OutputChecker):
     """Class for matching output of MiniMock objects against expectations.
     """
 
@@ -400,19 +400,19 @@ class MinimockOutputChecker(doctest.OutputChecker, object):
         if (optionflags & doctest.NORMALIZE_FUNCTION_PARAMETERS):
             want = normalize_function_parameters(want)
             got = normalize_function_parameters(got)
-        output_match = super(MinimockOutputChecker, self).check_output(
+        output_match = super().check_output(
             want, got, optionflags)
         return output_match
     check_output.__doc__ = doctest.OutputChecker.check_output.__doc__
 
 
-class _DefaultTracker(object):
+class _DefaultTracker:
     def __repr__(self):
         return '(default tracker)'
 DefaultTracker = _DefaultTracker()
 del _DefaultTracker
 
-class Mock(object):
+class Mock:
 
     def __init__(self, name, returns=None, returns_iter=None,
                  returns_func=None, raises=None, show_attrs=False,
@@ -431,7 +431,7 @@ class Mock(object):
         object.__setattr__(self, 'mock_tracker', tracker)
 
     def __repr__(self):
-        return '<Mock %s %s>' % (hex(id(self)), self.mock_name)
+        return '<Mock {} {}>'.format(hex(id(self)), self.mock_name)
 
     def __call__(self, *args, **kw):
         if self.mock_tracker is not None:

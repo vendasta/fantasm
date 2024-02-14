@@ -18,7 +18,7 @@ Copyright 2010 VendAsta Technologies Inc.
 """
 from fantasm.exceptions import TRANSIENT_ERRORS, HaltMachineError
 
-class Transition(object):
+class Transition:
     """ A transition object for a machine. """
 
     def __init__(self, name, target, action=None, countdown=0, retryOptions=None, queueName=None, taskTarget=None):

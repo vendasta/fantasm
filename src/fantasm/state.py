@@ -25,7 +25,7 @@ from fantasm.exceptions import UnknownEventError, InvalidEventNameRuntimeError, 
 from fantasm.utils import knuthHash
 from fantasm.lock import RunOnceSemaphore
 
-class State(object):
+class State:
     """ A state object for a machine. """
 
     def __init__(self, name, entryAction, doAction, exitAction, machineName=None,

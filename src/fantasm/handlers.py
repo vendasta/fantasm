@@ -128,19 +128,19 @@ class FSMGraphvizHandler(webapp.RequestHandler):
 <head></head>
 <body onload="javascript:document.forms.chartform.submit();">
 <form id='chartform' action='http://chart.apis.google.com/chart' method='POST'>
-  <input type="hidden" name="cht" value="gv:%(cht)s"  />
-  <input type="hidden" name="chs" value="%(chs)s"  />
-  <input type="hidden" name="chl" value='%(chl)s'  />
-  <input type="hidden" name="chd" value="%(chd)s"  />
-  <input type="hidden" name="chof" value="%(chof)s"  />
-  <input type="submit" value="Generate GraphViz .%(chof)s" />
+  <input type="hidden" name="cht" value="gv:{cht}"  />
+  <input type="hidden" name="chs" value="{chs}"  />
+  <input type="hidden" name="chl" value='{chl}'  />
+  <input type="hidden" name="chd" value="{chd}"  />
+  <input type="hidden" name="chof" value="{chof}"  />
+  <input type="submit" value="Generate GraphViz .{chof}" />
 </form>
 </body>
-""" % {'cht': cht,
-       'chs': chs,
-       'chl': chl,
-       'chd': chd,
-       'chof': chof})
+""".format(cht=cht,
+       chs=chs,
+       chl=chl,
+       chd=chd,
+       chof=chof))
 
         else:
             self.response.out.write(content)
@@ -175,7 +175,7 @@ class FSMHandler(webapp.RequestHandler):
 
     def initialize(self, request, response):
         """Initializes this request handler with the given Request and Response."""
-        super(FSMHandler, self).initialize(request, response)
+        super().initialize(request, response)
         # pylint: disable=W0201
         # - this is the preferred location to initialize the handler in the webapp framework
         self.fsm = None
@@ -219,7 +219,7 @@ class FSMHandler(webapp.RequestHandler):
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
-        lowerCaseHeaders = dict([(key.lower(), value) for key, value in list(self.request.headers.items())])
+        lowerCaseHeaders = {key.lower(): value for key, value in list(self.request.headers.items())}
 
         taskName = lowerCaseHeaders.get('x-appengine-taskname')
         retryCount = int(lowerCaseHeaders.get('x-appengine-taskretrycount', 0))
@@ -264,7 +264,7 @@ class FSMHandler(webapp.RequestHandler):
         # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
         # a datastore transaction as a semaphore to determine if we should actually execute this or not.
         if taskName and fsm.useRunOnceSemaphore:
-            semaphoreKey = '%s--%s' % (taskName, retryCount)
+            semaphoreKey = '{}--{}'.format(taskName, retryCount)
             semaphore = RunOnceSemaphore(semaphoreKey, None)
             if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
                 # we can simply return here, this is a duplicate fired task

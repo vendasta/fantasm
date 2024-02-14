@@ -56,7 +56,7 @@ from fantasm import models
 from fantasm.utils import knuthHash
 from fantasm.lock import ReadWriteLock, RunOnceSemaphore
 
-class FSM(object):
+class FSM:
     """ An FSMContext creation factory. This is primarily responsible for translating machine
     configuration information (config.currentConfiguration()) into singleton States and Transitions as per [1]
     """
@@ -279,7 +279,7 @@ class FSMContext(dict):
         """
         assert queueName
 
-        super(FSMContext, self).__init__(data or {})
+        super().__init__(data or {})
         self.initialState = initialState
         self.currentState = currentState
         self.currentAction = None
@@ -317,7 +317,7 @@ class FSMContext(dict):
         dateStr = utcnow.strftime(self.INSTANCE_NAME_DTFORMAT)
         randomStr = ''.join(random.sample(constants.CHARS_FOR_RANDOM, 6))
         # note this construction is important for getInstanceStartTime()
-        return '%s-%s-%s' % (self.machineName, dateStr, randomStr)
+        return '{}-{}-{}'.format(self.machineName, dateStr, randomStr)
 
     def getInstanceStartTime(self):
         """ Returns the UTC datetime when the instance was started.
@@ -756,7 +756,7 @@ class FSMContext(dict):
             """ A list that supports .logger.info(), .logger.warning() etc.for fan-in actions """
             def __init__(self, context, contexts, guarded=False):
                 """ setup a self.logger for fan-in actions """
-                super(FSMContextList, self).__init__(contexts)
+                super().__init__(contexts)
                 self.logger = Logger(context)
                 self.instanceName = context.instanceName
                 self.guarded = guarded
@@ -835,7 +835,7 @@ class FSMContext(dict):
         @return: a url that can be used to build a taskqueue.Task instance to .dispatch(event)
         """
         assert state and event
-        return self.url + '%s/%s/%s/' % (state.name,
+        return self.url + '{}/{}/{}/'.format(state.name,
                                          event,
                                          state.getTransition(event).target.name)
 
@@ -895,7 +895,7 @@ class FSMContext(dict):
 
         if self.get(constants.GEN_PARAM):
             for (step, gen) in list(self[constants.GEN_PARAM].items()):
-                parts.append('continuation-%s-%s' % (step, gen))
+                parts.append('continuation-{}-{}'.format(step, gen))
         if self.get(constants.FORK_PARAM):
             parts.append('fork-' + str(self[constants.FORK_PARAM]))
         # post-fan-in we need to store the workIndex in the task name to avoid duplicates, since

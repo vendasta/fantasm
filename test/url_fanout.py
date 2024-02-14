@@ -13,7 +13,7 @@ from google.appengine.api import urlfetch
 # - docstring not reqd
 # - some unused arguments
 
-class TwitterSearch(object):
+class TwitterSearch:
     """ Performs a Twitter search """
 
     def continuation(self, context, obj, token=None):

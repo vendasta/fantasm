@@ -10,7 +10,7 @@ from fantasm.handlers import getMachineNameFromRequest
 from fantasm import config # pylint: disable=W0611
                            # - actually used by minimock
 
-class MockConfigRootUrl(object):
+class MockConfigRootUrl:
     """ Simple mock config. """
     def __init__(self, rootUrl):
         """ Initialize. """
@@ -20,11 +20,11 @@ class GetMachineNameFromRequestTests(unittest.TestCase):
     """ Tests for getMachineNameFromRequest """
 
     def setUp(self):
-        super(GetMachineNameFromRequestTests, self).setUp()
+        super().setUp()
         mock('config.currentConfiguration', returns=MockConfigRootUrl('/fantasm/'), tracker=None)
 
     def tearDown(self):
-        super(GetMachineNameFromRequestTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_defaultMountPointNoExtraPathInfo(self):

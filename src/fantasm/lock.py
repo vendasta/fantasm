@@ -29,7 +29,7 @@ from fantasm.exceptions import FanInReadLockFailureRuntimeError
 
 # a variety of locking mechanisms to enforce idempotency (of the framework) in the face of retries
 
-class ReadWriteLock( object ):
+class ReadWriteLock:
     """ A read/write lock that allows
 
     1. non-blocking write (for speed of fan-out)
@@ -147,7 +147,7 @@ class ReadWriteLock( object ):
 
         return acquired
 
-class RunOnceSemaphore( object ):
+class RunOnceSemaphore:
     """ A object used to enforce run-once semantics """
 
     def __init__(self, semaphoreKey, context, obj=None):

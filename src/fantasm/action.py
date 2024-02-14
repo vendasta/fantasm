@@ -26,7 +26,7 @@ from fantasm.constants import CONTINUATION_COMPLETE_PARAM
 from fantasm.constants import STEPS_PARAM
 from fantasm.constants import GEN_PARAM
 
-class FSMAction(object):
+class FSMAction:
     """ Defines the interface for all user actions. """
 
     def execute(self, context, obj):

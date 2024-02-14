@@ -27,7 +27,7 @@ from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
 os.environ['APPLICATION_ID'] = 'fantasm'
 APP_ID = os.environ['APPLICATION_ID']
 
-class TaskDouble(object):
+class TaskDouble:
     """ TaskDouble is a mock for google.appengine.api.taskqueue.Task """
     def __init__(self, url, params=None, name=None, transactional=False, method='POST', countdown=0):
         """ Initialize MockTask """
@@ -42,12 +42,12 @@ class TaskDouble(object):
         """Adds this Task to a queue. See Queue.add."""
         return TaskQueueDouble(queue_name).add(self, transactional=transactional)
 
-class TaskQueueDouble(object):
+class TaskQueueDouble:
     """ TaskQueueDouble is a mock for google.appengine.api.lab.taskqueue.Queue """
 
     def __init__(self, name='default'):
         """ Initialize TaskQueueDouble object """
-        self.tasknames = set([])
+        self.tasknames = set()
         self.tasks = []
         self.name = name
 
@@ -73,7 +73,7 @@ class TaskQueueDouble(object):
         """ purge all tasks in queue """
         self.tasks = []
 
-class LoggingDouble(object):
+class LoggingDouble:
 
     def __init__(self):
         self.count = defaultdict(int)
@@ -219,10 +219,10 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
 
     return runList
 
-class ConfigurationMock(object):
+class ConfigurationMock:
     """ A mock object that looks like a config._Configuration instance """
     def __init__(self, machines):
-        self.machines = dict([(m.name, m) for m in machines])
+        self.machines = {m.name: m for m in machines}
 
 def getFSMFactoryByFilename(filename):
     """ Returns an FSM instance
@@ -277,7 +277,7 @@ def setUpByString(obj, yaml, machineName=None, instanceName=None):
     setUpByFilename(obj, f.name, machineName=machineName, instanceName=instanceName)
     f.close()
 
-class ZeroCountMock(object):
+class ZeroCountMock:
     count = 0
     fcount = 0
     ccount = 0
@@ -312,7 +312,7 @@ def getCounts(machineConfig):
                                   'exit': (state.exit or ZeroCountMock).count}
 
     for transition in list(machineConfig.transitions.values()):
-        counts['%s--%s' % (transition.fromState.name, transition.event)] = {
+        counts['{}--{}'.format(transition.fromState.name, transition.event)] = {
             'action': (transition.action or ZeroCountMock).count
         }
 

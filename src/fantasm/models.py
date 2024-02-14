@@ -83,7 +83,7 @@ class JSONProperty(db.Property):
 
     def get_value_for_datastore(self, modelInstance):
         """ see Property.get_value_for_datastore """
-        value = super(JSONProperty, self).get_value_for_datastore(modelInstance)
+        value = super().get_value_for_datastore(modelInstance)
         return db.Text(self._deflate(value))
 
     def validate(self, value):

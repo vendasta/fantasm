@@ -62,11 +62,11 @@ class OutsideListContinuationAction( ListContinuation ):
             context['data'] = obj[CONTINUATION_RESULTS_KEY]
         return context.get('event', 'ok') # bad!!! should be inside if
 
-class MiddleAction( object ):
+class MiddleAction:
     def execute(self, context, obj):
         return 'ok'
 
-class FanInAction( object ):
+class FanInAction:
     def execute(self, contexts, obj):
         for context in contexts:
             result = ContinuationFanInResult.get_or_insert('test')
@@ -217,7 +217,7 @@ class BaseTest( AppEngineTestCase ):
     EVENT = None
 
     def setUp(self):
-        super(BaseTest, self).setUp()
+        super().setUp()
         setUpByString(self, FAN_IN_MACHINE, machineName=self.MACHINE_NAME)
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
         mock('FSMFanInCleanupHandler.post', returns=None, tracker=None)
@@ -226,7 +226,7 @@ class BaseTest( AppEngineTestCase ):
         self.context['event'] = self.EVENT
 
     def tearDown(self):
-        super(BaseTest, self).tearDown()
+        super().tearDown()
         restore()
 
 

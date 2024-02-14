@@ -100,7 +100,7 @@ class FSMTests(unittest.TestCase):
 class FSMContextTests(unittest.TestCase):
 
     def setUp(self):
-        super(FSMContextTests, self).setUp()
+        super().setUp()
         filename = 'test-FSMContextTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -112,7 +112,7 @@ class FSMContextTests(unittest.TestCase):
         self.context.dispatch(FSM.PSEUDO_INIT, self.obj)
 
     def tearDown(self):
-        super(FSMContextTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getContextWithoutSpecialEntries(self):
@@ -200,7 +200,7 @@ class FSMContextTests(unittest.TestCase):
 class FSMContextMergeJoinTests(AppEngineTestCase):
 
     def setUp(self):
-        super(FSMContextMergeJoinTests, self).setUp()
+        super().setUp()
         self.state = State('foo', None, CountExecuteCalls(), None)
         self.state2 = State('foo2', None, CountExecuteCallsWithFork(), None)
         self.state.addTransition(Transition('t1', self.state2, queueName='q'), 'event')
@@ -236,7 +236,7 @@ class FSMContextMergeJoinTests(AppEngineTestCase):
 class TaskQueueFSMTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMTests, self).setUp()
+        super().setUp()
         self.maxDiff = None
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
@@ -250,18 +250,18 @@ class TaskQueueFSMTests(AppEngineTestCase):
         self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
 
     def tearDown(self):
-        super(TaskQueueFSMTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def assertTaskUrlHasStateAndEvent(self, task, expectedState, expectedEvent):
         # '/fantasm/fsm/TaskQueueFSMTests/?__st__=state-normal&__ev__=next-event&arg1=val1&arg2=val2'
-        stateParams = '%s=%s' % (STATE_PARAM, expectedState)
-        eventParams = '%s=%s' % (EVENT_PARAM, expectedEvent)
+        stateParams = '{}={}'.format(STATE_PARAM, expectedState)
+        eventParams = '{}={}'.format(EVENT_PARAM, expectedEvent)
         self.assertTrue(stateParams in task.url)
         self.assertTrue(eventParams in task.url)
 
     def assertTaskUrlHasInstanceName(self, task, instanceName):
-        instanceParams = '%s=%s' % (INSTANCE_NAME_PARAM, instanceName)
+        instanceParams = '{}={}'.format(INSTANCE_NAME_PARAM, instanceName)
         self.assertTrue(instanceParams in task.url)
 
     def test_initialialize_counts(self):
@@ -471,7 +471,7 @@ class TaskQueueFSMTests(AppEngineTestCase):
 class TaskQueueFSMRandomCountdownTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMRandomCountdownTests, self).setUp()
+        super().setUp()
         self.maxDiff = None
         filename = 'test-TaskQueueFSMRandomCountdownTests.yaml'
         setUpByFilename(self, filename)
@@ -485,7 +485,7 @@ class TaskQueueFSMRandomCountdownTests(AppEngineTestCase):
         self.transNormalToFinal = self.stateNormal._eventToTransition['next-event']
 
     def tearDown(self):
-        super(TaskQueueFSMRandomCountdownTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_normalStateDispatchUsesRandomCountdown(self):
@@ -516,7 +516,7 @@ _UTC = _UTCTimeZone()
 class TaskQueueFSMRetryTests(AppEngineTestCase):
 
     def setUp(self):
-        super(TaskQueueFSMRetryTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMRetryTests.yaml'
         machineName = getMachineNameByFilename(filename)
         self.factory = getFSMFactoryByFilename(filename)
@@ -531,7 +531,7 @@ class TaskQueueFSMRetryTests(AppEngineTestCase):
         self.mockQueue.purge() # clear the initialization task
 
     def tearDown(self):
-        super(TaskQueueFSMRetryTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_taskRetryLimitAddedToQueuedTask(self):
@@ -588,7 +588,7 @@ class DatastoreFSMContinuationBaseTests(AppEngineTestCase):
     MACHINE_NAME = None
 
     def setUp(self):
-        super(DatastoreFSMContinuationBaseTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
@@ -599,7 +599,7 @@ class DatastoreFSMContinuationBaseTests(AppEngineTestCase):
             self.modelKeys.append(modelKey)
 
     def tearDown(self):
-        super(DatastoreFSMContinuationBaseTests, self).tearDown()
+        super().tearDown()
         restore()
 
 class DatastoreFSMContinuationWithContinuationCountdownTests(DatastoreFSMContinuationBaseTests):
@@ -859,7 +859,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
     MACHINE_NAME = 'NDBDatastoreFSMContinuationTests'
 
     def setUp(self):
-        super(NDBDatastoreFSMContinuationTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
@@ -870,7 +870,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
             self.modelKeys.append(modelKey)
 
     def tearDown(self):
-        super(NDBDatastoreFSMContinuationTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_NDBDatastoreFSMContinuation_smoke_test(self):
@@ -982,7 +982,7 @@ class NDBDatastoreFSMContinuationTests(AppEngineTestCase):
 class ContextTypesCoercionTests(unittest.TestCase):
 
     def setUp(self):
-        super(ContextTypesCoercionTests, self).setUp()
+        super().setUp()
         setUpByFilename(self, 'test-TypeCoercionTests.yaml')
 
     def test_incomingItemsArePlacedIntoContextAsCorrectDatatype(self):
@@ -1016,7 +1016,7 @@ class ContextTypesCoercionTests(unittest.TestCase):
 class ContextYamlImportTests(unittest.TestCase):
 
     def setUp(self):
-        super(ContextYamlImportTests, self).setUp()
+        super().setUp()
 
     def test_imports_only(self):
         setUpByFilename(self, 'test-YamlImportOnly.yaml', machineName='TypeCoercionTests')
@@ -1044,7 +1044,7 @@ class ContextYamlImportTests(unittest.TestCase):
 class SpawnTests(unittest.TestCase):
 
     def setUp(self):
-        super(SpawnTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -1059,7 +1059,7 @@ class SpawnTests(unittest.TestCase):
         self.mockQueue.purge()
 
     def tearDown(self):
-        super(SpawnTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getTask(self, num):
@@ -1105,7 +1105,7 @@ class StartStateMachineTests(unittest.TestCase):
     """ Tests for startStateMachine """
 
     def setUp(self):
-        super(StartStateMachineTests, self).setUp()
+        super().setUp()
         filename = 'test-TaskQueueFSMTests.yaml'
         setUpByFilename(self, filename)
         self.machineName = getMachineNameByFilename(filename)
@@ -1113,7 +1113,7 @@ class StartStateMachineTests(unittest.TestCase):
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
 
     def tearDown(self):
-        super(StartStateMachineTests, self).tearDown()
+        super().tearDown()
         restore()
 
     def getTask(self, num):
@@ -1145,7 +1145,7 @@ class StartStateMachineTests(unittest.TestCase):
 
     def test_correctUrlInTask(self):
         startStateMachine(self.machineName, {'a': '1'}, _currentConfig=self.currentConfig, method='POST')
-        self.assertEqual(self.getTask(0).url, '/fantasm/fsm/%s/%s/%s/%s/' % (self.machineName,
+        self.assertEqual(self.getTask(0).url, '/fantasm/fsm/{}/{}/{}/{}/'.format(self.machineName,
                                                                               FSM.PSEUDO_INIT,
                                                                               FSM.PSEUDO_INIT,
                                                                               self.initialState.name))
@@ -1228,14 +1228,14 @@ class HaltMachineErrorTest(AppEngineTestCase):
     MACHINE_NAME = None
 
     def setUp(self):
-        super(HaltMachineErrorTest, self).setUp()
+        super().setUp()
         setUpByFilename(self, self.FILENAME, instanceName='instanceName', machineName=self.MACHINE_NAME)
         self.mockQueue = TaskQueueDouble()
         mock(name='Queue.add', returns_func=self.mockQueue.add, tracker=None)
         self.loggingDouble = getLoggingDouble()
 
     def tearDown(self):
-        super(HaltMachineErrorTest, self).tearDown()
+        super().tearDown()
         restore()
 
 class HaltMachineErrorEntryTests(HaltMachineErrorTest):

@@ -13,7 +13,7 @@ from fantasm.exceptions import HaltMachineError
 # - docstrings not reqd in unit tests
 # - these actions do not use arguments
 
-class Custom(object):
+class Custom:
     def __init__(self, string):
         self.impl = eval(string)
     def __repr__(self):
@@ -24,7 +24,7 @@ class CustomImpl(Custom):
         self.a = a
         self.b = b
     def __repr__(self):
-        return 'CustomImpl(a="%s", b="%s")' % (self.a, self.b)
+        return 'CustomImpl(a="{}", b="{}")'.format(self.a, self.b)
     def __eq__(self, other):
         # just for unit test equality
         if other.__class__ is Custom:
@@ -36,12 +36,12 @@ class CustomImpl(Custom):
             other = other.impl
         return self.a != other.a or self.b != other.b
 
-class ContextRecorder(object):
+class ContextRecorder:
     CONTEXTS = []
     def execute(self, context, obj):
         self.CONTEXTS.append(context)
 
-class CountExecuteCalls(object):
+class CountExecuteCalls:
     def __init__(self):
         self.count = 0
         self.fails = 0
@@ -58,10 +58,10 @@ class CountExecuteCalls(object):
 class CountExecuteCallsWithSpawn(CountExecuteCalls):
     def execute(self, context, obj):
         context.spawn('MachineToSpawn', [{'a': '1'}, {'b': '2'}])
-        super(CountExecuteCallsWithSpawn, self).execute(context, obj)
+        super().execute(context, obj)
         return None
 
-class CountExecuteCallsWithFork(object):
+class CountExecuteCallsWithFork:
     def __init__(self):
         self.count = 0
         self.fails = 0
@@ -78,7 +78,7 @@ class CountExecuteCallsWithFork(object):
     def event(self):
         return 'next-event'
 
-class CountExecuteAndContinuationCalls(object):
+class CountExecuteAndContinuationCalls:
     def __init__(self):
         self.count = 0
         self.ccount = 0
@@ -102,7 +102,7 @@ class CountExecuteAndContinuationCalls(object):
     def event(self):
         return 'next-event'
 
-class CountExecuteCallsFanInEntry(object):
+class CountExecuteCallsFanInEntry:
     def __init__(self):
         self.count = 0
         self.fcount = 0
@@ -132,7 +132,7 @@ class CountExecuteCallsFanIn(CountExecuteCallsFanInEntry):
             result = ResultModel(total=0, key_name=context.instanceName)
         result.total += sum([len(c.get('fan-me-in', [])) for c in context])
         result.put() # txn is overkill for this test
-        return super(CountExecuteCallsFanIn, self).execute(context, obj)
+        return super().execute(context, obj)
     @property
     def event(self):
         return 'next-event'
@@ -147,7 +147,7 @@ class CountExecuteCallsFinal(CountExecuteCalls):
     def event(self):
         return None
 
-class CountExecuteCallsSelfTransition(object):
+class CountExecuteCallsSelfTransition:
     def __init__(self):
         self.count = 0
         self.fails = 0
@@ -161,25 +161,25 @@ class CountExecuteCallsSelfTransition(object):
         else:
             return 'next-event2'
 
-class RaiseExceptionAction(object):
+class RaiseExceptionAction:
     def execute(self, context, obj):
         raise Exception('instrumented exception')
 
-class RaiseExceptionContinuationAction(object):
+class RaiseExceptionContinuationAction:
     def continuation(self, context, obj, token=None):
         return "token"
     def execute(self, context, obj):
         raise Exception('instrumented exception')
 
-class RaiseHaltMachineErrorAction(object):
+class RaiseHaltMachineErrorAction:
     def execute(self, context, obj):
         raise HaltMachineError('instrumented exception', logLevel=logging.DEBUG)
 
-class RaiseHaltMachineErrorActionNoMessage(object):
+class RaiseHaltMachineErrorActionNoMessage:
     def execute(self, context, obj):
         raise HaltMachineError('instrumented exception', logLevel=None) # do not log
 
-class RaiseHaltMachineErrorContinuationAction(object):
+class RaiseHaltMachineErrorContinuationAction:
     def continuation(self, context, obj, token=None):
         raise HaltMachineError('instrumented exception', logLevel=logging.DEBUG)
     def execute(self, context, obj):
@@ -187,7 +187,7 @@ class RaiseHaltMachineErrorContinuationAction(object):
 
 class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
     def __init__(self):
-        super(TestDatastoreContinuationFSMAction, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
         self.fails = 0
@@ -201,7 +201,7 @@ class TestDatastoreContinuationFSMAction(DatastoreContinuationFSMAction):
         self.ccount += 1
         if self.ccount == self.cfailat:
             raise Exception()
-        return super(TestDatastoreContinuationFSMAction, self).continuation(context, obj, token=token)
+        return super().continuation(context, obj, token=token)
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
@@ -219,7 +219,7 @@ class TestDatastoreContinuationFSMActionFanInGroupFSMAction(TestDatastoreContinu
     def execute(self, context, obj):
         if CONTINUATION_RESULTS_KEY in obj and obj[CONTINUATION_RESULTS_KEY]:
             context['fan-in-group'] = obj[CONTINUATION_RESULTS_KEY][0].key().id_or_name()
-        return super(TestDatastoreContinuationFSMActionFanInGroupFSMAction, self).execute(context, obj)
+        return super().execute(context, obj)
 
 class HappySadContinuationFSMAction(TestDatastoreContinuationFSMAction):
     def execute(self, context, obj):
@@ -240,7 +240,7 @@ class TestFileContinuationFSMAction(ContinuationFSMAction):
     CONTEXTS = []
     ENTRIES = ['a', 'b', 'c', 'd']
     def __init__(self):
-        super(TestFileContinuationFSMAction, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
         self.fails = 0
@@ -269,7 +269,7 @@ class TestFileContinuationFSMAction(ContinuationFSMAction):
 
 class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
     def __init__(self):
-        super(TestContinuationAndForkFSMAction, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
         self.fails = 0
@@ -283,7 +283,7 @@ class TestContinuationAndForkFSMAction(DatastoreContinuationFSMAction):
         self.ccount += 1
         if self.ccount == self.cfailat:
             raise Exception()
-        return super(TestContinuationAndForkFSMAction, self).continuation(context, obj, token=token)
+        return super().continuation(context, obj, token=token)
     def execute(self, context, obj):
         if not obj[CONTINUATION_RESULTS_KEY]:
             return None
@@ -315,7 +315,7 @@ class DoubleContinuation1(ContinuationFSMAction):
     CONTEXTS = []
     ENTRIES = ['1', '2', '3']
     def __init__(self):
-        super(DoubleContinuation1, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
     def continuation(self, context, obj, token=None):
@@ -333,11 +333,11 @@ class DoubleContinuation1(ContinuationFSMAction):
         DoubleContinuation1.CONTEXTS.append(context)
         return 'ok'
 
-class DoubleContinuation2(object):
+class DoubleContinuation2:
     CONTEXTS = []
     ENTRIES = ['a', 'b', 'c']
     def __init__(self):
-        super(DoubleContinuation2, self).__init__()
+        super().__init__()
         self.count = 0
         self.ccount = 0
     def continuation(self, context, obj, token=None):
@@ -355,14 +355,14 @@ class DoubleContinuation2(object):
         DoubleContinuation2.CONTEXTS.append(context)
         return 'okfinal'
 
-class FSCEE_InitialState(object):
+class FSCEE_InitialState:
     def __init__(self):
         self.count = 0
     def execute(self, context, obj):
         self.count += 1
         return 'ok'
 
-class FSCEE_OptionalFinalState(object):
+class FSCEE_OptionalFinalState:
     def __init__(self):
         self.count = 0
     def execute(self, context, obj):
@@ -370,7 +370,7 @@ class FSCEE_OptionalFinalState(object):
         # a final state should be able to emit an event
         return 'ok'
 
-class FSCEE_FinalState(object):
+class FSCEE_FinalState:
     def __init__(self):
         self.count = 0
     def execute(self, context, obj):

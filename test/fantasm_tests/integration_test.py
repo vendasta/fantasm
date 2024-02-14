@@ -33,7 +33,7 @@ class RunTasksBaseTest(AppEngineTestCase):
     METHOD = 'GET'
 
     def setUp(self):
-        super(RunTasksBaseTest, self).setUp()
+        super().setUp()
         for i in range(10):
             TestModel(key_name=str(i)).put()
             nkey = ndb_key.Key('NDBTestModel', str(i))
@@ -43,7 +43,7 @@ class RunTasksBaseTest(AppEngineTestCase):
         self.maxDiff = None
 
     def tearDown(self):
-        super(RunTasksBaseTest, self).tearDown()
+        super().tearDown()
         restore()
 
     def setUpMock(self):
@@ -66,7 +66,7 @@ class LoggingTests( RunTasksBaseTest ):
     FILENAME = 'test-TaskQueueFSMTests.yaml'
 
     def setUp(self):
-        super(LoggingTests, self).setUp()
+        super().setUp()
         self.context.initialize()
         self.context.logger.persistentLogging = True
 
@@ -119,11 +119,11 @@ class ParamsTests(RunTasksBaseTest):
     MACHINE_NAME = 'ContextRecorder'
 
     def setUp(self):
-        super(ParamsTests, self).setUp()
+        super().setUp()
         ContextRecorder.CONTEXTS = []
 
     def tearDown(self):
-        super(ParamsTests, self).tearDown()
+        super().tearDown()
         ContextRecorder.CONTEXTS = []
 
     def _test_not_a_list(self, method):
@@ -257,11 +257,11 @@ class HeadersTests(RunTasksBaseTest):
     MACHINE_NAME = 'TaskQueueFSMTests'
 
     def setUp(self):
-        super(HeadersTests, self).setUp()
+        super().setUp()
         ContextRecorder.CONTEXTS = []
 
     def tearDown(self):
-        super(HeadersTests, self).tearDown()
+        super().tearDown()
         ContextRecorder.CONTEXTS = []
 
     def test_headers(self):
@@ -406,7 +406,7 @@ class RunTasksTests_DatastoreFSMContinuationQueueTests(RunTasksBaseTest):
     MACHINE_NAME = 'DatastoreFSMContinuationQueueTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationQueueTests, self).setUp()
+        super().setUp()
 
         import google.appengine.api.taskqueue.taskqueue_stub as taskqueue_stub
         import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
@@ -451,7 +451,7 @@ class RunTasksTests_NDBDatastoreFSMContinuationQueueTests(RunTasksBaseTest):
     MACHINE_NAME = 'NDBDatastoreFSMContinuationQueueTests'
 
     def setUp(self):
-        super(RunTasksTests_NDBDatastoreFSMContinuationQueueTests, self).setUp()
+        super().setUp()
 
         import google.appengine.api.taskqueue.taskqueue_stub as taskqueue_stub
         import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
@@ -495,11 +495,11 @@ class RunTasksTests_FileFSMContinuationTests(RunTasksBaseTest):
     MACHINE_NAME = 'FileFSMContinuationTests'
 
     def setUp(self):
-        super(RunTasksTests_FileFSMContinuationTests, self).setUp()
+        super().setUp()
         TestFileContinuationFSMAction.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_FileFSMContinuationTests, self).tearDown()
+        super().tearDown()
         TestFileContinuationFSMAction.CONTEXTS = []
 
     def test_FileFSMContinuationTests(self):
@@ -535,12 +535,12 @@ class RunTasksTests_DoubleContinuationTests(RunTasksBaseTest):
     MACHINE_NAME = 'DoubleContinuationTests'
 
     def setUp(self):
-        super(RunTasksTests_DoubleContinuationTests, self).setUp()
+        super().setUp()
         DoubleContinuation1.CONTEXTS = []
         DoubleContinuation2.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_DoubleContinuationTests, self).tearDown()
+        super().tearDown()
         DoubleContinuation1.CONTEXTS = []
         DoubleContinuation2.CONTEXTS = []
 
@@ -697,11 +697,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInAndForkTests(RunTasksBaseTest):
     MACHINE_NAME = 'DatastoreFSMContinuationFanInAndForkTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInAndForkTests, self).setUp()
+        super().setUp()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInAndForkTests, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def test_DatastoreFSMContinuationTests(self):
@@ -800,11 +800,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests(RunTasksBaseTest):
     MACHINE_NAME = 'DatastoreFSMContinuationFanInTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests, self).setUp()
+        super().setUp()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def test_DatastoreFSMContinuationFanInTests(self):
@@ -847,11 +847,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInGroupDefaultTests(RunTasksBaseT
     MACHINE_NAME = 'DatastoreFSMContinuationFanInGroupDefaultTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInGroupDefaultTests, self).setUp()
+        super().setUp()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInGroupDefaultTests, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def test_DatastoreFSMContinuationFanInTests(self):
@@ -887,11 +887,11 @@ class RunTasksTests_DatastoreFSMContinuationFanInGroupTests(RunTasksBaseTest):
     MACHINE_NAME = 'DatastoreFSMContinuationFanInGroupTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInGroupTests, self).setUp()
+        super().setUp()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInGroupTests, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
 
     def test_DatastoreFSMContinuationFanInTests(self):
@@ -935,9 +935,9 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
     MACHINE_NAME = 'DatastoreFSMContinuationFanInTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems, self).setUp()
+        super().setUp()
         self.loggingDouble = getLoggingDouble()
-        class BreakReadLock( object ):
+        class BreakReadLock:
             def execute(self, context, obj):
                 from google.appengine.api import memcache
                 lockKey = 'instanceName--state-continuation--next-event--state-fan-in--step-2-lock-1'
@@ -952,7 +952,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems(RunTask
         ReadWriteLock.BUSY_WAIT_ITERS = 2
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests_memcache_problems, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
         ReadWriteLock.BUSY_WAIT_ITER_SECS = ReadWriteLock._BUSY_WAIT_ITER_SECS
         ReadWriteLock.BUSY_WAIT_ITERS = ReadWriteLock._BUSY_WAIT_ITERS
@@ -1011,7 +1011,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_fail_post_fan_in(RunTasks
     MACHINE_NAME = 'DatastoreFSMContinuationFanInTests'
 
     def setUp(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests_fail_post_fan_in, self).setUp()
+        super().setUp()
         CountExecuteCallsFanIn.CONTEXTS = []
         ReadWriteLock._BUSY_WAIT_ITER_SECS = ReadWriteLock.BUSY_WAIT_ITERS
         ReadWriteLock.BUSY_WAIT_ITER_SECS = 0
@@ -1020,7 +1020,7 @@ class RunTasksTests_DatastoreFSMContinuationFanInTests_fail_post_fan_in(RunTasks
         self.context['UNITTEST_RAISE_AFTER_FAN_IN'] = True
 
     def tearDown(self):
-        super(RunTasksTests_DatastoreFSMContinuationFanInTests_fail_post_fan_in, self).tearDown()
+        super().tearDown()
         CountExecuteCallsFanIn.CONTEXTS = []
         ReadWriteLock.BUSY_WAIT_ITER_SECS = ReadWriteLock._BUSY_WAIT_ITER_SECS
         ReadWriteLock.BUSY_WAIT_ITERS = ReadWriteLock._BUSY_WAIT_ITERS

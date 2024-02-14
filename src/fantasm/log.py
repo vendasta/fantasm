@@ -62,7 +62,7 @@ def _log(taskName,
         pass
 
     randomStr = ''.join(random.sample(constants.CHARS_FOR_RANDOM, 8))
-    keyName = '%s:%s' % (taskName, randomStr)
+    keyName = '{}:{}'.format(taskName, randomStr)
     key = db.Key.from_path(_FantasmLog.kind(), keyName, namespace='')
     _FantasmLog(key=key,
                 taskName=taskName,
@@ -78,7 +78,7 @@ def _log(taskName,
                 stack=stack,
                 time=time).put()
 
-class Logger( object ):
+class Logger:
     """ A object that allows an FSMContext to have methods debug, info etc. similar to logging.debug/info etc. """
 
     _LOGGING_MAP = {

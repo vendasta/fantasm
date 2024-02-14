@@ -12,7 +12,7 @@ class TeamcityServiceMessages:
     def message(self, messageName, **properties):
         self.output.write("\n##teamcity[" + messageName)
         for k, v in list(properties.items()):
-            self.output.write(" %s='%s'" % (k, self.escapeValue(v)))
+            self.output.write(" {}='{}'".format(k, self.escapeValue(v)))
         self.output.write("]\n")
         
     def testSuiteStarted(self, suiteName):

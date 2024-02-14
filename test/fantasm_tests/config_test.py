@@ -13,36 +13,36 @@ from minimock import restore
 # - accessing protected config members a lot in these tests
 
 # the following classes are used for namespace and interface testing
-class MockAction(object):
+class MockAction:
     def execute(self, context, obj):
         pass
-class MockEntry(object):
+class MockEntry:
     def execute(self, context, obj):
         pass
-class MockExit(object):
+class MockExit:
     def execute(self, context, obj):
         pass
-class MockActionWithContinuation(object):
+class MockActionWithContinuation:
     def continuation(self, context, obj, token):
         pass
     def execute(self, context, obj):
         pass
-class MockActionNoExecute(object):
+class MockActionNoExecute:
     pass
-class MockEntryNoExecute(object):
+class MockEntryNoExecute:
     pass
-class MockExitNoExecute(object):
+class MockExitNoExecute:
     pass
 
 class TestMachineDictionaryProcessing(unittest.TestCase):
 
     def setUp(self):
-        super(TestMachineDictionaryProcessing, self).setUp()
+        super().setUp()
         self.machineName = 'MyMachine'
         self.machineDict = {constants.MACHINE_NAME_ATTRIBUTE: self.machineName}
 
     def tearDown(self):
-        super(TestMachineDictionaryProcessing, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_nameParsed(self):
@@ -250,7 +250,7 @@ class TestMachineDictionaryProcessing(unittest.TestCase):
 class TestStateDictionaryProcessing(unittest.TestCase):
 
     def setUp(self):
-        super(TestStateDictionaryProcessing, self).setUp()
+        super().setUp()
         self.machineName = 'MyFsm'
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: self.machineName})
         self.stateDict = {constants.STATE_NAME_ATTRIBUTE: 'MyState',
@@ -258,7 +258,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
                           constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test'}
 
     def tearDown(self):
-        super(TestStateDictionaryProcessing, self).tearDown()
+        super().tearDown()
         restore()
 
     def test_nameParsed(self):
@@ -460,7 +460,7 @@ class TestMachineUrlConstruction(unittest.TestCase):
 class TestTransitionDictionaryProcessing(unittest.TestCase):
 
     def setUp(self):
-        super(TestTransitionDictionaryProcessing, self).setUp()
+        super().setUp()
         self.transDict = {
             constants.TRANS_EVENT_ATTRIBUTE: 'MyEvent',
             constants.TRANS_TO_ATTRIBUTE: 'GoodState'
@@ -712,7 +712,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
 class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
 
     def setUp(self):
-        super(TestAdvancedTransitionDictionaryProcessing, self).setUp()
+        super().setUp()
         self.transDict = {
             constants.TRANS_EVENT_ATTRIBUTE: 'MyEvent',
             constants.TRANS_TO_ATTRIBUTE: 'state2'
@@ -753,7 +753,7 @@ class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
 class TestConfigDictionaryProcessing(unittest.TestCase):
 
     def setUp(self):
-        super(TestConfigDictionaryProcessing, self).setUp()
+        super().setUp()
         self.rootUrl = '/foo/'
         self.machineName = 'MyMachine'
         self.initialStateName = 'MyInitialState'

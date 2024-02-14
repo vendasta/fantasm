@@ -69,8 +69,7 @@ def exceptionGeneratingWsgiMiddleware(app):
             restore()
             raise
         if result is not None:
-            for value in result:
-                yield value
+            yield from result
         restore()
     return exceptionGeneratingWsgiWrapper
 

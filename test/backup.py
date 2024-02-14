@@ -46,9 +46,9 @@ BACKUP_CONFIG = (
     (Company,                         'modifiedDate',     10),
     # add more models here
 )
-BACKUP_CLASS = dict( (m[0].__name__, m[0]) for m in BACKUP_CONFIG )
-BACKUP_INCREMENTAL_PROPERTY = dict( (m[0].__name__, m[1]) for m in BACKUP_CONFIG )
-BACKUP_BATCH_SIZE = dict( (m[0].__name__, m[2]) for m in BACKUP_CONFIG )
+BACKUP_CLASS = { m[0].__name__: m[0] for m in BACKUP_CONFIG }
+BACKUP_INCREMENTAL_PROPERTY = { m[0].__name__: m[1] for m in BACKUP_CONFIG }
+BACKUP_BATCH_SIZE = { m[0].__name__: m[2] for m in BACKUP_CONFIG }
 BACKUP_MODELS = sorted(BACKUP_CLASS.keys())
 
 
@@ -99,7 +99,7 @@ class EnumerateBackupModels(FSMAction):
         
         def tx():
             """ Gets the backup meta information for this model, creating if necessary. """
-            keyName = '%s:%s' % (backupId, model)
+            keyName = '{}:{}'.format(backupId, model)
             entry = _Backup.get_by_key_name(keyName)
             
             if not entry:

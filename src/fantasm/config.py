@@ -98,7 +98,7 @@ def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabiliti
 
     try:
         yamlFile = open(filename)
-    except IOError:
+    except OSError:
         raise exceptions.YamlFileNotFoundError(filename)
     try:
         configDict = yaml.load(yamlFile.read())
@@ -110,7 +110,7 @@ def loadYaml(filename=None, importedAlready=None, rootUrl=None, enableCapabiliti
                          rootUrl=rootUrl,
                          enableCapabilitiesCheck=enableCapabilitiesCheck)
 
-class Configuration(object):
+class Configuration:
     """ An overall configuration that corresponds to a fantasm.yaml file. """
 
     def __init__(self, configDict, importedAlready=None, rootUrl=None, enableCapabilitiesCheck=None):
@@ -262,7 +262,7 @@ def _resolveClass(className, namespace):
     if '.' in className:
         fullyQualifiedClass = className
     elif namespace:
-        fullyQualifiedClass = '%s.%s' % (namespace, className)
+        fullyQualifiedClass = '{}.{}'.format(namespace, className)
     else:
         fullyQualifiedClass = className
 
@@ -308,7 +308,7 @@ def _resolveObject(objectName, namespace, expectedType=str):
 
     return resolvedObject
 
-class _MachineConfig(object):
+class _MachineConfig:
     """ Configuration of a machine. """
 
     def __init__(self, initDict, rootUrl=None):
@@ -426,9 +426,9 @@ class _MachineConfig(object):
     @property
     def url(self):
         """ Returns the url for this machine. """
-        return '%sfsm/%s/' % (self.rootUrl, self.name)
+        return '{}fsm/{}/'.format(self.rootUrl, self.name)
 
-class _StateConfig(object):
+class _StateConfig:
     """ Configuration of a state. """
 
     # R0912:268:_StateConfig.__init__: Too many branches (22/20)
@@ -525,7 +525,7 @@ class _StateConfig(object):
         else:
             self.exit = None
 
-class _TransitionConfig(object):
+class _TransitionConfig:
     """ Configuration of a transition. """
 
     # R0912:326:_TransitionConfig.__init__: Too many branches (22/20)
@@ -557,7 +557,7 @@ class _TransitionConfig(object):
             raise exceptions.InvalidTransitionEventNameError(self.machineName, fromStateName, self.event)
 
         # transition name
-        self.name = '%s--%s' % (fromStateName, self.event)
+        self.name = '{}--{}'.format(fromStateName, self.event)
         if not self.name:
             raise exceptions.TransitionNameRequiredError(self.machineName)
         if not constants.NAME_RE.match(self.name):

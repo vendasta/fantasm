@@ -17,7 +17,7 @@ class LoggerTestPersistent(AppEngineTestCase):
     PERSISTENT_LOGGING = True
 
     def setUp(self):
-        super(LoggerTestPersistent, self).setUp()
+        super().setUp()
         filename = 'test-FSMContextTests.yaml'
         setUpByFilename(self, filename)
         self.context.logger.persistentLogging = self.PERSISTENT_LOGGING
@@ -100,7 +100,7 @@ class LoggerTestPersistent(AppEngineTestCase):
             self.assertEqual("{'a': 'b'}", self.loggingDouble.messages['info'][0])
 
     def test_logging_bad_object(self):
-        class StrRaises(object):
+        class StrRaises:
             def __str__(self):
                 raise Exception()
         self.context.logger.info(StrRaises())
