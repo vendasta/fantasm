@@ -1,0 +1,4 @@
+--extra-index-url https://us-central1-python.pkg.dev/repcore-prod/python/simple/
+appengine-python-standard==1.1.5
+keyrings.google-artifactregistry-auth==1.1.2
+twine==4.0.2
