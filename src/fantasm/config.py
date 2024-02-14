@@ -18,20 +18,17 @@ Copyright 2010 VendAsta Technologies Inc.
 """
 
 
-import os
-import yaml
-import logging
-import sys
-
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
 import datetime
+import json
+import logging
+import os
 import pickle
+import sys
 import threading
-from fantasm import exceptions, constants, utils
+
+import yaml
+
+from fantasm import constants, exceptions, utils
 
 TASK_ATTRIBUTES = (
     (constants.TASK_RETRY_LIMIT_ATTRIBUTE, 'taskRetryLimit', constants.DEFAULT_TASK_RETRY_LIMIT,

@@ -17,16 +17,11 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
-from google.appengine.ext import db, ndb
-from google.appengine.api import datastore_types
-
 import datetime
-import sys
+import json
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
+from google.appengine.api import datastore_types
+from google.appengine.ext import db, ndb
 
 
 def decode(dct):

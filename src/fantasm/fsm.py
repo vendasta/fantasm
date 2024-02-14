@@ -30,31 +30,30 @@ The Fan-out / Fan-in implementation is modeled after the presentation:
     http://code.google.com/events/io/2010/sessions/high-throughput-data-pipelines-appengine.html
 """
 
-import datetime
-import random
 import copy
-import time
-import sys
-
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
+import datetime
+import json
 import pickle
-from google.appengine.api.taskqueue.taskqueue import Task, TaskAlreadyExistsError, TombstonedTaskError, \
-                                                     TaskRetryOptions
+import random
+import time
+
+from google.appengine.api.taskqueue.taskqueue import (Task,
+                                                      TaskAlreadyExistsError,
+                                                      TaskRetryOptions,
+                                                      TombstonedTaskError)
 from google.appengine.ext import db
-from fantasm import constants, config
+
+from fantasm import config, constants, models
+from fantasm.exceptions import (TRANSIENT_ERRORS, HaltMachineError,
+                                UnknownEventError, UnknownMachineError,
+                                UnknownStateError)
+from fantasm.lock import ReadWriteLock, RunOnceSemaphore
 from fantasm.log import Logger
+from fantasm.models import _FantasmFanIn, _FantasmInstance
 from fantasm.state import State
 from fantasm.transition import Transition
-from fantasm.exceptions import UnknownEventError, UnknownStateError, UnknownMachineError, TRANSIENT_ERRORS, \
-                               HaltMachineError
-from fantasm.models import _FantasmFanIn, _FantasmInstance
-from fantasm import models
 from fantasm.utils import knuthHash
-from fantasm.lock import ReadWriteLock, RunOnceSemaphore
+
 
 class FSM:
     """ An FSMContext creation factory. This is primarily responsible for translating machine

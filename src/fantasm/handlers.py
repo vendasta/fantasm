@@ -17,32 +17,33 @@ Copyright 2010 VendAsta Technologies Inc.
    limitations under the License.
 """
 
-import time
+import json
 import logging
 import sys
+import time
 import traceback
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
+from google.appengine.ext import db, deferred, webapp
 
-from google.appengine.ext import deferred, webapp, db
 try:
     from google.appengine.api.capabilities import CapabilitySet
 except ImportError:
     CapabilitySet = None
 from google.appengine.ext import ndb
+
 from fantasm import config, constants
+from fantasm.constants import (EVENT_PARAM, HTTP_REQUEST_HEADER_PREFIX,
+                               IMMEDIATE_MODE_PARAM, INSTANCE_NAME_PARAM,
+                               MESSAGES_PARAM, NON_CONTEXT_PARAMS,
+                               RETRY_COUNT_PARAM, STARTED_AT_PARAM,
+                               STATE_PARAM, TASK_NAME_PARAM)
+from fantasm.exceptions import (TRANSIENT_ERRORS, FSMRuntimeError,
+                                RequiredServicesUnavailableRuntimeError,
+                                UnknownMachineError)
 from fantasm.fsm import FSM
-from fantasm.utils import NoOpQueue
-from fantasm.constants import NON_CONTEXT_PARAMS, STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, TASK_NAME_PARAM, \
-                              RETRY_COUNT_PARAM, STARTED_AT_PARAM, IMMEDIATE_MODE_PARAM, MESSAGES_PARAM, \
-                              HTTP_REQUEST_HEADER_PREFIX
-from fantasm.exceptions import UnknownMachineError, RequiredServicesUnavailableRuntimeError, FSMRuntimeError, \
-                               TRANSIENT_ERRORS
-from fantasm.models import Encoder, _FantasmFanIn
 from fantasm.lock import RunOnceSemaphore
+from fantasm.models import Encoder, _FantasmFanIn
+from fantasm.utils import NoOpQueue
 
 REQUIRED_SERVICES = ('memcache', 'datastore_v3', 'taskqueue')
 

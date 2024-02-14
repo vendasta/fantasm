@@ -1,47 +1,46 @@
 """ Tests for fantasm.fsm """
-import logging
+import datetime
+import json
+import pickle
+import random  # pylint: disable=W0611
 import time
 import unittest
-import urllib.request, urllib.parse, urllib.error
-import datetime
-import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 
-if sys.version_info < (2, 7):
-    import simplejson as json
-else:
-    import json
-
-import random # pylint: disable=W0611
-import pickle
-from google.appengine.api.taskqueue.taskqueue import Queue, Task # pylint: disable=W0611
-from google.appengine.api import memcache # pylint: disable=W0611
-from google.appengine.ext import db
-from google.appengine.ext.ndb import model as ndb_model, key as ndb_key
-from fantasm import config
-from fantasm.handlers import TemporaryStateObject
-from fantasm.fsm import FSMContext, FSM, startStateMachine
-from fantasm.transition import Transition
-from fantasm.exceptions import UnknownMachineError, UnknownStateError, UnknownEventError, \
-                               FanInWriteLockFailureRuntimeError, \
-                               YamlFileCircularImportError
-from fantasm.state import State
-from fantasm.models import _FantasmFanIn
-from fantasm.constants import STATE_PARAM, EVENT_PARAM, INSTANCE_NAME_PARAM, STEPS_PARAM, MACHINE_STATES_ATTRIBUTE, \
-                              CONTINUATION_PARAM, INDEX_PARAM, GEN_PARAM, FORKED_CONTEXTS_PARAM, \
-                              FORK_PARAM, TASK_NAME_PARAM, RETRY_COUNT_PARAM, CONTINUATION_RESULTS_KEY, \
-                              HTTP_REQUEST_HEADER_QUEUENAME
+from fantasm_tests.actions import (CountExecuteCalls,
+                                   CountExecuteCallsWithFork,
+                                   RaiseExceptionAction,
+                                   RaiseExceptionContinuationAction)
 from fantasm_tests.fixtures import AppEngineTestCase
-from fantasm_tests.actions import RaiseExceptionAction, RaiseExceptionContinuationAction
-from fantasm_tests.helpers import TaskQueueDouble, getLoggingDouble
-from fantasm_tests.helpers import ConfigurationMock
-from fantasm_tests.helpers import getFSMFactoryByFilename
-from fantasm_tests.helpers import getMachineNameByFilename
-from fantasm_tests.helpers import setUpByFilename
-from fantasm_tests.helpers import getCounts
-from fantasm_tests.actions import CountExecuteCalls
-from fantasm_tests.actions import CountExecuteCallsWithFork
-
+from fantasm_tests.helpers import (ConfigurationMock, TaskQueueDouble,
+                                   getCounts, getFSMFactoryByFilename,
+                                   getLoggingDouble, getMachineNameByFilename,
+                                   setUpByFilename)
+from google.appengine.api import memcache  # pylint: disable=W0611
+from google.appengine.api.taskqueue.taskqueue import (  # pylint: disable=W0611
+    Queue, Task)
+from google.appengine.ext import db
+from google.appengine.ext.ndb import key as ndb_key
+from google.appengine.ext.ndb import model as ndb_model
 from minimock import mock, restore
+
+from fantasm import config
+from fantasm.constants import (CONTINUATION_PARAM, CONTINUATION_RESULTS_KEY,
+                               EVENT_PARAM, FORK_PARAM, FORKED_CONTEXTS_PARAM,
+                               GEN_PARAM, HTTP_REQUEST_HEADER_QUEUENAME,
+                               INDEX_PARAM, INSTANCE_NAME_PARAM,
+                               MACHINE_STATES_ATTRIBUTE, RETRY_COUNT_PARAM,
+                               STATE_PARAM, STEPS_PARAM, TASK_NAME_PARAM)
+from fantasm.exceptions import (FanInWriteLockFailureRuntimeError,
+                                UnknownEventError, UnknownMachineError,
+                                UnknownStateError, YamlFileCircularImportError)
+from fantasm.fsm import FSM, FSMContext, startStateMachine
+from fantasm.handlers import TemporaryStateObject
+from fantasm.models import _FantasmFanIn
+from fantasm.state import State
+from fantasm.transition import Transition
 
 # pylint: disable=C0111, W0212, W0612, W0613
 # - docstrings not reqd in unit tests
@@ -1195,7 +1194,8 @@ class StartStateMachineTests(unittest.TestCase):
         startStateMachine(self.machineName, [{'a': '1'}, {'b': '2'}], taskName='a', _currentConfig=self.currentConfig)
         self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.'],
                          ld.messages['info'])
-        from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
+        from google.appengine.api.taskqueue.taskqueue import \
+            TaskAlreadyExistsError
         self.assertRaises(TaskAlreadyExistsError, startStateMachine, self.machineName, [{'a': '1'}, {'b': '2'}],
                           taskName='a', _currentConfig=self.currentConfig, raiseIfTaskExists=True)
         self.assertEqual(['Unable to queue new machine TaskQueueFSMTests with taskName a as it has been previously enqueued.',
