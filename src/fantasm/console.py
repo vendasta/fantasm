@@ -1,18 +1,19 @@
 """ Views for the console. """
 
-from google.appengine.ext import webapp
 import fantasm
 from fantasm import config
 
-class Dashboard(webapp.RequestHandler):
+class Dashboard():
     """ The main dashboard. """
 
-    def get(self):
-        """ GET """
-
-        self.response.out.write(self.generateDashboard())
-
-
+    def __call__(self, environ, start_response):
+        """ CALL """
+        if environ['REQUEST_METHOD'] == 'GET':
+            start_response('200 OK', [('Content-Type', 'text/html')])
+            return [self.generateDashboard().encode('utf-8')]
+        start_response('405 Method Not Allowed', [('Content-Type', 'text/plain')])
+        return [b'Method Not Allowed']
+        
     def generateDashboard(self):
         """ Generates the HTML for the dashboard. """
 
@@ -40,7 +41,6 @@ class Dashboard(webapp.RequestHandler):
     <th>Queue</th>
     <th>States</th>
     <th>Transitions</th>
-    <th>Chart</th>
   </tr>
 </thead>
 <tbody>
@@ -56,7 +56,6 @@ class Dashboard(webapp.RequestHandler):
     <td>%(queueName)s</td>
     <td>%(numStates)d</td>
     <td>%(numTransitions)d</td>
-    <td><a href='%(rootUrl)sgraphviz/%(machineName)s/'>view</a></td>
   </tr>
 """ % {
     'class': 'ae-even' if even else '',

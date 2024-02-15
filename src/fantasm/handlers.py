@@ -22,8 +22,9 @@ import logging
 import sys
 import time
 import traceback
+from urllib.parse import parse_qs
 
-from google.appengine.ext import db, deferred, webapp
+from google.appengine.ext import db, deferred
 
 try:
     from google.appengine.api.capabilities import CapabilitySet
@@ -45,43 +46,47 @@ from fantasm.lock import RunOnceSemaphore
 from fantasm.models import Encoder, _FantasmFanIn
 from fantasm.utils import NoOpQueue
 
-REQUIRED_SERVICES = ('memcache', 'datastore_v3', 'taskqueue')
+REQUIRED_SERVICES = ("memcache", "datastore_v3", "taskqueue")
+
 
 class TemporaryStateObject(dict):
-    """ A simple object that is passed throughout a machine dispatch that can hold temporary
-        in-flight data.
+    """A simple object that is passed throughout a machine dispatch that can hold temporary
+    in-flight data.
     """
+
     pass
 
-def getMachineNameFromRequest(request):
-    """ Returns the machine name embedded in the request.
 
-    @param request: an HttpRequest
+def getMachineNameFromRequest(environ):
+    """Returns the machine name embedded in the request.
+
+    @param environ: the WSGI environment
     @return: the machineName (as a string)
     """
-    path = request.path
+    path = environ["PATH_INFO"]
 
     # strip off the mount-point
     currentConfig = config.currentConfiguration()
-    mountPoint = currentConfig.rootUrl # e.g., '/fantasm/'
+    mountPoint = currentConfig.rootUrl  # e.g., '/fantasm/'
     if not path.startswith(mountPoint):
         raise FSMRuntimeError("rootUrl '%s' must match app.yaml mapping." % mountPoint)
-    path = path[len(mountPoint):]
+    path = path[len(mountPoint) :]
 
     # split on '/', the second item will be the machine name
-    parts = path.split('/')
-    return parts[1] # 0-based index
+    parts = path.split("/")
+    return parts[1]  # 0-based index
 
-def getMachineConfig(request):
-    """ Returns the machine configuration specified by a URI in a HttpReuest
 
-    @param request: an HttpRequest
+def getMachineConfig(environ):
+    """Returns the machine configuration specified by a URI in a HttpReuest
+
+    @param environ: the WSGI environment
     @return: a config._machineConfig instance
     """
 
     # parse out the machine-name from the path {mount-point}/fsm/{machine-name}/startState/event/endState/
     # NOTE: /startState/event/endState/ is optional
-    machineName = getMachineNameFromRequest(request)
+    machineName = getMachineNameFromRequest(environ)
 
     # load the configuration, lookup the machine-specific configuration
     # FIXME: sort out a module level cache for the configuration - it must be sensitive to YAML file changes
@@ -93,65 +98,40 @@ def getMachineConfig(request):
     except KeyError:
         raise UnknownMachineError(machineName)
 
-class FSMLogHandler(webapp.RequestHandler):
-    """ The handler used for logging """
-    def post(self):
-        """ Runs the serialized function """
-        deferred.run(self.request.body)
 
-class FSMFanInCleanupHandler(webapp.RequestHandler):
-    """ The handler used for logging """
-    def post(self):
-        """ Runs the serialized function """
-        q = _FantasmFanIn.all(namespace='').filter('workIndex =', self.request.POST[constants.WORK_INDEX_PARAM])
-        db.delete(q)
+class FSMLogHandler:
+    """The handler used for logging"""
 
-class FSMGraphvizHandler(webapp.RequestHandler):
-    """ The hander to output graphviz diagram of the finite state machine. """
-    def get(self):
-        """ Handles the GET request. """
-        from fantasm.utils import outputMachineConfig
-        machineConfig = getMachineConfig(self.request)
-        content = outputMachineConfig(machineConfig, skipStateNames=[self.request.GET.get('skipStateName')])
+    def __call__(self, environ, start_response):
+        """Runs the serialized function"""
+        if environ["REQUEST_METHOD"] == "POST":
+            body = environ["wsgi.input"].read()
+            deferred.run(body)
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b""]
 
-        cht = self.request.GET.get('cht', 'dot')
-        chs = self.request.GET.get('chs', '')
-        chl = content.replace('\n', ' ')
-        chd = self.request.GET.get('chd', '')
-        chof = self.request.GET.get('chof', 'png')
 
-        tipe = self.request.GET.get('type', False)
+class FSMFanInCleanupHandler:
+    """The handler used for logging"""
 
-        if not tipe:
-            self.response.out.write(
-"""
-<html>
-<head></head>
-<body onload="javascript:document.forms.chartform.submit();">
-<form id='chartform' action='http://chart.apis.google.com/chart' method='POST'>
-  <input type="hidden" name="cht" value="gv:{cht}"  />
-  <input type="hidden" name="chs" value="{chs}"  />
-  <input type="hidden" name="chl" value='{chl}'  />
-  <input type="hidden" name="chd" value="{chd}"  />
-  <input type="hidden" name="chof" value="{chof}"  />
-  <input type="submit" value="Generate GraphViz .{chof}" />
-</form>
-</body>
-""".format(cht=cht,
-       chs=chs,
-       chl=chl,
-       chd=chd,
-       chof=chof))
+    def __call__(self, environ, start_response):
+        """Runs the serialized function"""
+        if environ["REQUEST_METHOD"] == "POST":
+            body = environ["wsgi.input"].read()
+            workIndex = parse_qs(body).get(constants.WORK_INDEX_PARAM)
+            q = _FantasmFanIn.all(namespace="").filter("workIndex =", workIndex)
+            db.delete(q)
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b""]
 
-        else:
-            self.response.out.write(content)
 
 _fsm = None
 
+
 def getCurrentFSM():
-    """ Returns the current FSM singleton. """
+    """Returns the current FSM singleton."""
     # W0603: 32:currentConfiguration: Using the global statement
-    global _fsm # pylint: disable=W0603
+    global _fsm  # pylint: disable=W0603
 
     # always reload the FSM for dev_appserver to grab recent dev changes
     if _fsm and not constants.DEV_APPSERVER:
@@ -161,45 +141,47 @@ def getCurrentFSM():
     _fsm = FSM(currentConfig=currentConfig)
     return _fsm
 
-class FSMHandler(webapp.RequestHandler):
-    """ The main worker handler, used to process queued machine events. """
 
-    @ndb.toplevel
-    def get(self):
-        """ Handles the GET request. """
-        self.get_or_post(method='GET')
+class FSMHandler:
+    """The main worker handler, used to process queued machine events."""
 
-    @ndb.toplevel
-    def post(self):
-        """ Handles the POST request. """
-        self.get_or_post(method='POST')
-
-    def initialize(self, request, response):
-        """Initializes this request handler with the given Request and Response."""
-        super().initialize(request, response)
-        # pylint: disable=W0201
-        # - this is the preferred location to initialize the handler in the webapp framework
+    def __init__(self):
+        """INIT"""
         self.fsm = None
 
-    def handle_exception(self, exception, debug_mode): # pylint: disable=C0103
-        """ Delegates logging to the FSMContext logger """
-        self.error(500)
+    @ndb.toplevel
+    def __call__(self, environ, start_response):
+        """CALL"""
+        method = environ["REQUEST_METHOD"]
+        if method not in ("GET", "POST"):
+            start_response("405 Method Not Allowed", [("Content-Type", "text/plain")])
+            return [b"Method Not Allowed"]
+        try:
+            result = self.get_or_post(environ)
+            if not result:
+                start_response("200 OK", [("Content-Type", "text/plain")])
+                return [b""]
+            return result
+        except Exception as e:
+            self.handle_exception(e)
+            start_response(
+                "500 Internal Server Error", [("Content-Type", "text/plain")]
+            )
+            return [b"Inernal Server Error"]
+
+    def handle_exception(self, exception):
+        """Delegates logging to the FSMContext logger"""
         logger = logging
         if self.fsm:
             logger = self.fsm.logger
         level = logger.error
         if exception.__class__ in TRANSIENT_ERRORS:
             level = logger.warn
-        lines = ''.join(traceback.format_exception(*sys.exc_info()))
+        lines = "".join(traceback.format_exception(*sys.exc_info()))
         level("FSMHandler caught Exception\n" + lines)
-        if debug_mode:
-            import cgi
-            lines = ''.join(traceback.format_exception(*sys.exc_info()))
-            self.response.clear()
-            self.response.out.write('<pre>%s</pre>' % (cgi.escape(lines, quote=True)))
 
-    def get_or_post(self, method='POST'):
-        """ Handles the GET/POST request.
+    def get_or_post(self, environ, start_response):
+        """Handles the GET/POST request.
 
         FIXME: this is getting a touch long
         """
@@ -220,56 +202,74 @@ class FSMHandler(webapp.RequestHandler):
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
-        lowerCaseHeaders = {key.lower(): value for key, value in list(self.request.headers.items())}
+        lowerCaseHeaders = {
+            key[5:].lower(): value
+            for key, value in environ.items()
+            if key.startswith("HTTP_")
+        }
 
-        taskName = lowerCaseHeaders.get('x-appengine-taskname')
-        retryCount = int(lowerCaseHeaders.get('x-appengine-taskretrycount', 0))
+        taskName = lowerCaseHeaders.get("x-appengine-taskname")
+        retryCount = int(lowerCaseHeaders.get("x-appengine-taskretrycount", 0))
 
         # pull out X-Fantasm-* headers
         headers = None
-        for key, value in list(self.request.headers.items()):
-            if key.startswith(HTTP_REQUEST_HEADER_PREFIX):
+        for key, value in list(lowerCaseHeaders.items()):
+            if key.startswith(HTTP_REQUEST_HEADER_PREFIX.lower()):
                 headers = headers or {}
-                if ',' in value:
-                    headers[key] = [v.strip() for v in value.split(',')]
+                if "," in value:
+                    headers[key] = [v.strip() for v in value.split(",")]
                 else:
                     headers[key] = value.strip()
 
-        requestData = {'POST': self.request.POST, 'GET': self.request.GET}[method]
-        method = requestData.get('method') or method
+        method = environ["REQUEST_METHOD"]
+        if method == "POST":
+            request_body = environ["wsgi.input"].read().decode("utf-8")
+            requestData = parse_qs(request_body)
+        if method == "GET":
+            requestData = parse_qs(environ["QUERY_STRING"])
+        method = requestData.get("method") or method
 
-        machineName = getMachineNameFromRequest(self.request)
+        machineName = getMachineNameFromRequest(environ)
 
         # get the incoming instance name, if any
-        instanceName = requestData.get(INSTANCE_NAME_PARAM)
+        instanceName = requestData.get(INSTANCE_NAME_PARAM, [None])[0]
 
         # get the incoming state, if any
-        fsmState = requestData.get(STATE_PARAM)
+        fsmState = requestData.get(STATE_PARAM, [None])[0]
 
         # get the incoming event, if any
-        fsmEvent = requestData.get(EVENT_PARAM)
+        fsmEvent = requestData.get(EVENT_PARAM, [None])[0]
 
-        assert (fsmState and instanceName) or True # if we have a state, we should have an instanceName
-        assert (fsmState and fsmEvent) or True # if we have a state, we should have an event
+        assert (
+            fsmState and instanceName
+        ) or True  # if we have a state, we should have an instanceName
+        assert (
+            fsmState and fsmEvent
+        ) or True  # if we have a state, we should have an event
 
         obj = TemporaryStateObject()
 
         # make a copy, add the data
-        fsm = getCurrentFSM().createFSMInstance(machineName,
-                                                currentStateName=fsmState,
-                                                instanceName=instanceName,
-                                                method=method,
-                                                obj=obj,
-                                                headers=headers)
+        fsm = getCurrentFSM().createFSMInstance(
+            machineName,
+            currentStateName=fsmState,
+            instanceName=instanceName,
+            method=method,
+            obj=obj,
+            headers=headers,
+        )
 
         # Taskqueue can invoke multiple tasks of the same name occassionally. Here, we'll use
         # a datastore transaction as a semaphore to determine if we should actually execute this or not.
         if taskName and fsm.useRunOnceSemaphore:
-            semaphoreKey = '{}--{}'.format(taskName, retryCount)
+            semaphoreKey = "{}--{}".format(taskName, retryCount)
             semaphore = RunOnceSemaphore(semaphoreKey, None)
-            if not semaphore.writeRunOnceSemaphore(payload='fantasm')[0]:
+            if not semaphore.writeRunOnceSemaphore(payload="fantasm")[0]:
                 # we can simply return here, this is a duplicate fired task
-                logging.warn('A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.', taskName)
+                logging.warn(
+                    'A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.',
+                    taskName,
+                )
                 self.response.set_status(200)
                 return
 
@@ -279,26 +279,23 @@ class FSMHandler(webapp.RequestHandler):
         if immediateMode:
             obj[IMMEDIATE_MODE_PARAM] = immediateMode
             obj[MESSAGES_PARAM] = []
-            fsm.Queue = NoOpQueue # don't queue anything else
+            fsm.Queue = NoOpQueue  # don't queue anything else
 
-        # pylint: disable=W0201
-        # - initialized outside of ctor is ok in this case
-        self.fsm = fsm # used for logging in handle_exception
+        self.fsm = fsm  # used for logging in handle_exception
 
         # pull all the data off the url and stuff into the context
         for key, value in list(requestData.items()):
             if key in NON_CONTEXT_PARAMS:
-                continue # these are special, don't put them in the data
+                continue  # these are special, don't put them in the data
 
             # deal with ...a=1&a=2&a=3...
-            value = requestData.get(key)
-            valueList = requestData.getall(key)
-            if len(valueList) > 1:
-                value = valueList
+            value = requestData.get(key, [])
 
             if key.endswith('[]'):
                 key = key[:-2]
                 value = [value]
+            elif len(value) == 1:
+                value = value[0]
 
             if key in list(fsm.contextTypes.keys()):
                 fsm.putTypedValue(key, value)
@@ -329,9 +326,10 @@ class FSMHandler(webapp.RequestHandler):
         if immediateMode:
             while fsmEvent:
                 fsmEvent = fsm.dispatch(fsmEvent, obj)
-            self.response.headers['Content-Type'] = 'application/json'
+
+            start_response("200 OK", [("Content-Type", "application/json")])
             data = {
-                'obj' : obj,
-                'context': fsm,
+                "obj": obj,
+                "context": fsm,
             }
-            self.response.out.write(json.dumps(data, cls=Encoder))
+            return [json.dumps(data, cls=Encoder).encode("utf-8")]

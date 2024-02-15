@@ -19,7 +19,12 @@ Copyright 2010 VendAsta Technologies Inc.
 Release Notes:
 
 v2.0.0
-- initial Python 3 migration
+- Python 3 migration
+    - dropped support for Python 2
+    - dropped support for outputting graphviz visualizations
+    - webapp2 is not supported in Python 3, so you install fantasm via wrap_wsgi_app. Flask example:
+        app = Flask(__name__)
+        app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
 
 v1.3.4
 - minor change to pylint formatting
@@ -75,7 +80,6 @@ v1.0.0
 
 __version__ = '2.0.0'
 
-import functools
 from fantasm import console
 from fantasm import handlers
 
@@ -84,19 +88,11 @@ from fantasm import handlers
 from fantasm.fsm import *
 
 
-def wrap_wsapi_app(app):
+def wrap_wsgi_app(app):
     """ Wrap the given WSGI app with the fantasm middleware. """
     return lambda wsgi_env, start_response: FantasmMiddleware(app, wsgi_env, start_response)
 
 
-def middleware(f):
-  """ Function decorator for making WSGI middlewares. """
-  return functools.update_wrapper(
-      lambda app: lambda wsgi_env, start_resp: f(app, wsgi_env, start_resp),
-      f)
-
-
-@middleware
 def FantasmMiddleware(app, wsgi_env, start_response):
     """ Add the fantasm middleware to the given WSGI app. """
     path = wsgi_env['PATH_INFO']
@@ -104,13 +100,12 @@ def FantasmMiddleware(app, wsgi_env, start_response):
         routes = {
             'fsm': handlers.FSMHandler,
             'cleanup': handlers.FSMFanInCleanupHandler,
-            'graphviz': handlers.FSMGraphvizHandler,
             'log': handlers.FSMLogHandler,
         }
         path_segment = path.split('/')[2]
         handler = routes.get(path_segment)
         if handler:
-            return handler(wsgi_env, start_response)
-        return console.Dashboard(wsgi_env, start_response)
+            return handler()(wsgi_env, start_response)
+        return console.Dashboard()(wsgi_env, start_response)
     return app(wsgi_env, start_response)
 
