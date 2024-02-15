@@ -89,7 +89,20 @@ from fantasm.fsm import *
 
 
 def wrap_wsgi_app(app):
-    """ Wrap the given WSGI app with the fantasm middleware. """
+    """ 
+    Wrap the given WSGI app with the fantasm middleware. 
+    
+    Example:
+    app = Flask(__name__)
+    app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
+
+    Make sure that this is done BEFORE adding the appengine WSGI middleware:
+
+    from google.appengine.api import wrap_wsgi_app
+    ...
+    app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
+    app.wsgi_app = wrap_wsgi_app(app.wsgi_app, use_legacy_context_mode=True, use_deferred=True)
+    """
     return lambda wsgi_env, start_response: FantasmMiddleware(app, wsgi_env, start_response)
 
 
