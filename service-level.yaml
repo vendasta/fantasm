@@ -1,5 +1,0 @@
-services:
- - name: fantasm
-   language: python
-   owner: no-owner
-   nonServiceType: library
