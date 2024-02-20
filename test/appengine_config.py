@@ -6,10 +6,10 @@ FIXME: work in progress, currently disabled
 import random
 import google.appengine.ext.db
 
-from .fantasm.models import _FantasmFanIn
-from .fantasm.models import _FantasmTaskSemaphore
-from .fantasm.models import _FantasmInstance
-from .fantasm.models import _FantasmLog
+from fantasm.models import _FantasmFanIn
+from fantasm.models import _FantasmTaskSemaphore
+from fantasm.models import _FantasmInstance
+from fantasm.models import _FantasmLog
 
 GET = google.appengine.ext.db.get
 GET_THRESHOLD = 0.1

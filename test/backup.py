@@ -7,8 +7,8 @@ from google.appengine.ext import db
 from google.appengine.ext import blobstore
 from google.appengine.ext import webapp
 from google.appengine.api import memcache
-from .fantasm.action import FSMAction, DatastoreContinuationFSMAction
-from .fantasm.constants import CONTINUATION_RESULT_KEY
+from fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULT_KEY
 
 FULL_BACKUP_ON_DAY_OF_WEEK = 2 # 0 = Monday, 1 = Tuesday, 2 = Wednesday, ...
 DELETE_BACKUPS_OLDER_THAN_DAYS = 90 # set to -1 to disable

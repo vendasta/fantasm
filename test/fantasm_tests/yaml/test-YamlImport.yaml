@@ -7,7 +7,7 @@ state_machines:
 - import: test/fantasm_tests/yaml/test-TestYamlFileLocation.yaml
 
 - name: Foo
-  namespace: fantasm_tests.fsm_test
+  namespace: fantasm_tests.test_fsm
   states:
     - name: initial
       initial: True
