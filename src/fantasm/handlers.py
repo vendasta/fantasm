@@ -105,7 +105,9 @@ class FSMLogHandler:
     def __call__(self, environ, start_response):
         """Runs the serialized function"""
         if environ["REQUEST_METHOD"] == "POST":
-            body = environ["wsgi.input"].read().encode('latin1')
+            body = environ["wsgi.input"].read()
+            if isinstance(body, str):
+                body = body.encode("latin1")
             deferred.run(body)
         start_response("200 OK", [("Content-Type", "text/plain")])
         return [b""]
@@ -118,6 +120,8 @@ class FSMFanInCleanupHandler:
         """Runs the serialized function"""
         if environ["REQUEST_METHOD"] == "POST":
             body = environ["wsgi.input"].read()
+            if isinstance(body, bytes):
+                body = body.decode("latin1")
             workIndex = parse_qs(body).get(constants.WORK_INDEX_PARAM, [None])[0]
             q = _FantasmFanIn.all(namespace="").filter("workIndex =", workIndex)
             db.delete(q)
@@ -207,6 +211,8 @@ class FSMHandler:
         method = environ["REQUEST_METHOD"]
         if method == "POST":
             request_body = environ["wsgi.input"].read()
+            if isinstance(request_body, bytes):
+                request_body = request_body.decode("latin1")
             requestData = parse_qs(request_body)
         if method == "GET":
             requestData = parse_qs(environ["QUERY_STRING"])
