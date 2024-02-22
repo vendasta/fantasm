@@ -105,7 +105,7 @@ class FSMLogHandler:
     def __call__(self, environ, start_response):
         """Runs the serialized function"""
         if environ["REQUEST_METHOD"] == "POST":
-            body = environ["wsgi.input"].read()
+            body = environ["wsgi.input"].read().encode('latin1')
             deferred.run(body)
         start_response("200 OK", [("Content-Type", "text/plain")])
         return [b""]
@@ -118,36 +118,22 @@ class FSMFanInCleanupHandler:
         """Runs the serialized function"""
         if environ["REQUEST_METHOD"] == "POST":
             body = environ["wsgi.input"].read()
-            workIndex = parse_qs(body).get(constants.WORK_INDEX_PARAM)
+            workIndex = parse_qs(body).get(constants.WORK_INDEX_PARAM, [None])[0]
             q = _FantasmFanIn.all(namespace="").filter("workIndex =", workIndex)
             db.delete(q)
         start_response("200 OK", [("Content-Type", "text/plain")])
         return [b""]
 
 
-_fsm = None
-
-
-def getCurrentFSM():
-    """Returns the current FSM singleton."""
-    # W0603: 32:currentConfiguration: Using the global statement
-    global _fsm  # pylint: disable=W0603
-
-    # always reload the FSM for dev_appserver to grab recent dev changes
-    if _fsm and not constants.DEV_APPSERVER:
-        return _fsm
-
-    currentConfig = config.currentConfiguration()
-    _fsm = FSM(currentConfig=currentConfig)
-    return _fsm
-
-
 class FSMHandler:
     """The main worker handler, used to process queued machine events."""
 
-    def __init__(self):
-        """INIT"""
-        self.fsm = None
+    def getCurrentFSM(self):
+        """Returns the current FSM singleton."""
+        if not hasattr(self, "_fsm"):
+            currentConfig = config.currentConfiguration()
+            setattr(self, "_fsm", FSM(currentConfig=currentConfig))
+        return getattr(self, "_fsm")
 
     @ndb.toplevel
     def __call__(self, environ, start_response):
@@ -157,7 +143,7 @@ class FSMHandler:
             start_response("405 Method Not Allowed", [("Content-Type", "text/plain")])
             return [b"Method Not Allowed"]
         try:
-            result = self.get_or_post(environ)
+            result = self.get_or_post(environ, start_response)
             if not result:
                 start_response("200 OK", [("Content-Type", "text/plain")])
                 return [b""]
@@ -167,13 +153,14 @@ class FSMHandler:
             start_response(
                 "500 Internal Server Error", [("Content-Type", "text/plain")]
             )
-            return [b"Inernal Server Error"]
+            raise e
 
     def handle_exception(self, exception):
         """Delegates logging to the FSMContext logger"""
         logger = logging
-        if self.fsm:
-            logger = self.fsm.logger
+        currentFsm = self.getCurrentFSM()
+        if currentFsm:
+            logger = currentFsm.logger
         level = logger.error
         if exception.__class__ in TRANSIENT_ERRORS:
             level = logger.warn
@@ -202,11 +189,7 @@ class FSMHandler:
 
         # the case of headers is inconsistent on dev_appserver and appengine
         # ie 'X-AppEngine-TaskRetryCount' vs. 'X-AppEngine-Taskretrycount'
-        lowerCaseHeaders = {
-            key[5:].lower(): value
-            for key, value in environ.items()
-            if key.startswith("HTTP_")
-        }
+        lowerCaseHeaders = {k[5:].lower(): v for k, v in environ.items() if k.startswith('HTTP_')}
 
         taskName = lowerCaseHeaders.get("x-appengine-taskname")
         retryCount = int(lowerCaseHeaders.get("x-appengine-taskretrycount", 0))
@@ -223,7 +206,7 @@ class FSMHandler:
 
         method = environ["REQUEST_METHOD"]
         if method == "POST":
-            request_body = environ["wsgi.input"].read().decode("utf-8")
+            request_body = environ["wsgi.input"].read()
             requestData = parse_qs(request_body)
         if method == "GET":
             requestData = parse_qs(environ["QUERY_STRING"])
@@ -250,7 +233,7 @@ class FSMHandler:
         obj = TemporaryStateObject()
 
         # make a copy, add the data
-        fsm = getCurrentFSM().createFSMInstance(
+        fsm = self.getCurrentFSM().createFSMInstance(
             machineName,
             currentStateName=fsmState,
             instanceName=instanceName,
@@ -270,7 +253,6 @@ class FSMHandler:
                     'A duplicate task "%s" has been queued by taskqueue infrastructure. Ignoring.',
                     taskName,
                 )
-                self.response.set_status(200)
                 return
 
         # in "immediate mode" we try to execute as much as possible in the current request
@@ -281,21 +263,18 @@ class FSMHandler:
             obj[MESSAGES_PARAM] = []
             fsm.Queue = NoOpQueue  # don't queue anything else
 
-        self.fsm = fsm  # used for logging in handle_exception
-
         # pull all the data off the url and stuff into the context
         for key, value in list(requestData.items()):
             if key in NON_CONTEXT_PARAMS:
                 continue  # these are special, don't put them in the data
 
             # deal with ...a=1&a=2&a=3...
-            value = requestData.get(key, [])
+            value = requestData.get(key, None)
 
-            if key.endswith('[]'):
-                key = key[:-2]
-                value = [value]
-            elif len(value) == 1:
+            if len(value) == 1 and not str(key).endswith('[]'):
                 value = value[0]
+            if str(key).endswith('[]'):
+                key = key[:-2]
 
             if key in list(fsm.contextTypes.keys()):
                 fsm.putTypedValue(key, value)

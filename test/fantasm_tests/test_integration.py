@@ -1,6 +1,7 @@
 """ Integration tests for testing the Task execution order etc. """
 import logging
 import datetime
+import os
 
 import random # pylint: disable=W0611
 from fantasm.lock import ReadWriteLock
@@ -12,8 +13,8 @@ from fantasm_tests.helpers import overrideFails
 from fantasm_tests.helpers import setUpByFilename
 from fantasm_tests.helpers import getCounts
 from fantasm_tests.fixtures import AppEngineTestCase
-from fantasm_tests.fsm_test import TestModel, NDBTestModel
-from fantasm_tests.fsm_test import getLoggingDouble
+from fantasm_tests.test_fsm import TestModel, NDBTestModel
+from fantasm_tests.test_fsm import getLoggingDouble
 from fantasm_tests.actions import ContextRecorder, CountExecuteCallsFanIn, TestFileContinuationFSMAction, \
                                   DoubleContinuation1, DoubleContinuation2, ResultModel, CustomImpl
 from minimock import mock, restore
@@ -101,7 +102,7 @@ class LoggingTests( RunTasksBaseTest ):
         runQueuedTasks(queueName=self.context.queueName)
         log = _FantasmLog.all(namespace='').get()
         self.assertEqual("message", log.message)
-        self.assertEqual("None\n", log.stack)
+        self.assertEqual("NoneType: None\n", log.stack)
 
     def test_FantasmInstance_stack_error(self):
         try:
@@ -168,7 +169,7 @@ class ParamsTests(RunTasksBaseTest):
         self.context['char'] = 'a'
         self.context['bool1'] = False
         self.context['bool2'] = True
-        self.context['str'] = 'abc'
+        self.context['str'] = b'abc'
         self.context['str_as_unicode'] = 'abc'
         self.context['unicode'] = '\xe8' # MUST be context_types
         self.context['list_of_str'] = ['a', 'b', 'c']
@@ -183,7 +184,7 @@ class ParamsTests(RunTasksBaseTest):
         self.context['dict_str_keys_defined_in_context_types'] = {'a': 1, 'b': 2}
         self.context['dict_db_Key'] = {'a': models[1].key()} # BAD!!!! not defined in context_types
         self.context['dict_db_Key_defined_in_context_types'] = {'a': models[1].key()}
-        self.context['unicode2'] = "  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ".decode('iso-8859-1')
+        self.context['unicode2'] = b"  Mik\xe9 ,  Br\xe9\xe9 ,  Michael.Bree-1@gmail.com ,  Montr\xe9al  ".decode('iso-8859-1')
         self.context['custom'] = CustomImpl(a='A', b='B')
         self.context['list_of_custom'] = [CustomImpl(a='A', b='B'), CustomImpl(a='AA', b='BB')]
         self.context['list_of_custom_len_1'] = [CustomImpl(a='A', b='B')]
@@ -410,7 +411,7 @@ class RunTasksTests_DatastoreFSMContinuationQueueTests(RunTasksBaseTest):
 
         import google.appengine.api.taskqueue.taskqueue_stub as taskqueue_stub
         import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
-        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path='./test/fantasm_tests/yaml/')
+        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path=os.path.join(os.path.dirname(__file__), 'yaml'))
         apiproxy_stub_map.apiproxy._APIProxyStubMap__stub_map.pop('taskqueue')
         apiproxy_stub_map.apiproxy.RegisterStub('taskqueue', self.__taskqueue)
 
@@ -455,7 +456,7 @@ class RunTasksTests_NDBDatastoreFSMContinuationQueueTests(RunTasksBaseTest):
 
         import google.appengine.api.taskqueue.taskqueue_stub as taskqueue_stub
         import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
-        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path='./test/fantasm_tests/yaml/')
+        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path=os.path.join(os.path.dirname(__file__), 'yaml'))
         apiproxy_stub_map.apiproxy._APIProxyStubMap__stub_map.pop('taskqueue')
         apiproxy_stub_map.apiproxy.RegisterStub('taskqueue', self.__taskqueue)
 
@@ -565,19 +566,19 @@ class RunTasksTests_DoubleContinuationTests(RunTasksBaseTest):
              'instanceName--continuation-1-1--DoubleContinuation1--ok--DoubleContinuation2--step-1',
              'instanceName--DoubleContinuation2--okfinal--StateFinal--step-2',
              'instanceName--continuation-0-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
-             'instanceName--continuation-1-1--continuation-0-1--DoubleContinuation1--ok--DoubleContinuation2--step-1',
+             'instanceName--continuation-0-1--continuation-1-1--DoubleContinuation1--ok--DoubleContinuation2--step-1',
              'instanceName--continuation-0-1--DoubleContinuation2--okfinal--StateFinal--step-2',
              'instanceName--continuation-1-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
              'instanceName--continuation-1-1--DoubleContinuation2--okfinal--StateFinal--step-2',
-             'instanceName--continuation-1-1--continuation-0-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
+             'instanceName--continuation-0-2--continuation-1-1--DoubleContinuation1--ok--DoubleContinuation2--step-1',
              'instanceName--continuation-0-2--DoubleContinuation2--okfinal--StateFinal--step-2',
-             'instanceName--continuation-1-2--continuation-0-1--DoubleContinuation1--ok--DoubleContinuation2--step-1',
-             'instanceName--continuation-1-1--continuation-0-1--DoubleContinuation2--okfinal--StateFinal--step-2',
+             'instanceName--continuation-0-1--continuation-1-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
+             'instanceName--continuation-0-1--continuation-1-1--DoubleContinuation2--okfinal--StateFinal--step-2',
              'instanceName--continuation-1-2--DoubleContinuation2--okfinal--StateFinal--step-2',
-             'instanceName--continuation-1-2--continuation-0-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
-             'instanceName--continuation-1-1--continuation-0-2--DoubleContinuation2--okfinal--StateFinal--step-2',
-             'instanceName--continuation-1-2--continuation-0-1--DoubleContinuation2--okfinal--StateFinal--step-2',
-             'instanceName--continuation-1-2--continuation-0-2--DoubleContinuation2--okfinal--StateFinal--step-2'],
+             'instanceName--continuation-0-2--continuation-1-2--DoubleContinuation1--ok--DoubleContinuation2--step-1',
+             'instanceName--continuation-0-2--continuation-1-1--DoubleContinuation2--okfinal--StateFinal--step-2',
+             'instanceName--continuation-0-1--continuation-1-2--DoubleContinuation2--okfinal--StateFinal--step-2',
+             'instanceName--continuation-0-2--continuation-1-2--DoubleContinuation2--okfinal--StateFinal--step-2'],
             ran)
         self.assertEqual({
             'DoubleContinuation1': {

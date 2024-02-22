@@ -336,7 +336,9 @@ class FSMContext(dict):
         if cast is json.loads:
             kwargs = {'object_hook': models.decode}
         if cast is pickle.loads:
-            value = pickle.loads(str(value))
+            if isinstance(value, str):
+                value = value.encode('latin1')
+            value = pickle.loads(value)
         elif isinstance(value, list):
             value = [cast(v, **kwargs) for v in value]
         else:
@@ -864,9 +866,9 @@ class FSMContext(dict):
                 valueIsNotBasestring = False
                 if isinstance(value, (list, tuple)):
                     for v in value:
-                        if not isinstance(v, str):
+                        if not isinstance(v, (str, bytes)):
                             valueIsNotBasestring = True
-                elif not isinstance(value, str):
+                elif not isinstance(value, (str, bytes)):
                     valueIsNotBasestring = True
 
                 if valueIsNotBasestring:
@@ -878,6 +880,11 @@ class FSMContext(dict):
 
                 if isinstance(value, (list, tuple)) and len(value) == 1:
                     key = key + '[]' # used to preserve lists of length=1 - see handler.py for inverse
+
+                if isinstance(value, bytes):
+                    value = value.decode('latin1').encode('utf-8')
+                if isinstance(value, (list, tuple)):
+                    value = [v.decode('latin1').encode('utf-8') if isinstance(v, bytes) else v for v in value]
 
                 params[key] = value
         return params

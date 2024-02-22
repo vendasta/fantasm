@@ -27,7 +27,7 @@ class AppEngineTestCase(unittest.TestCase):
         apiproxy_stub_map.apiproxy = \
             apiproxy_stub_map.APIProxyStubMap()
 
-        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path='./test/')
+        self.__taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path=os.path.join(os.path.dirname(__file__), '../test/'))
         apiproxy_stub_map.apiproxy.RegisterStub('taskqueue', self.__taskqueue)
 
         # optimization for slow sdk update

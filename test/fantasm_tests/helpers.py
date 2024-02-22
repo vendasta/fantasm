@@ -1,24 +1,22 @@
 """ Unittest helper methods """
+import base64
+import datetime
+import logging
 import os
 import random
-import logging
-import time
-import datetime
-import base64
 import tempfile
+import time
 from collections import defaultdict
-from minimock import mock
+from io import StringIO
+
 import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
-from fantasm import constants
-from fantasm import config
-from fantasm.fsm import FSM
-from fantasm.handlers import FSMLogHandler
-from fantasm.handlers import FSMHandler
-from fantasm.handlers import FSMFanInCleanupHandler
-from fantasm.log import Logger # pylint: disable=W0611
-                               # - used by minimock
-from google.appengine.ext import webapp
 from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
+from minimock import mock
+
+from fantasm import config, constants
+from fantasm.fsm import FSM
+from fantasm.handlers import FSMFanInCleanupHandler, FSMHandler, FSMLogHandler
+from fantasm.log import Logger  # pylint: disable=W0611
 
 # pylint: disable=C0111, C0103, W0613, W0612
 # - docstrings not reqd in unit tests
@@ -191,20 +189,16 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
                 environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
             environ['REQUEST_METHOD'] = task['method']
 
-            handler.request = webapp.Request(environ)
-            handler.response = webapp.Response()
-
             if task['method'] == 'POST':
-                handler.request.body = base64.decodestring(task['body'])
+                environ['wsgi.input'] = StringIO(base64.decodebytes(task['body']).decode('latin1'))
 
-            handler.request.headers[random.choice(['X-AppEngine-TaskName',
-                                                   'X-Appengine-Taskname'])] = task['name']
+            environ[random.choice(['HTTP_X-AppEngine-TaskName', 'HTTP_X-Appengine-Taskname'])] = task['name']
             if retries.get(task['name']):
-                handler.request.headers[random.choice(['X-AppEngine-TaskRetryCount',
-                                                       'X-Appengine-Taskretrycount'])] = retries[task['name']]
+                environ[random.choice(['HTTP_X-AppEngine-TaskRetryCount', 'HTTP_X-Appengine-Taskretrycount'])] = str(retries[task['name']])
 
             try:
-                {'GET': handler.get, 'POST': handler.post}[task['method']]() # call the correct dispatch
+                start_response = lambda status, headers: None
+                handler.__call__(environ, start_response)
                 runAgain = True
                 alreadyRun.append(task['name'])
                 if record:
@@ -272,7 +266,7 @@ def setUpByString(obj, yaml, machineName=None, instanceName=None):
     @param yaml: a yaml string
     """
     f = tempfile.NamedTemporaryFile()
-    f.write(yaml)
+    f.write(yaml.encode('utf-8'))
     f.flush()
     setUpByFilename(obj, f.name, machineName=machineName, instanceName=instanceName)
     f.close()
@@ -355,10 +349,10 @@ def overrideTaskRetryLimit(machineConfig, overrides):
 
 def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
                   path=None, cookies=None, host=None, port=None):
-    """ Builds a request suitable for view.initialize(). """
-    from urllib.parse import urlencode
+    """ Builds a request environ suitable for view.initialize(). """
     from http.cookies import BaseCookie
     from io import StringIO
+    from urllib.parse import urlencode
 
     if not get_args:
         get_args = {}
@@ -405,12 +399,10 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
         # affects.
         wsgi['HTTP_COOKIE'] = cookies.output(header='', sep=';').strip().replace('"', '')
 
-    request = webapp.Request(wsgi)
-
     if post_args:
         assert method == 'POST', 'method must be POST for post_args'
         post_body = urlencode(post_args)
         wsgi['wsgi.input'] = StringIO(post_body)
         wsgi['CONTENT_LENGTH'] = len(post_body)
 
-    return request
+    return wsgi

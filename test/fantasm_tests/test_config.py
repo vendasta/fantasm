@@ -255,7 +255,7 @@ class TestStateDictionaryProcessing(unittest.TestCase):
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: self.machineName})
         self.stateDict = {constants.STATE_NAME_ATTRIBUTE: 'MyState',
                           constants.STATE_ACTION_ATTRIBUTE: 'MockAction',
-                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test'}
+                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.test_config'}
 
     def tearDown(self):
         super().tearDown()
@@ -316,16 +316,16 @@ class TestStateDictionaryProcessing(unittest.TestCase):
     def test_entryResolvedUsingDefaultNamespace(self):
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'MockEntry'
         state = self.fsm.addState(self.stateDict)
-        self.assertEqual(fantasm_tests.config_test.MockEntry, state.entry.__class__)
+        self.assertEqual(fantasm_tests.test_config.MockEntry, state.entry.__class__)
 
     def test_exitResolvedUsingDefaultNamespace(self):
         self.stateDict[constants.STATE_EXIT_ATTRIBUTE] = 'MockExit'
         state = self.fsm.addState(self.stateDict)
-        self.assertEqual(fantasm_tests.config_test.MockExit, state.exit.__class__)
+        self.assertEqual(fantasm_tests.test_config.MockExit, state.exit.__class__)
 
     def test_actionResolvedUsingDefaultNamespace(self):
         state = self.fsm.addState(self.stateDict)
-        self.assertEqual(fantasm_tests.config_test.MockAction, state.action.__class__)
+        self.assertEqual(fantasm_tests.test_config.MockAction, state.action.__class__)
 
     def test_entryResolvedUsingFullyQualified(self):
         self.stateDict[constants.STATE_ENTRY_ATTRIBUTE] = 'fantasm_tests.MockEntry2'
@@ -466,7 +466,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
             constants.TRANS_TO_ATTRIBUTE: 'GoodState'
         }
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine',
-                                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test',
+                                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.test_config',
                                           constants.QUEUE_NAME_ATTRIBUTE: 'somequeue',
                                           constants.COUNTDOWN_ATTRIBUTE: 100,
                                           constants.TARGET_ATTRIBUTE: 'some-target',
@@ -519,7 +519,7 @@ class TestTransitionDictionaryProcessing(unittest.TestCase):
     def test_actionResolvedUsingDefaultNamespace(self):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'MockAction'
         transition = self.fsm.addTransition(self.transDict, 'GoodState')
-        self.assertEqual(fantasm_tests.config_test.MockAction, transition.action.__class__)
+        self.assertEqual(fantasm_tests.test_config.MockAction, transition.action.__class__)
 
     def test_actionResolvedUsingFullyQualified(self):
         self.transDict[constants.TRANS_ACTION_ATTRIBUTE] = 'fantasm_tests.MockAction2'
@@ -718,7 +718,7 @@ class TestAdvancedTransitionDictionaryProcessing(unittest.TestCase):
             constants.TRANS_TO_ATTRIBUTE: 'state2'
         }
         self.fsm = config._MachineConfig({constants.MACHINE_NAME_ATTRIBUTE: 'MyMachine',
-                                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.config_test',
+                                          constants.NAMESPACE_ATTRIBUTE: 'fantasm_tests.test_config',
                                           constants.TASK_RETRY_LIMIT_ATTRIBUTE: 100})
         self.state1 = self.fsm.addState({constants.STATE_NAME_ATTRIBUTE: 'state1',
                                          constants.STATE_ACTION_ATTRIBUTE: 'MockAction'})
@@ -911,12 +911,12 @@ class TestNamespacedEventsAndContextTypes(unittest.TestCase):
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
     NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL: int
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
       - event: NAMESPACED_EVENT_MODULE_LEVEL
@@ -938,15 +938,15 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
-    fantasm_tests.fsm_test.NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL_FSM_TESTS: int
+    fantasm_tests.test_fsm.NAMESPACED_CONTEXT_TYPE_MODULE_LEVEL_FSM_TESTS: int
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
-      - event: fantasm_tests.fsm_test.NAMESPACED_EVENT_MODULE_LEVEL_FSM_TESTS
+      - event: fantasm_tests.test_fsm.NAMESPACED_EVENT_MODULE_LEVEL_FSM_TESTS
         to: state2
     - name: state2
       final: True
@@ -965,12 +965,12 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
     TestNamespacedEventsAndContextTypes.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL: int
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
       - event: TestNamespacedEventsAndContextTypes.NAMESPACED_EVENT_CLASS_LEVEL
@@ -992,15 +992,15 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
-    fantasm_tests.fsm_test.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
+    fantasm_tests.test_fsm.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
-      - event: fantasm_tests.fsm_test.FSMTests.NAMESPACED_EVENT_CLASS_LEVEL_FSM_TESTS
+      - event: fantasm_tests.test_fsm.FSMTests.NAMESPACED_EVENT_CLASS_LEVEL_FSM_TESTS
         to: state2
     - name: state2
       final: True
@@ -1019,13 +1019,13 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
-    fantasm_tests.fsm_test.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
+    fantasm_tests.test_fsm.FSMTests.NAMESPACED_CONTEXT_TYPE_CLASS_LEVEL_FSM_TESTS: int
     abc: long
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
       - event: just-a-plain-old-string
@@ -1050,10 +1050,10 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
       - event: TestNamespacedEventsAndContextTypes.WRONG_TYPE
@@ -1067,12 +1067,12 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.config_test
+  namespace: fantasm_tests.test_config
   context_types:
      TestNamespacedEventsAndContextTypes.WRONG_TYPE: int
   states:
     - name: state1
-      action: fantasm_tests.fsm_test.CountExecuteCalls
+      action: fantasm_tests.test_fsm.CountExecuteCalls
       initial: True
       transitions:
       - event: event
@@ -1098,7 +1098,7 @@ class TestStatesWithAndWithoutDoActions(unittest.TestCase):
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.fsm_test
+  namespace: fantasm_tests.test_fsm
   states:
     - name: state1
       entry: CountExecuteCalls
@@ -1113,7 +1113,7 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.fsm_test
+  namespace: fantasm_tests.test_fsm
   states:
     - name: state1
       entry: CountExecuteCalls
@@ -1127,7 +1127,7 @@ state_machines:
 """
 state_machines:
 - name: machineName
-  namespace: fantasm_tests.fsm_test
+  namespace: fantasm_tests.test_fsm
   states:
     - name: state1
       entry: CountExecuteCalls
