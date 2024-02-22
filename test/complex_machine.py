@@ -4,8 +4,8 @@ import random
 import time
 import os
 import pickle
-from .fantasm.action import FSMAction, DatastoreContinuationFSMAction
-from .fantasm.constants import CONTINUATION_RESULTS_KEY
+from fantasm.action import FSMAction, DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext import db
 
 # pylint: disable=C0111

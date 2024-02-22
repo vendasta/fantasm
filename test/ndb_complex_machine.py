@@ -4,8 +4,8 @@ import random
 import time
 import os
 import pickle
-from .fantasm.action import FSMAction, NDBDatastoreContinuationFSMAction
-from .fantasm.constants import CONTINUATION_RESULTS_KEY
+from fantasm.action import FSMAction, NDBDatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULTS_KEY
 from google.appengine.ext.ndb import model as ndb_model
 from google.appengine.ext import db
 

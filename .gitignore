@@ -1,4 +1,8 @@
 *.pyc
 venv
+dist
+build
 *.egg-info
-fantasm-*.tar.gz
+
+.idea
+.vscode

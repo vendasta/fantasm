@@ -3,8 +3,8 @@ import logging
 from datetime import datetime
 from google.appengine.ext import db
 from google.appengine.ext import webapp
-from .fantasm.action import DatastoreContinuationFSMAction
-from .fantasm.constants import CONTINUATION_RESULT_KEY
+from fantasm.action import DatastoreContinuationFSMAction
+from fantasm.constants import CONTINUATION_RESULT_KEY
 
 # pylint: disable=C0111, W0613, C0103
 # - docstring not reqd

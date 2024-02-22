@@ -140,43 +140,4 @@
     <target name="integration-test" depends="_setup-integration-test-properties, _integration-test"/>
     <target name="ndb-integration-test" depends="_setup-ndb-integration-test-properties, _integration-test"/>
 
-    <!-- work in progress
-
-    <target name="integration-test-results">
-        <tempfile property="temp.file" suffix=".html"/>
-        <get src="http://${app.yaml.version}.${app.yaml.application}.appspot.com/integration-test-results/?token=${integration_test_results_token}" dest="${temp.file}"/>
-        <loadfile property="integration.result" srcFile="${temp.file}"/>
-        <fail message="Integration test is not complete.">
-            <condition>
-                <equals arg1="${integration.result}" arg2="notdone"/>
-            </condition>
-        </fail>
-
-        ##teamcity[buildStatisticValue key='overcounts' value='3']
-
-        Project-Level Charts
-        http://confluence.jetbrains.net/display/TCD4/Custom+Chart
-        The chart is shown on the Statistics tab for the individual Project.
-
-        The settings are configured in the <TeamCity data dir>/config/<Project Name>/plugin-settings.xml file by "graph" tags. You can edit the file while server is running, it will be automatically reloaded.
-
-        Almost the same as for main-config.xml, but there is an intermediate custom-graphs tag:
-
-        <settings>
-
-          <custom-graphs>
-
-           <graph title="Integration Results" hideFilters="showFailed" seriesTitle="Series">
-              <valueType key="overcounts" title="Overcounts" buildTypeId="bt1119"/>
-              <valueType key="undercounts" title="Undercounts" buildTypeId="bt1119"/>
-            </graph>
-
-          </custom-graphs>
-
-        </settings>
-
-
-    </target>
-    -->
-
 </project>

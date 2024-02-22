@@ -256,6 +256,8 @@ def _resolveClass(className, namespace):
         'google.appengine.ext.ndb.key.Key': deserializeNDBKey,
         'google.appengine.ext.ndb.model.Key': deserializeNDBKey,
         'google.appengine.ext.ndb.context.Key': deserializeNDBKey,
+
+        'types.IntType': int,
     }
     if className in shortTypes:
         return shortTypes[className] # FIXME: is this valid with methods?

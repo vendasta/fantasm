@@ -77,7 +77,7 @@ FAN_IN_MACHINE = """
 state_machines:
 
   - name: InsideDatastoreFanInMachine
-    namespace: fantasm_tests.continuation_fan_in_test
+    namespace: fantasm_tests.test_continuation_fan_in
     task_retry_limit: 0
     context_types:
       data: int
@@ -110,7 +110,7 @@ state_machines:
       action: FanInAction
 
   - name: InsideListFanInMachine
-    namespace: fantasm_tests.continuation_fan_in_test
+    namespace: fantasm_tests.test_continuation_fan_in
     task_retry_limit: 0
     context_types:
       data: int
@@ -143,7 +143,7 @@ state_machines:
       action: FanInAction
 
   - name: OutsideDatastoreFanInMachine
-    namespace: fantasm_tests.continuation_fan_in_test
+    namespace: fantasm_tests.test_continuation_fan_in
     task_retry_limit: 0
     context_types:
       data: int
@@ -175,7 +175,7 @@ state_machines:
       action: FanInAction
 
   - name: OutsideListFanInMachine
-    namespace: fantasm_tests.continuation_fan_in_test
+    namespace: fantasm_tests.test_continuation_fan_in
     task_retry_limit: 0
     context_types:
       data: int
@@ -220,7 +220,7 @@ class BaseTest( AppEngineTestCase ):
         super().setUp()
         setUpByString(self, FAN_IN_MACHINE, machineName=self.MACHINE_NAME)
         mock('config.currentConfiguration', returns=self.currentConfig, tracker=None)
-        mock('FSMFanInCleanupHandler.post', returns=None, tracker=None)
+        mock('FSMFanInCleanupHandler.__call__', returns=None, tracker=None)
         for i in range(10):
             ContinuationFanInModel(value=i).put()
         self.context['event'] = self.EVENT

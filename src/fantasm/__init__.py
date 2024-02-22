@@ -18,6 +18,14 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v2.0.0
+- Python 3 migration
+    - dropped support for Python 2
+    - dropped support for outputting graphviz visualizations
+    - webapp2 is not supported in Python 3, so you install fantasm via wrap_wsgi_app. Flask example:
+        app = Flask(__name__)
+        app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
+
 v1.3.4
 - minor change to pylint formatting
 
@@ -70,8 +78,47 @@ v1.0.0
 
 """
 
-__version__ = '1.3.4'
+__version__ = '2.0.0'
+
+from fantasm import console
+from fantasm import handlers
 
 # W0401:  2: Wildcard import fsm
 # pylint: disable-msg=W0401
 from fantasm.fsm import *
+
+
+def wrap_wsgi_app(app):
+    """ 
+    Wrap the given WSGI app with the fantasm middleware. 
+    
+    Example:
+    app = Flask(__name__)
+    app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
+
+    Make sure that this is done BEFORE adding the appengine WSGI middleware:
+
+    from google.appengine.api import wrap_wsgi_app
+    ...
+    app.wsgi_app = fantasm.wrap_wsgi_app(app.wsgi_app)
+    app.wsgi_app = wrap_wsgi_app(app.wsgi_app, use_legacy_context_mode=True, use_deferred=True)
+    """
+    return lambda wsgi_env, start_response: FantasmMiddleware(app, wsgi_env, start_response)
+
+
+def FantasmMiddleware(app, wsgi_env, start_response):
+    """ Add the fantasm middleware to the given WSGI app. """
+    path = wsgi_env['PATH_INFO']
+    if path.startswith('/fantasm/'):
+        routes = {
+            'fsm': handlers.FSMHandler,
+            'cleanup': handlers.FSMFanInCleanupHandler,
+            'log': handlers.FSMLogHandler,
+        }
+        path_segment = path.split('/')[2]
+        handler = routes.get(path_segment)
+        if handler:
+            return handler()(wsgi_env, start_response)
+        return console.Dashboard()(wsgi_env, start_response)
+    return app(wsgi_env, start_response)
+

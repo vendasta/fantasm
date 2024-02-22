@@ -1,7 +1,7 @@
 """ Simple machine actions """
 
 import random
-from .fantasm.action import FSMAction
+from fantasm.action import FSMAction
 
 # pylint: disable=C0111
 # - docstring not reqd

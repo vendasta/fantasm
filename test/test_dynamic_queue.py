@@ -4,7 +4,7 @@ Testing dynamic queue specificiation (context.setQueue())
 import os
 import logging
 
-from .fantasm.action import FSMAction
+from fantasm.action import FSMAction
 
 OK_EVENT = 'ok'
 

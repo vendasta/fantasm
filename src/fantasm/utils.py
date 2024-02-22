@@ -16,7 +16,6 @@ Copyright 2010 VendAsta Technologies Inc.
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from fantasm import constants
 from google.appengine.api.taskqueue.taskqueue import Queue
 
 class NoOpQueue( Queue ):
@@ -33,88 +32,3 @@ def knuthHash(number):
 def boolConverter(boolStr):
     """ A converter that maps some common bool string to True """
     return {'1': True, 'True': True, 'true': True}.get(boolStr, False)
-
-def outputAction(action):
-    """ Outputs the name of the action 
-    
-    @param action: an FSMAction instance 
-    """
-    if action:
-        return str(action.__class__.__name__).split('.')[-1]
-
-def outputTransitionConfig(transitionConfig):
-    """ Outputs a GraphViz directed graph node
-    
-    @param transitionConfig: a config._TransitionConfig instance
-    @return: a string
-    """
-    label = transitionConfig.event
-    if transitionConfig.action:
-        label += '/ ' + outputAction(transitionConfig.action)
-    return '"%(fromState)s" -> "%(toState)s" [label="%(label)s"];' % \
-            {'fromState': transitionConfig.fromState.name, 
-             'toState': transitionConfig.toState.name, 
-             'label': label}
-            
-def outputStateConfig(stateConfig, colorMap=None):
-    """ Outputs a GraphViz directed graph node
-    
-    @param stateConfig: a config._StateConfig instance
-    @return: a string
-    """
-    colorMap = colorMap or {}
-    actions = []
-    if stateConfig.entry:
-        actions.append('entry/ {entry}'.format(entry=outputAction(stateConfig.entry)))
-    if stateConfig.action:
-        actions.append('do/ {do}'.format(do=outputAction(stateConfig.action)))
-    if stateConfig.exit:
-        actions.append('exit/ {exit}'.format(exit=outputAction(stateConfig.exit)))
-    label = '{stateName}|{actions}'.format(stateName=stateConfig.name, actions='\\l'.join(actions))
-    if stateConfig.continuation:
-        label += '|continuation = True'
-    if stateConfig.fanInPeriod != constants.NO_FAN_IN:
-        label += '|fan in period = %(fanin)ds' % {'fanin': stateConfig.fanInPeriod}
-    if stateConfig.fanInGroup:
-        label += '|fan in group = {faningroup}'.format(faningroup=stateConfig.fanInGroup)
-    shape = 'Mrecord'
-    if colorMap.get(stateConfig.name):
-        return '"%(stateName)s" [style=filled,fillcolor="%(fillcolor)s",shape=%(shape)s,label="{%(label)s}"];' % \
-               {'stateName': stateConfig.name,
-                'fillcolor': colorMap.get(stateConfig.name, 'white'),
-                'shape': shape,
-                'label': label}
-    else:
-        return '"%(stateName)s" [shape=%(shape)s,label="{%(label)s}"];' % \
-               {'stateName': stateConfig.name,
-                'shape': shape,
-                'label': label}
-
-def outputMachineConfig(machineConfig, colorMap=None, skipStateNames=None):
-    """ Outputs a GraphViz directed graph of the state machine 
-    
-    @param machineConfig: a config._MachineConfig instance
-    @return: a string
-    """
-    skipStateNames = skipStateNames or ()
-    lines = []
-    lines.append('digraph G {')
-    lines.append('label="{machineName}"'.format(machineName=machineConfig.name))
-    lines.append('labelloc="t"')
-    lines.append('"__start__" [label="start",shape=circle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
-    lines.append('"__end__" [label="end",shape=doublecircle,style=filled,fillcolor=black,fontcolor=white,fontsize=9];')
-    for stateConfig in list(machineConfig.states.values()):
-        if stateConfig.name in skipStateNames:
-            continue
-        lines.append(outputStateConfig(stateConfig, colorMap=colorMap))
-        if stateConfig.initial:
-            lines.append('"__start__" -> "{stateName}"'.format(stateName=stateConfig.name))
-        if stateConfig.final:
-            lines.append('"{stateName}" -> "__end__"'.format(stateName=stateConfig.name))
-    for transitionConfig in list(machineConfig.transitions.values()):
-        if transitionConfig.fromState.name in skipStateNames or \
-           transitionConfig.toState.name in skipStateNames:
-            continue
-        lines.append(outputTransitionConfig(transitionConfig))
-    lines.append('}')
-    return '\n'.join(lines)
