@@ -18,6 +18,9 @@ Copyright 2010 VendAsta Technologies Inc.
 
 Release Notes:
 
+v2.0.1
+- allow _findYaml to find the yaml file if we are installed in a venv beside the src directory
+
 v2.0.0
 - Python 3 migration
     - dropped support for Python 2
@@ -78,7 +81,7 @@ v1.0.0
 
 """
 
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 from fantasm import console
 from fantasm import handlers

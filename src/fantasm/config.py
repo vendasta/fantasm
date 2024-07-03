@@ -78,6 +78,10 @@ def _findYaml(yamlNames=constants.YAML_NAMES):
             yamlPath = os.path.join(directory, yamlName)
             if os.path.exists(yamlPath):
                 return yamlPath
+            # check for a src directory, which likely means the lib is installed in a venv beside the src directory
+            yamlPath = os.path.join(directory, 'src', yamlName)
+            if os.path.exists(yamlPath):
+                return yamlPath
         parent = os.path.dirname(directory)
         if parent == directory:
             break

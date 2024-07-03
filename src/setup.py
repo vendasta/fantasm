@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fantasm",
-    version="2.0.0",
+    version="2.0.1",
     packages=find_packages(),
     url="http://github.com/vendasta/fantasm",
     install_requires=[
