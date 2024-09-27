@@ -30,6 +30,7 @@ The Fan-out / Fan-in implementation is modeled after the presentation:
     http://code.google.com/events/io/2010/sessions/high-throughput-data-pipelines-appengine.html
 """
 
+import base64
 import copy
 import datetime
 import json
@@ -337,7 +338,8 @@ class FSMContext(dict):
             kwargs = {'object_hook': models.decode}
         if cast is pickle.loads:
             if isinstance(value, str):
-                value = value.encode('latin1')
+                value = value.encode()
+            value = base64.urlsafe_b64decode(value)
             value = pickle.loads(value)
         elif isinstance(value, list):
             value = [cast(v, **kwargs) for v in value]
@@ -856,7 +858,7 @@ class FSMContext(dict):
                 if self.contextTypes.get(key) is json.loads:
                     value = json.dumps(value, cls=models.Encoder)
                 if self.contextTypes.get(key) is pickle.loads:
-                    value = pickle.dumps(value)
+                    value = base64.urlsafe_b64encode(pickle.dumps(value))
                 if self.contextTypes.get(key) is config.deserializeNDBKey:
                     value = value.urlsafe()
                 if isinstance(value, dict):
@@ -880,11 +882,6 @@ class FSMContext(dict):
 
                 if isinstance(value, (list, tuple)) and len(value) == 1:
                     key = key + '[]' # used to preserve lists of length=1 - see handler.py for inverse
-
-                if isinstance(value, bytes):
-                    value = value.decode('latin1').encode('utf-8')
-                if isinstance(value, (list, tuple)):
-                    value = [v.decode('latin1').encode('utf-8') if isinstance(v, bytes) else v for v in value]
 
                 params[key] = value
         return params

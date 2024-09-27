@@ -1,4 +1,5 @@
 """ Tests for fantasm.fsm """
+import base64
 import datetime
 import json
 import pickle
@@ -990,7 +991,7 @@ class ContextTypesCoercionTests(unittest.TestCase):
         self.context.putTypedValue('counter', '123')
         self.context.putTypedValue('batch-key', 'agxmYW50YXNtLXRlc3RyEAsSCkVtYWlsQmF0Y2gYUAw')
         self.context.putTypedValue('data', json.dumps({'a': 'a'}))
-        self.context.putTypedValue('start-date', pickle.dumps(dt))
+        self.context.putTypedValue('start-date', base64.b64encode(pickle.dumps(dt)))
         self.context.putTypedValue('ndb_key_key', nkey.urlsafe())
         self.context.putTypedValue('ndb_model_key', nkey.urlsafe())
         self.context.putTypedValue('ndb_context_key', nkey.urlsafe())

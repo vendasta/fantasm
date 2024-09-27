@@ -7,7 +7,7 @@ import random
 import tempfile
 import time
 from collections import defaultdict
-from io import StringIO
+from io import BytesIO
 
 import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
 from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
@@ -190,7 +190,7 @@ def runQueuedTasks(queueName='default', assertTasks=True, tasksOverride=None, sp
             environ['REQUEST_METHOD'] = task['method']
 
             if task['method'] == 'POST':
-                environ['wsgi.input'] = StringIO(base64.decodebytes(task['body']).decode('latin1'))
+                environ['wsgi.input'] = BytesIO(base64.decodebytes(task['body']))
 
             environ[random.choice(['HTTP_X-AppEngine-TaskName', 'HTTP_X-Appengine-Taskname'])] = task['name']
             if retries.get(task['name']):
@@ -402,7 +402,7 @@ def buildRequest(method='GET', get_args=None, post_args=None, referrer=None,
     if post_args:
         assert method == 'POST', 'method must be POST for post_args'
         post_body = urlencode(post_args)
-        wsgi['wsgi.input'] = StringIO(post_body)
+        wsgi['wsgi.input'] = BytesIO(post_body)
         wsgi['CONTENT_LENGTH'] = len(post_body)
 
     return wsgi
