@@ -162,7 +162,7 @@ class FSMHandler:
         """Delegates logging to the FSMContext logger"""
         logger = logging
         currentFsm = self.getCurrentFSM()
-        if currentFsm:
+        if currentFsm and getattr(currentFsm, "logger", None):
             logger = currentFsm.logger
         level = logger.error
         if exception.__class__ in TRANSIENT_ERRORS:
@@ -213,7 +213,7 @@ class FSMHandler:
             requestData = parse_qs(request_body)
         if method == "GET":
             requestData = parse_qs(environ["QUERY_STRING"])
-        method = requestData.get("method") or method
+        method = requestData.get("method", [method])[0]
 
         machineName = getMachineNameFromRequest(environ)
 
