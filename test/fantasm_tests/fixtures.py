@@ -7,12 +7,13 @@ import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
 import google.appengine.api.urlfetch_stub as urlfetch_stub
 import google.appengine.api.memcache.memcache_stub as memcache_stub
 import google.appengine.api.capabilities.capability_stub as capability_stub
+from google.appengine.api import full_app_id
 from fantasm import constants
 
 # pylint: disable=C0111
 # - docstrings not reqd in unit tests
 
-os.environ['APPLICATION_ID'] = 'fantasm'
+full_app_id.put('fantasm')
 os.environ['HTTP_HOST'] = 'fantasm'
 
 class AppEngineTestCase(unittest.TestCase):

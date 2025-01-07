@@ -11,6 +11,7 @@ from io import BytesIO
 
 import google.appengine.api.apiproxy_stub_map as apiproxy_stub_map
 from google.appengine.api.taskqueue.taskqueue import TaskAlreadyExistsError
+from google.appengine.api import full_app_id
 from minimock import mock
 
 from fantasm import config, constants
@@ -22,8 +23,8 @@ from fantasm.log import Logger  # pylint: disable=W0611
 # - docstrings not reqd in unit tests
 # - mock interfaces need to inherit args with '_' in them
 
-os.environ['APPLICATION_ID'] = 'fantasm'
-APP_ID = os.environ['APPLICATION_ID']
+APP_ID = 'fantasm'
+full_app_id.put(APP_ID)
 
 class TaskDouble:
     """ TaskDouble is a mock for google.appengine.api.taskqueue.Task """
