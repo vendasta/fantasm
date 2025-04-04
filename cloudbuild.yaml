@@ -1,0 +1,27 @@
+steps:
+  - name: 'python:3.9'
+    dir: /workspace/src
+    script: |
+      #!/usr/bin/env bash
+      # Install from root requirements.txt
+      pip install --prefer-binary -r ../requirements.txt --user --no-warn-script-location
+    id: "install-dependencies"
+
+  - name: 'python:3.9'
+    dir: /workspace/src
+    script: |
+      #!/usr/bin/env bash
+      python3 -m build . --sdist --wheel --outdir dist/
+    id: "build"
+
+  - name: 'python:3.9'
+    dir: /workspace/src
+    script: |
+      #!/usr/bin/env bash
+      # Ensure twine is in PATH (installed with --user)
+      export PATH="${PATH}:$(python3 -m site --user-base)/bin"
+      python3 -m twine upload --repository-url https://us-central1-python.pkg.dev/repcore-prod/python/ dist/*
+    id: "publish"
+
+options:
+  logging: CLOUD_LOGGING_ONLY 
