@@ -8,6 +8,15 @@ steps:
     id: "install-dependencies"
 
   - name: 'python:3.9'
+    dir: /workspace
+    script: |
+      #!/usr/bin/env bash
+      # Ensure pytest is in PATH (installed with --user)
+      export PATH="${PATH}:$(python3 -m site --user-base)/bin"
+      python3 -m pytest
+    id: "test"
+
+  - name: 'python:3.9'
     dir: /workspace/src
     script: |
       #!/usr/bin/env bash
